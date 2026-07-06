@@ -1,0 +1,130 @@
+/* ===== Design Tokens / CSS Custom Properties ===== */
+
+:root {
+  /* ── Primary / Accent ── */
+  --color-primary: hsl(175, 87%, 46%);
+  --color-primary-hover: hsl(175, 87%, 38%);
+  --color-primary-active: hsl(175, 87%, 32%);
+  --color-primary-subtle: hsla(175, 87%, 46%, 0.12);
+  --color-accent: hsl(173, 89%, 72%);
+
+  /* ── Typography ── */
+  --font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ── Spacing ── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px hsla(0, 0%, 0%, 0.15);
+  --shadow-md: 0 2px 8px hsla(0, 0%, 0%, 0.2);
+  --shadow-lg: 0 4px 16px hsla(0, 0%, 0%, 0.25);
+  --shadow-xl: 0 8px 32px hsla(0, 0%, 0%, 0.3);
+
+  /* ── Transitions ── */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ── Layout ── */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 56px;
+  --inspector-width: 280px;
+  --toolbar-height: 48px;
+}
+
+/* ===== Dark Theme (default) ===== */
+[data-theme='dark'],
+:root {
+  --color-bg: hsl(220, 20%, 10%);
+  --color-bg-elevated: hsl(220, 18%, 13%);
+  --color-bg-surface: hsl(220, 16%, 16%);
+  --color-bg-hover: hsl(220, 14%, 20%);
+  --color-bg-active: hsl(220, 14%, 24%);
+
+  --color-border: hsl(220, 14%, 22%);
+  --color-border-subtle: hsl(220, 14%, 18%);
+
+  --color-text: hsl(220, 20%, 92%);
+  --color-text-secondary: hsl(220, 12%, 65%);
+  --color-text-tertiary: hsl(220, 10%, 48%);
+  --color-text-inverse: hsl(220, 20%, 10%);
+
+  --color-danger: hsl(0, 72%, 56%);
+  --color-danger-hover: hsl(0, 72%, 48%);
+  --color-danger-subtle: hsla(0, 72%, 56%, 0.12);
+
+  --color-warning: hsl(40, 90%, 56%);
+  --color-success: hsl(145, 65%, 46%);
+
+  --color-overlay: hsla(0, 0%, 0%, 0.6);
+
+  --scrollbar-track: hsl(220, 18%, 13%);
+  --scrollbar-thumb: hsl(220, 14%, 28%);
+  --scrollbar-thumb-hover: hsl(220, 14%, 36%);
+}
+
+/* ===== Light Theme ===== */
+[data-theme='light'] {
+  --color-bg: hsl(220, 20%, 97%);
+  --color-bg-elevated: hsl(0, 0%, 100%);
+  --color-bg-surface: hsl(220, 16%, 94%);
+  --color-bg-hover: hsl(220, 14%, 90%);
+  --color-bg-active: hsl(220, 14%, 86%);
+
+  --color-border: hsl(220, 14%, 84%);
+  --color-border-subtle: hsl(220, 14%, 90%);
+
+  --color-text: hsl(220, 20%, 14%);
+  --color-text-secondary: hsl(220, 10%, 44%);
+  --color-text-tertiary: hsl(220, 8%, 60%);
+  --color-text-inverse: hsl(220, 20%, 97%);
+
+  --color-danger: hsl(0, 72%, 50%);
+  --color-danger-hover: hsl(0, 72%, 42%);
+  --color-danger-subtle: hsla(0, 72%, 50%, 0.08);
+
+  --color-warning: hsl(40, 90%, 44%);
+  --color-success: hsl(145, 65%, 38%);
+
+  --color-overlay: hsla(0, 0%, 0%, 0.4);
+
+  --shadow-sm: 0 1px 2px hsla(0, 0%, 0%, 0.06);
+  --shadow-md: 0 2px 8px hsla(0, 0%, 0%, 0.08);
+  --shadow-lg: 0 4px 16px hsla(0, 0%, 0%, 0.1);
+  --shadow-xl: 0 8px 32px hsla(0, 0%, 0%, 0.12);
+
+  --scrollbar-track: hsl(220, 16%, 94%);
+  --scrollbar-thumb: hsl(220, 14%, 78%);
+  --scrollbar-thumb-hover: hsl(220, 14%, 68%);
+}

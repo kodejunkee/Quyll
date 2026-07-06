@@ -1,0 +1,110 @@
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: relative;
+}
+
+.dropdown__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  min-height: 38px;
+}
+
+.dropdown__trigger:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.dropdown__trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.dropdown__trigger--open {
+  border-color: var(--color-primary);
+}
+
+.dropdown__trigger--error {
+  border-color: var(--color-danger);
+}
+
+.dropdown__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdown__value {
+  color: var(--color-text);
+}
+
+.dropdown__placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.dropdown__icon {
+  color: var(--color-text-secondary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.dropdown__icon--open {
+  transform: rotate(180deg);
+}
+
+.dropdown__list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown__option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  transition: background var(--transition-fast);
+}
+
+.dropdown__option:hover,
+.dropdown__option--focused {
+  background: var(--color-bg-hover);
+}
+
+.dropdown__option--selected {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.dropdown__error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}

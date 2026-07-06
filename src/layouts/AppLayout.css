@@ -1,0 +1,26 @@
+.app-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--inspector-width);
+  height: 100vh;
+  overflow: hidden;
+  transition: grid-template-columns var(--transition-slow);
+}
+
+.app-layout--sidebar-collapsed {
+  grid-template-columns: var(--sidebar-collapsed-width) 1fr var(--inspector-width);
+}
+
+.app-layout--inspector-collapsed {
+  grid-template-columns: var(--sidebar-width) 1fr 0px;
+}
+
+.app-layout--sidebar-collapsed.app-layout--inspector-collapsed {
+  grid-template-columns: var(--sidebar-collapsed-width) 1fr 0px;
+}
+
+.app-layout__main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg);
+  position: relative;
+}

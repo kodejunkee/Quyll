@@ -1,0 +1,76 @@
+.settings-page {
+  padding: var(--space-6) var(--space-8);
+  max-width: 720px;
+}
+
+.settings-page__header {
+  margin-bottom: var(--space-6);
+}
+
+.settings-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.settings-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settings-page__card {
+  width: 100%;
+}
+
+.settings-page__setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+}
+
+.settings-page__setting + .settings-page__setting {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.settings-page__setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settings-page__setting-label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.settings-page__setting-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.settings-page__ai-coming-soon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.settings-page__ai-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.settings-page__ai-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.settings-page__ai-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
