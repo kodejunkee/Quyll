@@ -7,7 +7,7 @@ import { Input } from '@/components';
 import { TextArea } from '@/components';
 import { Dialog } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
-import { initAppDatabase, registerProject, listProjects, renameProject as dbRename, unregisterProject } from '@/database';
+import { initAppDatabase, registerProject, listProjects, renameProject as dbRename, unregisterProject, initializeProjectDatabase } from '@/database';
 import { generateId } from '@/utils/uuid';
 import './HomePage.css';
 
@@ -52,6 +52,14 @@ export default function HomePage() {
     const id = generateId();
     const projectPath = `projects/${id}.quyll`;
     try {
+      await initializeProjectDatabase(projectPath, {
+        id,
+        title: newTitle.trim(),
+        description: newDescription,
+        author: newAuthor,
+        genre: newGenre,
+      });
+
       await registerProject({
         id,
         name: newTitle.trim(),

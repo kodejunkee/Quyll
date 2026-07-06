@@ -1,0 +1,97 @@
+.plot-card {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.plot-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.plot-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.plot-card__order {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.plot-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.plot-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.plot-card__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plot-card__status {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+}
+
+.plot-card__status--idea {
+  background: hsla(210, 60%, 50%, 0.15);
+  color: hsl(210, 60%, 60%);
+}
+
+.plot-card__status--in-progress {
+  background: hsla(45, 70%, 50%, 0.15);
+  color: hsl(45, 70%, 55%);
+}
+
+.plot-card__status--complete {
+  background: hsla(145, 60%, 40%, 0.15);
+  color: hsl(145, 60%, 50%);
+}
+
+.plot-card__status--cut {
+  background: hsla(0, 60%, 40%, 0.15);
+  color: hsl(0, 60%, 55%);
+}
+
+.plot-card__arc {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+.plot-card__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}

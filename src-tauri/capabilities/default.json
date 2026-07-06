@@ -25,12 +25,13 @@
     "fs:allow-remove",
     "fs:allow-rename",
     "fs:allow-mkdir",
+    "fs:allow-copy-file",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "$APPDATA/**" },
-        { "path": "$DOCUMENT/**" },
-        { "path": "$HOME/**" }
+        { "path": "**" }
       ]
     }
   ]

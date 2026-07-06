@@ -62,7 +62,7 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
       );
 
       const rows = await select<T>(db, `SELECT * FROM ${tableName} WHERE id = $1`, [id]);
-      return rows[0];
+      return rows[0]!;
     },
 
     /** Update specific fields on a row. */

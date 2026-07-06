@@ -1,0 +1,38 @@
+.timeline-page {
+  padding: var(--space-6) var(--space-8);
+}
+
+.timeline-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.timeline-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.timeline-page__count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.timeline-page__search {
+  margin-bottom: var(--space-6);
+  max-width: 400px;
+}
+
+.timeline-page__events {
+  max-width: 700px;
+  padding-left: var(--space-2);
+}
+
+.timeline-page__loading {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}

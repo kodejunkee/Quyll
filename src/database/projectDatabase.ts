@@ -6,6 +6,8 @@ import type Database from '@tauri-apps/plugin-sql';
 import { openDatabase, closeDatabase, execute } from './databaseService';
 import { migrateProjectDatabase } from './migrations';
 import { generateId } from '@/utils/uuid';
+import { mkdir } from '@tauri-apps/plugin-fs';
+import { appDataDir, join } from '@tauri-apps/api/path';
 
 /** Build the sqlite: URI for a project's database file. */
 function projectDbPath(projectFolderPath: string): string {
@@ -31,6 +33,14 @@ export async function initializeProjectDatabase(
   projectFolderPath: string,
   meta: { id: string; title: string; description?: string; author?: string; genre?: string },
 ): Promise<Database> {
+  const dataDir = await appDataDir();
+  const fullPath = await join(dataDir, projectFolderPath);
+  try {
+    await mkdir(fullPath, { recursive: true });
+  } catch (err) {
+    console.error('Failed to create project directory:', err);
+  }
+
   const db = await openProjectDatabase(projectFolderPath);
 
   await execute(

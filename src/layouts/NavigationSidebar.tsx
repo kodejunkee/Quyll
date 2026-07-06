@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Feather,
+  Home,
 } from 'lucide-react';
 import './NavigationSidebar.css';
 
@@ -74,6 +75,17 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
       </div>
 
       <div className="nav-sidebar__footer">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
+          }
+          title={collapsed ? 'Home' : undefined}
+          end
+        >
+          <Home size={18} className="nav-sidebar__link-icon" />
+          {!collapsed && <span className="nav-sidebar__link-label">Home</span>}
+        </NavLink>
         <NavLink
           to={`/project/${projectId}/settings`}
           className={({ isActive }) =>

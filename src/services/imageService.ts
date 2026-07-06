@@ -89,7 +89,7 @@ export async function removeImage(
   const rows = await select<Image>(db, `SELECT * FROM images WHERE id = $1`, [imageId]);
   if (rows.length === 0) return;
 
-  const image = rows[0];
+  const image = rows[0]!;
   const dataDir = await appDataDir();
   const fullPath = await join(dataDir, projectFolderPath, image.path);
 
