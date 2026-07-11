@@ -12,7 +12,7 @@ import {
   INSERT_UNORDERED_LIST_COMMAND,
   INSERT_ORDERED_LIST_COMMAND,
 } from '@lexical/list';
-import { $setBlocksType } from '@lexical/selection';
+import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
 import { $createParagraphNode } from 'lexical';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 import { $createQuoteNode } from '@lexical/rich-text';
@@ -62,6 +62,17 @@ function ToolbarSeparator() {
   return <div className="editor-toolbar__separator" />;
 }
 
+const FONT_OPTIONS = [
+  { label: 'Default', value: '' },
+  { label: 'Arial', value: 'Arial' },
+  { label: 'Courier New', value: '"Courier New", Courier, monospace' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
+  { label: 'Trebuchet MS', value: '"Trebuchet MS", Helvetica, sans-serif' },
+  { label: 'Verdana', value: 'Verdana, Geneva, sans-serif' },
+  { label: 'Comic Sans MS', value: '"Comic Sans MS", cursive, sans-serif' },
+];
+
 export function EditorToolbar() {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
@@ -69,6 +80,7 @@ export function EditorToolbar() {
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [blockType, setBlockType] = useState<string>('paragraph');
+  const [fontFamily, setFontFamily] = useState<string>('');
 
   /** Update toolbar state based on current selection. */
   const updateToolbar = useCallback(() => {
@@ -80,6 +92,13 @@ export function EditorToolbar() {
       setIsItalic(selection.hasFormat('italic'));
       setIsUnderline(selection.hasFormat('underline'));
       setIsStrikethrough(selection.hasFormat('strikethrough'));
+
+      try {
+        const font = $getSelectionStyleValueForProperty(selection, 'font-family', '');
+        setFontFamily(font);
+      } catch (e) {
+        // Fallback if utility missing
+      }
 
       const anchorNode = selection.anchor.getNode();
       const element = anchorNode.getKey() === 'root'
@@ -132,8 +151,35 @@ export function EditorToolbar() {
     });
   }, [editor, blockType]);
 
+  const applyFontFamily = useCallback((font: string) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        $patchStyleText(selection, {
+          'font-family': font || null,
+        });
+      }
+    });
+  }, [editor]);
+
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Formatting toolbar">
+      <select
+        className="editor-toolbar__font-select"
+        value={fontFamily}
+        onChange={(e) => applyFontFamily(e.target.value)}
+        title="Font Family"
+        aria-label="Font Family"
+      >
+        {FONT_OPTIONS.map(option => (
+          <option key={option.label} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      
+      <ToolbarSeparator />
+
       <ToolbarButton
         icon={<Bold size={16} />}
         label="Bold (Ctrl+B)"

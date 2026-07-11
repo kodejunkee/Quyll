@@ -1,5 +1,6 @@
 import { createEntityService } from '@/services/entityService';
 import type { Character } from '@/types/database';
+import { EntityType } from '@/types/common';
 
 const CHARACTER_COLUMNS = [
   'name', 'aliases', 'age', 'birthday', 'gender', 'height', 'occupation',
@@ -11,4 +12,6 @@ const CHARACTER_COLUMNS = [
 export const characterService = createEntityService<Character>({
   tableName: 'characters',
   columns: CHARACTER_COLUMNS,
+  entityType: EntityType.Character,
+  nameColumn: 'name',
 });

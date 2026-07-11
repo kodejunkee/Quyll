@@ -17,11 +17,38 @@
 }
 
 .inspector-panel__title {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.inspector-panel__tabs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.inspector-panel__tab {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.inspector-panel__tab:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.inspector-panel__tab.active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
 }
 
 .inspector-panel__toggle {
@@ -70,5 +97,52 @@
 .inspector-panel__empty-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  font-style: italic;
+  margin: 0;
+}
+
+.inspector-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.inspector-panel__section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-2) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inspector-panel__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.inspector-panel__list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+}
+
+.inspector-panel__list-item:hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-primary-subtle);
+}
+
+.inspector-panel__item-icon {
+  color: var(--color-text-tertiary);
 }

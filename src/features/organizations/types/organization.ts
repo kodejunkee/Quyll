@@ -9,5 +9,7 @@ export const organizationSchema = z.object({
   structure: z.string().max(5000),
   history: z.string().max(5000),
   notes: z.string().max(10000),
+  keyword_enabled: z.boolean(),
 });
+
 export type OrganizationFormData = z.infer<typeof organizationSchema>;

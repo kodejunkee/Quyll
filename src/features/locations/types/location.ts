@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export const LOCATION_TYPES = ['City', 'Town', 'Village', 'Fortress', 'Forest', 'Mountain', 'River', 'Cave', 'Other'] as const;
+export const LOCATION_TYPES = ['Planet', 'Realm', 'Kingdom', 'City', 'Town', 'Village', 'Fortress', 'Forest', 'Mountain', 'River', 'Cave', 'Other'] as const;
 
 export const locationSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
@@ -11,6 +11,7 @@ export const locationSchema = z.object({
   population: z.string().max(500),
   history: z.string().max(5000),
   notes: z.string().max(10000),
+  keyword_enabled: z.boolean(),
 });
 
 export type LocationFormData = z.infer<typeof locationSchema>;

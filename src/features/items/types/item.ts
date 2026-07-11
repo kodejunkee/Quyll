@@ -6,5 +6,7 @@ export const itemSchema = z.object({
   description: z.string().max(5000),
   owner_character_id: z.string().nullable(),
   notes: z.string().max(10000),
+  keyword_enabled: z.boolean(),
 });
+
 export type ItemFormData = z.infer<typeof itemSchema>;

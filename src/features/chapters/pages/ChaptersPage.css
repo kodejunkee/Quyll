@@ -131,6 +131,16 @@
   margin: var(--space-8) 0;
 }
 
+/* Keyword Highlighting */
+.editor__keyword {
+  color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
+  border-radius: 4px;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
 /* —— Empty State —— */
 
 .chapters-page__empty {

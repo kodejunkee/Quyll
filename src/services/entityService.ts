@@ -8,9 +8,14 @@ import { execute, select } from '@/database/databaseService';
 import { generateId } from '@/utils/uuid';
 import type Database from '@tauri-apps/plugin-sql';
 
+import type { EntityType } from '@/types/common';
+import { keywordService } from './keywordService';
+
 export interface EntityServiceConfig {
   tableName: string;
   columns: string[];
+  entityType?: EntityType;
+  nameColumn?: string;
 }
 
 /**
@@ -50,7 +55,11 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
       const values = [
         id,
         projectId,
-        ...columns.map((col) => data[col] ?? (col === 'age' ? null : '')),
+        ...columns.map((col) => {
+          const val = data[col];
+          if (typeof val === 'boolean') return val ? 1 : 0;
+          return val ?? (col === 'age' ? null : '');
+        }),
         now,
         now,
       ];
@@ -60,6 +69,14 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         `INSERT INTO ${tableName} (${insertCols.join(', ')}) VALUES (${placeholders})`,
         values,
       );
+
+      // Sync keyword if enabled
+      if (config.entityType && config.nameColumn && data.keyword_enabled) {
+        const nameVal = data[config.nameColumn] as string | undefined;
+        if (nameVal) {
+          await keywordService.upsert(db, projectId, config.entityType, id, nameVal);
+        }
+      }
 
       const rows = await select<T>(db, `SELECT * FROM ${tableName} WHERE id = $1`, [id]);
       return rows[0]!;
@@ -71,7 +88,11 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
       if (keys.length === 0) return;
 
       const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
-      const values = keys.map((k) => data[k]);
+      const values = keys.map((k) => {
+        const val = data[k];
+        if (typeof val === 'boolean') return val ? 1 : 0;
+        return val;
+      });
       values.push(new Date().toISOString(), id);
 
       await execute(
@@ -79,6 +100,24 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         `UPDATE ${tableName} SET ${setClauses}, updated_at = $${values.length - 1} WHERE id = $${values.length}`,
         values,
       );
+
+      // Sync keyword on update
+      if (config.entityType && config.nameColumn) {
+        // Fetch the full updated entity to know its current state
+        const updatedRows = await select<{ project_id: string; keyword_enabled: number; [key: string]: any }>(
+          db,
+          `SELECT * FROM ${tableName} WHERE id = $1`,
+          [id]
+        );
+        if (updatedRows.length > 0) {
+          const row = updatedRows[0];
+          if (row.keyword_enabled) {
+            await keywordService.upsert(db, row.project_id, config.entityType, id, row[config.nameColumn]);
+          } else {
+            await keywordService.remove(db, row.project_id, id);
+          }
+        }
+      }
     },
 
     /** Soft-delete: set deleted_at timestamp. */
@@ -88,6 +127,14 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         `UPDATE ${tableName} SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = $1`,
         [id],
       );
+
+      if (config.entityType) {
+        // Remove keyword when soft deleted
+        const rows = await select<{ project_id: string }>(db, `SELECT project_id FROM ${tableName} WHERE id = $1`, [id]);
+        if (rows.length > 0) {
+          await keywordService.remove(db, rows[0].project_id, id);
+        }
+      }
     },
 
     /** Restore a soft-deleted row. */
@@ -97,10 +144,28 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         `UPDATE ${tableName} SET deleted_at = NULL, updated_at = datetime('now') WHERE id = $1`,
         [id],
       );
+
+      if (config.entityType && config.nameColumn) {
+        // Restore keyword if enabled
+        const rows = await select<{ project_id: string; keyword_enabled: number; [key: string]: any }>(
+          db,
+          `SELECT * FROM ${tableName} WHERE id = $1`,
+          [id]
+        );
+        if (rows.length > 0 && rows[0].keyword_enabled) {
+          await keywordService.upsert(db, rows[0].project_id, config.entityType, id, rows[0][config.nameColumn]);
+        }
+      }
     },
 
     /** Permanently delete (for trash emptying). */
     async hardDelete(db: Database, id: string): Promise<void> {
+      if (config.entityType) {
+        const rows = await select<{ project_id: string }>(db, `SELECT project_id FROM ${tableName} WHERE id = $1`, [id]);
+        if (rows.length > 0) {
+          await keywordService.remove(db, rows[0].project_id, id);
+        }
+      }
       await execute(db, `DELETE FROM ${tableName} WHERE id = $1`, [id]);
     },
 

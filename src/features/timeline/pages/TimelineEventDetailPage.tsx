@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
-import { Button, Card, Dialog, Modal } from '@/components';
+import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { timelineEventService } from '../services/timelineEventService';
 import { TimelineEventForm } from '../components/TimelineEventForm';
 import type { TimelineEvent } from '@/types/database';
 import type { TimelineEventFormData } from '../types/timelineEvent';
+import { EntityType } from '@/types/common';
 import '../../locations/pages/LocationDetailPage.css';
 
 export default function TimelineEventDetailPage() {
@@ -51,7 +52,7 @@ export default function TimelineEventDetailPage() {
           <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 size={14} /></Button>
         </div>
       </header>
-      <div className="entity-detail__content" style={{ gridTemplateColumns: '1fr' }}>
+      <div className="entity-detail__content">
         <div className="entity-detail__main">
           <h1 className="entity-detail__name">{entity.title}</h1>
           {fields[0]?.value && (
@@ -73,10 +74,11 @@ export default function TimelineEventDetailPage() {
               <p className="entity-detail__text">{value}</p>
             </Card>
           ))}
+          <EntityReferences entityId={entity.id} entityType={EntityType.TimelineEvent} />
         </div>
       </div>
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Timeline Event" size="md">
-        <TimelineEventForm defaultValues={entity} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
+        <TimelineEventForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
       </Modal>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.title}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" />
     </div>

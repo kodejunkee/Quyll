@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { characterSchema, CHARACTER_STATUSES, type CharacterFormData } from '../types/character';
-import { Input, TextArea, Button } from '@/components';
+import { Input, TextArea, Button, Checkbox } from '@/components';
 import { Dropdown } from '@/components/Dropdown';
 import './CharacterForm.css';
 
@@ -41,6 +41,7 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
       biography: '',
       notes: '',
       status: 'Alive',
+      keyword_enabled: false,
       ...defaultValues,
     },
   });
@@ -57,6 +58,13 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
           <div className="character-form__row">
             <Input label="Age" placeholder="Age" type="number" error={errors.age?.message} {...register('age', { setValueAs: (v: string) => (v === '' ? null : Number(v)) })} />
             <Input label="Gender" placeholder="Gender" error={errors.gender?.message} {...register('gender')} />
+          </div>
+          <div className="character-form__row">
+            <Checkbox 
+              label="Enable Keyword" 
+              hint="When enabled, this entity will be highlighted in chapters and timeline events."
+              {...register('keyword_enabled')} 
+            />
           </div>
           <div className="character-form__row">
             <Input label="Birthday" placeholder="e.g. March 15" error={errors.birthday?.message} {...register('birthday')} />

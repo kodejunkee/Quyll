@@ -2,6 +2,7 @@ import type { InitialConfigType } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { KeywordNode } from '../components/KeywordNode';
 
 /**
  * Lexical theme mapping — maps Lexical element types to BEM CSS classes.
@@ -44,7 +45,7 @@ export function createEditorConfig(initialState?: string | null): InitialConfigT
   return {
     namespace: 'QuyllEditor',
     theme: editorTheme,
-    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, HorizontalRuleNode],
+    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, HorizontalRuleNode, KeywordNode],
     onError,
     editorState: initialState || undefined,
   };

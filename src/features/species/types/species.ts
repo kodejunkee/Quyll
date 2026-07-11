@@ -8,5 +8,7 @@ export const speciesSchema = z.object({
   abilities: z.string().max(5000),
   weaknesses: z.string().max(5000),
   notes: z.string().max(10000),
+  keyword_enabled: z.boolean(),
 });
+
 export type SpeciesFormData = z.infer<typeof speciesSchema>;

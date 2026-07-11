@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
-import { Outlet, useParams, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useLayoutStore } from '@/store/layoutStore';
 import { ProjectDbProvider } from '@/hooks/useProjectDb';
 import { NavigationSidebar } from './NavigationSidebar';
 import { InspectorPanel } from './InspectorPanel';
+import { GlobalKeywordHoverCard } from '@/components/HoverCard';
+import { ReferenceBubbles } from '@/components/ReferenceBubbles';
+import { EntityDetailsModal } from '@/components/EntityDetailsModal';
+import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import './AppLayout.css';
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
   const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Hide the inspector panel on the chapters/writing workspace route
   const isWritingWorkspace = location.pathname.includes('/chapters');
@@ -27,6 +32,10 @@ export function AppLayout() {
       }
       if (e.ctrlKey && e.key.toLowerCase() === 'f' && !isWritingWorkspace) {
         e.preventDefault();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
       }
     }
     window.addEventListener('keydown', handleKeyDown, { capture: true });
@@ -49,6 +58,10 @@ export function AppLayout() {
         {!isWritingWorkspace && (
           <InspectorPanel collapsed={inspectorCollapsed} onToggle={toggleInspector} />
         )}
+        <GlobalKeywordHoverCard />
+        <ReferenceBubbles />
+        <EntityDetailsModal />
+        <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       </div>
     </ProjectDbProvider>
   );

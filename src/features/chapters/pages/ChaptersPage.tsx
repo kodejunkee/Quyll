@@ -22,6 +22,8 @@ import { EditorStatusBar } from '../components/EditorStatusBar';
 import { ChapterListPanel } from '../components/ChapterListPanel';
 import { DraftRecoveryDialog } from '../components/DraftRecoveryDialog';
 import { FindAndReplacePlugin } from '../components/FindAndReplacePlugin';
+import { KeywordPlugin } from '../components/KeywordPlugin';
+import { AutoFormatPlugin } from '../components/AutoFormatPlugin';
 import { createEditorConfig } from '../utils/editorConfig';
 import {
   countWords,
@@ -322,6 +324,7 @@ export default function ChaptersPage() {
           <LexicalComposer key={editorKey} initialConfig={createEditorConfig(editorInitialContent)}>
             <EditorToolbar />
             <div className="chapters-page__editor-scroll">
+              <KeywordPlugin />
               <RichTextPlugin
                 contentEditable={<ContentEditable className="writing-editor__input" />}
                 ErrorBoundary={LexicalErrorBoundary}
@@ -332,6 +335,7 @@ export default function ChaptersPage() {
               <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
               <EditorRefPlugin editorRef={editorRef} />
               <FindAndReplacePlugin />
+              <AutoFormatPlugin />
               <SaveShortcutPlugin onSave={handleManualSave} />
             </div>
           </LexicalComposer>

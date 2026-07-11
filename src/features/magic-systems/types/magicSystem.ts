@@ -6,5 +6,7 @@ export const magicSystemSchema = z.object({
   limitations: z.string().max(5000),
   energy_source: z.string().max(2000),
   examples: z.string().max(5000),
+  keyword_enabled: z.boolean(),
 });
+
 export type MagicSystemFormData = z.infer<typeof magicSystemSchema>;

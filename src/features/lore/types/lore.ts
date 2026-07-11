@@ -5,5 +5,7 @@ export const loreSchema = z.object({
   category: z.string().max(100),
   content: z.string().max(10000),
   notes: z.string().max(10000),
+  keyword_enabled: z.boolean(),
 });
+
 export type LoreFormData = z.infer<typeof loreSchema>;

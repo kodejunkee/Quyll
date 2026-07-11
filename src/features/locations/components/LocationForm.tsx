@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { locationSchema, LOCATION_TYPES, type LocationFormData } from '../types/location';
-import { Input, TextArea, Button } from '@/components';
+import { Input, TextArea, Button, Checkbox } from '@/components';
 import { Dropdown } from '@/components/Dropdown';
 import './LocationForm.css';
 
@@ -31,6 +31,12 @@ export function LocationForm({ defaultValues, onSubmit, onCancel, submitLabel = 
       <TextArea label="Culture" placeholder="Cultural details..." rows={2} {...register('culture')} />
       <TextArea label="History" placeholder="Historical background..." rows={3} {...register('history')} />
       <TextArea label="Notes" placeholder="Additional notes..." rows={2} {...register('notes')} />
+        <div className="form-row" style={{marginBottom: '1rem'}}>
+
+          <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
+
+        </div>
+
       <div className="entity-form__actions">
         <Button variant="secondary" type="button" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" type="submit" loading={isSubmitting}>{submitLabel}</Button>

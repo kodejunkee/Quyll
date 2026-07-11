@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
-import { Button, Card, Dialog, Modal } from '@/components';
+import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { ImageUploader } from '@/components/ImageUploader';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { locationService } from '../services/locationService';
@@ -9,6 +9,7 @@ import { LocationForm } from '../components/LocationForm';
 import { pickImageFile, uploadImage, removeImage, getImageUrl, getImageById } from '@/services/imageService';
 import type { Location } from '@/types/database';
 import type { LocationFormData } from '../types/location';
+import { EntityType } from '@/types/common';
 import './LocationDetailPage.css';
 
 export default function LocationDetailPage() {
@@ -55,9 +56,10 @@ export default function LocationDetailPage() {
           <h1 className="entity-detail__name">{entity.name}</h1>
           <Card className="entity-detail__card"><h3 className="entity-detail__card-title">General</h3><div className="entity-detail__fields">{fields.map(({ label, value }) => value ? <div key={label} className="entity-detail__field"><span className="entity-detail__field-label">{label}</span><span className="entity-detail__field-value">{value}</span></div> : null)}</div></Card>
           {sections.filter(s => s.value.trim()).map(({ label, value }) => <Card key={label} className="entity-detail__card"><h3 className="entity-detail__card-title">{label}</h3><p className="entity-detail__text">{value}</p></Card>)}
+          <EntityReferences entityId={entity.id} entityType={EntityType.Location} />
         </div>
       </div>
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Location" size="lg"><LocationForm defaultValues={entity} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" /></Modal>
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Location" size="lg"><LocationForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" /></Modal>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.name}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" />
     </div>
   );

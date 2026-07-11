@@ -13,9 +13,10 @@ import {
   GitBranch,
   Settings,
   PanelLeftClose,
-  PanelLeft,
   Feather,
   Home,
+  Trash2,
+  Share2
 } from 'lucide-react';
 import './NavigationSidebar.css';
 
@@ -85,6 +86,26 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
         >
           <Home size={18} className="nav-sidebar__link-icon" />
           {!collapsed && <span className="nav-sidebar__link-label">Home</span>}
+        </NavLink>
+        <NavLink
+          to={`/project/${projectId}/graph`}
+          className={({ isActive }) =>
+            `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
+          }
+          title={collapsed ? 'Knowledge Graph' : undefined}
+        >
+          <Share2 size={18} className="nav-sidebar__link-icon" />
+          {!collapsed && <span className="nav-sidebar__link-label">Knowledge Graph</span>}
+        </NavLink>
+        <NavLink
+          to={`/project/${projectId}/trash`}
+          className={({ isActive }) =>
+            `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
+          }
+          title={collapsed ? 'Trash' : undefined}
+        >
+          <Trash2 size={18} className="nav-sidebar__link-icon" />
+          {!collapsed && <span className="nav-sidebar__link-label">Trash</span>}
         </NavLink>
         <NavLink
           to={`/project/${projectId}/settings`}

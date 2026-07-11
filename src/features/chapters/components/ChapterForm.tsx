@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components';
@@ -13,7 +12,6 @@ interface ChapterFormProps {
 }
 
 export function ChapterForm({ onSubmit, onCancel, submitLabel, defaultValues }: ChapterFormProps) {
-  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -29,13 +27,6 @@ export function ChapterForm({ onSubmit, onCancel, submitLabel, defaultValues }: 
 
   const { ref: titleRefHook, ...titleRest } = register('title');
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      titleInputRef.current?.focus();
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <form className="chapter-form" onSubmit={handleSubmit(onSubmit)}>
       <div className="chapter-form__fields">
@@ -44,10 +35,14 @@ export function ChapterForm({ onSubmit, onCancel, submitLabel, defaultValues }: 
           placeholder="Chapter title..."
           error={errors.title?.message}
           required
+          autoFocus
           {...titleRest}
           ref={(e) => {
             titleRefHook(e);
-            titleInputRef.current = e;
+            if (e && !e.dataset.focused) {
+              e.dataset.focused = 'true';
+              setTimeout(() => e.focus(), 10);
+            }
           }}
         />
       </div>

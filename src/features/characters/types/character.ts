@@ -22,6 +22,7 @@ export const characterSchema = z.object({
   biography: z.string().max(10000),
   notes: z.string().max(10000),
   status: z.enum(CHARACTER_STATUSES),
+  keyword_enabled: z.boolean(),
 });
 
 export type CharacterFormData = z.infer<typeof characterSchema>;

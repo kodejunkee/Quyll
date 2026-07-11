@@ -50,3 +50,25 @@
   margin: 0 var(--space-1);
   flex-shrink: 0;
 }
+
+.editor-toolbar__font-select {
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  outline: none;
+  color-scheme: dark;
+}
+
+.editor-toolbar__font-select:hover {
+  border-color: var(--color-border);
+}
+
+.editor-toolbar__font-select:focus {
+  border-color: var(--color-primary);
+}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
-import { Button, Card, Dialog, Modal } from '@/components';
+import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { ImageUploader } from '@/components/ImageUploader';
+import { EntityType } from '@/types/common';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { characterService } from '../services/characterService';
 import { CharacterForm } from '../components/CharacterForm';
@@ -162,6 +163,8 @@ export default function CharacterDetailPage() {
                 <p className="character-detail__text">{value}</p>
               </Card>
             ))}
+
+          <EntityReferences entityId={character.id} entityType={EntityType.Character} />
         </div>
       </div>
 
@@ -187,6 +190,7 @@ export default function CharacterDetailPage() {
             biography: character.biography,
             notes: character.notes,
             status: character.status as 'Alive' | 'Dead' | 'Unknown' | 'Other',
+            keyword_enabled: Boolean(character.keyword_enabled),
           }}
           onSubmit={handleUpdate}
           onCancel={() => setEditOpen(false)}

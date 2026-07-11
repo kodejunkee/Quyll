@@ -8,6 +8,7 @@ import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
 const ChaptersPage = lazy(() => import('@/features/chapters/pages/ChaptersPage'));
+const KnowledgeGraphPage = lazy(() => import('@/features/knowledge-graph/pages/KnowledgeGraphPage').then(m => ({ default: m.KnowledgeGraphPage })));
 const CharactersPage = lazy(() => import('@/features/characters/pages/CharactersPage'));
 const CharacterDetailPage = lazy(() => import('@/features/characters/pages/CharacterDetailPage'));
 const LocationsPage = lazy(() => import('@/features/locations/pages/LocationsPage'));
@@ -27,6 +28,7 @@ const TimelineEventDetailPage = lazy(() => import('@/features/timeline/pages/Tim
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
+const TrashPage = lazy(() => import('@/features/trash/pages/TrashPage').then(m => ({ default: m.TrashPage })));
 
 function PageLoader() {
   return (
@@ -58,6 +60,8 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <SuspenseWrap><DashboardPage /></SuspenseWrap> },
       { path: 'chapters', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
       { path: 'chapters/:chapterId', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
+
+      { path: 'graph', element: <SuspenseWrap><KnowledgeGraphPage /></SuspenseWrap> },
 
       // Characters
       { path: 'characters', element: <SuspenseWrap><CharactersPage /></SuspenseWrap> },
@@ -95,6 +99,7 @@ const router = createBrowserRouter([
       { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
       { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
 
+      { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
       { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
     ],
   },
