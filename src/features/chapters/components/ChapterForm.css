@@ -1,0 +1,17 @@
+.chapter-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.chapter-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.chapter-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

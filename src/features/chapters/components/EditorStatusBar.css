@@ -1,0 +1,80 @@
+.editor-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  min-height: 32px;
+}
+
+.editor-status-bar__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editor-status-bar__stat {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.editor-status-bar__stat strong {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.editor-status-bar__divider {
+  color: var(--color-border);
+  font-size: var(--font-size-xs);
+}
+
+/* —— Save Indicator —— */
+
+.editor-status-bar__save {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.editor-status-bar__save-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.editor-status-bar__save--saved {
+  color: var(--color-success);
+}
+.editor-status-bar__save--saved .editor-status-bar__save-dot {
+  background: var(--color-success);
+}
+
+.editor-status-bar__save--saving {
+  color: var(--color-warning);
+}
+.editor-status-bar__save--saving .editor-status-bar__save-dot {
+  background: var(--color-warning);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.editor-status-bar__save--unsaved {
+  color: var(--color-text-tertiary);
+}
+.editor-status-bar__save--unsaved .editor-status-bar__save-dot {
+  background: var(--color-text-tertiary);
+}
+
+.editor-status-bar__save-time {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

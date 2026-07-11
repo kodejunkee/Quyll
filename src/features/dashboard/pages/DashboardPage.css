@@ -18,6 +18,25 @@
   margin-top: var(--space-1);
 }
 
+.dashboard-page__writing-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.dashboard-page__writing-stat-card {
+  cursor: default;
+  background: var(--color-bg-elevated);
+}
+
+.dashboard-page__section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
 .dashboard-page__stats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

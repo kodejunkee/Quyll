@@ -5,6 +5,7 @@ export { Dropdown } from './Dropdown';
 export type { DropdownOption } from './Dropdown';
 export { EmptyState } from './EmptyState';
 export { HoverCard } from './HoverCard';
+export * from './ErrorBoundary/GlobalErrorBoundary';
 export { Input } from './Input';
 export { LoadingSkeleton } from './LoadingSkeleton';
 export { Modal } from './Modal';

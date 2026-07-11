@@ -6,6 +6,7 @@
   box-shadow: var(--shadow-xl);
   padding: 0;
   max-height: 85vh;
+  margin: 10vh auto auto auto;
   animation: scaleIn var(--transition-normal);
 }
 

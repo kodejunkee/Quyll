@@ -3,7 +3,6 @@
    ======================================== */
 
 .dialog {
-  position: fixed;
   border: none;
   border-radius: var(--radius-lg);
   background-color: var(--color-bg-elevated);
@@ -14,6 +13,7 @@
   color: var(--color-text-primary);
   font-family: var(--font-family);
   z-index: var(--z-dialog);
+  margin: 10vh auto auto auto;
 }
 
 .dialog::backdrop {

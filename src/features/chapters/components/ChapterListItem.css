@@ -1,0 +1,146 @@
+.chapter-list-item {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  margin-bottom: 2px;
+  position: relative;
+  transition: background var(--transition-fast);
+}
+
+.chapter-list-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.chapter-list-item--active {
+  background: var(--color-primary-subtle);
+}
+
+.chapter-list-item--active:hover {
+  background: var(--color-primary-subtle);
+}
+
+.chapter-list-item__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.chapter-list-item__number {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-sm);
+}
+
+.chapter-list-item--active .chapter-list-item__number {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.chapter-list-item__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chapter-list-item__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-list-item__words {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* —— Actions / Context Menu —— */
+
+.chapter-list-item__actions {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.chapter-list-item__menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.chapter-list-item:hover .chapter-list-item__menu-btn,
+.chapter-list-item__menu-btn:focus-visible {
+  opacity: 1;
+}
+
+.chapter-list-item__menu-btn:hover {
+  background: var(--color-bg-active);
+  color: var(--color-text);
+}
+
+.chapter-list-item__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  padding: var(--space-1);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.chapter-list-item__menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.chapter-list-item__menu-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.chapter-list-item__menu-item--danger {
+  color: var(--color-danger);
+}
+
+.chapter-list-item__menu-item--danger:hover {
+  background: var(--color-danger-subtle);
+}

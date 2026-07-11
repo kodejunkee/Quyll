@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react';
 import { AppLayout } from '@/layouts/AppLayout';
 import { HomeLayout } from '@/layouts/HomeLayout';
-import { LoadingSkeleton } from '@/components';
+import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
@@ -44,6 +44,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <HomeLayout />,
+    errorElement: <GlobalErrorBoundary />,
     children: [
       { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
     ],
@@ -51,10 +52,12 @@ const router = createBrowserRouter([
   {
     path: '/project/:projectId',
     element: <AppLayout />,
+    errorElement: <GlobalErrorBoundary />,
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <SuspenseWrap><DashboardPage /></SuspenseWrap> },
       { path: 'chapters', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
+      { path: 'chapters/:chapterId', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
 
       // Characters
       { path: 'characters', element: <SuspenseWrap><CharactersPage /></SuspenseWrap> },
