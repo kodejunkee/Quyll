@@ -54,8 +54,8 @@ export async function initializeProjectDatabase(
   const settingsId = generateId();
   await execute(
     db,
-    `INSERT INTO settings (id, theme, editor_font, editor_font_size, autosave_interval)
-     VALUES ($1, 'dark', 'Inter', 16, 30)`,
+    `INSERT INTO settings (id, theme, editor_font, editor_font_size, autosave_interval, backup_interval)
+     VALUES ($1, 'dark', 'Inter', 16, 30, 0)`,
     [settingsId],
   );
 

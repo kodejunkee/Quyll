@@ -5,32 +5,42 @@ import { searchService, SearchResult } from '@/services/searchService';
 import { Search, Loader2, BookOpen, MapPin, Users, Hash, Shield, Box, Sparkles, Book, Clock, Map } from 'lucide-react';
 import './GlobalSearch.css';
 
-interface GlobalSearchProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
+export function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
   
   const { db, projectId } = useProjectDb();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 10);
-      setQuery('');
-      setResults([]);
-      setSelectedIndex(0);
-    }
-  }, [isOpen]);
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setIsFocused(true);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
+  }, []);
 
   useEffect(() => {
-    if (!isOpen || !db || !projectId || query.trim().length < 2) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!isFocused || !db || !projectId || query.trim().length < 1) {
       setResults([]);
       return;
     }
@@ -46,34 +56,28 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [query, isOpen, db, projectId]);
+  }, [query, isFocused, db, projectId]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
-      
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (results[selectedIndex]) {
-          handleSelect(results[selectedIndex]);
-        }
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsFocused(false);
+      inputRef.current?.blur();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (results[selectedIndex]) {
+        handleSelect(results[selectedIndex]);
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, results, selectedIndex]);
+    }
+  };
 
   const handleSelect = (result: SearchResult) => {
     let route = '';
@@ -92,7 +96,9 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     
     if (route) {
       navigate(`/project/${projectId}/${route}`);
-      onClose();
+      setQuery('');
+      setIsFocused(false);
+      inputRef.current?.blur();
     }
   };
 
@@ -112,56 +118,68 @@ export function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="global-search-backdrop" onClick={onClose}>
-      <div className="global-search-modal" onClick={e => e.stopPropagation()}>
-        <div className="global-search-header">
-          <Search size={20} className="global-search-icon" />
-          <input
-            ref={inputRef}
-            type="text"
-            className="global-search-input"
-            placeholder="Search characters, locations, chapters..."
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-          />
-          {loading && <Loader2 size={16} className="global-search-spinner" />}
-        </div>
-        
-        {results.length > 0 && (
-          <div className="global-search-results">
-            {results.map((result, idx) => (
-              <div 
-                key={`${result.type}-${result.id}`}
-                className={`global-search-result-item ${idx === selectedIndex ? 'selected' : ''}`}
-                onClick={() => handleSelect(result)}
-                onMouseEnter={() => setSelectedIndex(idx)}
-              >
-                <div className="global-search-result-icon">
-                  {getIcon(result.type)}
-                </div>
-                <div className="global-search-result-content">
-                  <div className="global-search-result-name">{result.name}</div>
-                  {result.description && (
-                    <div className="global-search-result-desc">{result.description}</div>
-                  )}
-                </div>
-                <div className="global-search-result-type">
-                  {result.type.replace('_', ' ')}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {query.length >= 2 && !loading && results.length === 0 && (
-          <div className="global-search-empty">
-            No results found for "{query}"
-          </div>
+    <div className="global-search-wrapper" ref={containerRef}>
+      <div 
+        className={`global-search-bar ${isFocused ? 'global-search-bar--focused' : ''}`}
+        onClick={() => {
+          inputRef.current?.focus();
+          setIsFocused(true);
+        }}
+      >
+        <Search size={16} className="global-search-bar__icon" />
+        <input
+          ref={inputRef}
+          type="text"
+          className="global-search-bar__input"
+          placeholder="Search the project"
+          value={query}
+          onChange={e => {
+            setQuery(e.target.value);
+            if (!isFocused) setIsFocused(true);
+          }}
+          onFocus={() => setIsFocused(true)}
+          onKeyDown={handleKeyDown}
+        />
+        {loading && <Loader2 size={15} className="global-search-spinner" />}
+        {!isFocused && !query && (
+          <kbd className="global-search-bar__shortcut">Ctrl K</kbd>
         )}
       </div>
+
+      {isFocused && (query.trim().length > 0 || results.length > 0) && (
+        <div className="global-search-popover">
+          {results.length > 0 ? (
+            <div className="global-search-results">
+              {results.map((result, idx) => (
+                <div 
+                  key={`${result.type}-${result.id}`}
+                  className={`global-search-result-item ${idx === selectedIndex ? 'selected' : ''}`}
+                  onClick={() => handleSelect(result)}
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                >
+                  <div className="global-search-result-icon">
+                    {getIcon(result.type)}
+                  </div>
+                  <div className="global-search-result-content">
+                    <div className="global-search-result-name">{result.name}</div>
+                    {result.description && (
+                      <div className="global-search-result-desc">{result.description}</div>
+                    )}
+                  </div>
+                  <div className="global-search-result-type">
+                    {result.type.replace('_', ' ')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !loading && query.trim().length >= 1 ? (
+            <div className="global-search-empty">
+              No results found for "{query}"
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

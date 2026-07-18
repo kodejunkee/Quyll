@@ -47,11 +47,12 @@ export const keywordService = {
       [projectId, entityId],
     );
 
-    if (existing.length > 0) {
+    const firstExisting = existing[0];
+    if (firstExisting) {
       await execute(
         db,
         `UPDATE keywords SET display_name = $1 WHERE id = $2`,
-        [displayName, existing[0].id],
+        [displayName, firstExisting.id],
       );
     } else {
       const id = generateId();

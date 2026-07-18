@@ -20,6 +20,9 @@ export function LocationForm({ defaultValues, onSubmit, onCancel, submitLabel = 
 
   return (
     <form className="entity-form" onSubmit={handleSubmit(onSubmit)}>
+      <div className="form-row" style={{marginBottom: '1rem'}}>
+        <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
+      </div>
       <Input label="Name" placeholder="Location name" error={errors.name?.message} required {...register('name')} />
       <Dropdown label="Type" value={watch('type')} options={LOCATION_TYPES.map(t => ({ label: t, value: t }))} onChange={v => setValue('type', v)} />
       <TextArea label="Description" placeholder="Describe this location..." rows={3} {...register('description')} />
@@ -31,11 +34,6 @@ export function LocationForm({ defaultValues, onSubmit, onCancel, submitLabel = 
       <TextArea label="Culture" placeholder="Cultural details..." rows={2} {...register('culture')} />
       <TextArea label="History" placeholder="Historical background..." rows={3} {...register('history')} />
       <TextArea label="Notes" placeholder="Additional notes..." rows={2} {...register('notes')} />
-        <div className="form-row" style={{marginBottom: '1rem'}}>
-
-          <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
-
-        </div>
 
       <div className="entity-form__actions">
         <Button variant="secondary" type="button" onClick={onCancel}>Cancel</Button>

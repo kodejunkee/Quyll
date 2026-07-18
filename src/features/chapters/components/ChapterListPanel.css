@@ -1,11 +1,18 @@
 .chapter-list-panel {
-  width: 260px;
+  width: var(--chapter-panel-width, 260px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-elevated);
-  border-left: 1px solid var(--color-border-subtle);
+  margin: 16px 16px 16px 0;
+  background: var(--color-bg-elevated, #090a0d);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 12px);
   overflow: hidden;
+  transition: width var(--transition-slow);
+}
+
+.chapter-list-panel--collapsed {
+  width: var(--chapter-panel-collapsed-width, 56px);
 }
 
 .chapter-list-panel__header {
@@ -13,6 +20,12 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-3) var(--space-2);
+  min-height: var(--toolbar-height);
+}
+
+.chapter-list-panel--collapsed .chapter-list-panel__header {
+  justify-content: center;
+  padding: var(--space-3) var(--space-1) var(--space-2);
 }
 
 .chapter-list-panel__title {
@@ -21,6 +34,104 @@
   color: var(--color-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.chapter-list-panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.chapter-list-panel__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.chapter-list-panel__toggle:hover {
+  color: var(--color-text);
+  background: var(--color-bg-hover);
+}
+
+.chapter-list-panel__rail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-1);
+  overflow-y: auto;
+}
+
+.chapter-list-panel__rail-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.chapter-list-panel__rail-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  padding: 2px 0;
+}
+
+.chapter-list-panel__rail-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+  transform: scale(1.05);
+}
+
+.chapter-list-panel__rail-btn--active {
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.chapter-list-panel__rail-btn--new {
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.chapter-list-panel__rail-btn--new:hover {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.chapter-list-panel__rail-num {
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.chapter-list-panel__rail-divider {
+  width: 28px;
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: var(--space-1) 0;
 }
 
 .chapter-list-panel__search {

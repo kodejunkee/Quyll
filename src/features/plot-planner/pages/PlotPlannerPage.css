@@ -1,4 +1,7 @@
 .plot-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: var(--space-6) var(--space-8);
 }
 
@@ -22,8 +25,21 @@
 }
 
 .plot-page__search {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--space-4);
+  max-width: 100%;
+}
+
+.plot-page__search > :first-child {
   max-width: 400px;
+  flex: 1;
+}
+
+.plot-page__view-toggle {
+  display: flex;
+  gap: var(--space-2);
 }
 
 .plot-page__list {

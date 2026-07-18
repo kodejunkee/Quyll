@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useParams, useLocation } from 'react-router-dom';
 import { useLayoutStore } from '@/store/layoutStore';
+import { useProjectStore } from '@/store/projectStore';
 import { ProjectDbProvider } from '@/hooks/useProjectDb';
 import { NavigationSidebar } from './NavigationSidebar';
 import { InspectorPanel } from './InspectorPanel';
@@ -8,13 +9,18 @@ import { GlobalKeywordHoverCard } from '@/components/HoverCard';
 import { ReferenceBubbles } from '@/components/ReferenceBubbles';
 import { EntityDetailsModal } from '@/components/EntityDetailsModal';
 import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
+import { useNotification } from '@/components/Notification';
+import { ProjectSettingsModal } from '@/features/settings/components';
+import { Feather, Bot, Settings } from 'lucide-react';
 import './AppLayout.css';
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
+  const { currentProject } = useProjectStore();
   const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { notify } = useNotification();
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Hide the inspector panel on the chapters/writing workspace route
   const isWritingWorkspace = location.pathname.includes('/chapters');
@@ -26,16 +32,11 @@ export function AppLayout() {
         toggleSidebar();
       }
       if (e.ctrlKey && e.shiftKey && e.key === '|' && !isWritingWorkspace) {
-        // Shift + \ is |
         e.preventDefault();
         toggleInspector();
       }
       if (e.ctrlKey && e.key.toLowerCase() === 'f' && !isWritingWorkspace) {
         e.preventDefault();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
       }
     }
     window.addEventListener('keydown', handleKeyDown, { capture: true });
@@ -48,20 +49,60 @@ export function AppLayout() {
 
   return (
     <ProjectDbProvider projectId={projectId}>
-      <div
-        className={`app-layout ${sidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''} ${hideInspector ? 'app-layout--inspector-collapsed' : ''}`}
-      >
-        <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-        <main className="app-layout__main">
-          <Outlet />
-        </main>
-        {!isWritingWorkspace && (
-          <InspectorPanel collapsed={inspectorCollapsed} onToggle={toggleInspector} />
-        )}
+      <div className="app-shell">
+        <header className="app-global-header">
+          <div className="app-global-header__brand">
+            <Feather size={20} className="app-global-header__logo" />
+            <span className="app-global-header__title">Quyll</span>
+            <span className="app-global-header__divider">/</span>
+            <span className="app-global-header__project">
+              Project - {currentProject?.name || 'The Silver Atlas'}
+            </span>
+          </div>
+
+          <div className="app-global-header__center">
+            <GlobalSearch />
+          </div>
+
+          <div className="app-global-header__actions">
+            <button
+              className="app-global-header__ai-btn"
+              onClick={() => notify('AI Assistant feature coming soon in Antigravity 2.0', 'info')}
+              title="AI Assistant"
+            >
+              <Bot size={15} className="app-global-header__ai-icon" />
+              <span className="app-global-header__ai-label">AI Assistant</span>
+              <span className="app-global-header__ai-badge">Coming Soon</span>
+            </button>
+            <button
+              className="app-global-header__settings-btn"
+              onClick={() => setIsSettingsModalOpen(true)}
+              title="Project Settings"
+            >
+              <Settings size={18} />
+            </button>
+          </div>
+        </header>
+
+        <div
+          className={`app-layout ${sidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''} ${hideInspector ? 'app-layout--inspector-collapsed' : ''}`}
+        >
+          <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+          <main className="app-layout__main">
+            <Outlet />
+          </main>
+          {!isWritingWorkspace && (
+            <InspectorPanel collapsed={inspectorCollapsed} onToggle={toggleInspector} />
+          )}
+        </div>
+
         <GlobalKeywordHoverCard />
         <ReferenceBubbles />
         <EntityDetailsModal />
-        <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+        <ProjectSettingsModal 
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+        />
       </div>
     </ProjectDbProvider>
   );

@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type Database from '@tauri-apps/plugin-sql';
 import { openProjectDatabase, closeProjectDatabase } from '@/database/projectDatabase';
 import { useProjectStore } from '@/store/projectStore';
-import { LoadingSkeleton } from '@/components';
+import { Button, LoadingSkeleton } from '@/components';
 
 interface ProjectDbContextValue {
   db: Database;
@@ -17,10 +17,11 @@ interface ProjectDbContextValue {
 
 const ProjectDbContext = createContext<ProjectDbContextValue | null>(null);
 
-/** Access the current project's database connection. Throws if used outside a ProjectDbProvider. */
 export function useProjectDb(): ProjectDbContextValue {
   const ctx = useContext(ProjectDbContext);
-  if (!ctx) throw new Error('useProjectDb must be used within a ProjectDbProvider');
+  if (!ctx || !ctx.db) {
+    throw new Error('useProjectDb must be used within a ProjectDbProvider when db is ready.');
+  }
   return ctx;
 }
 
@@ -62,10 +63,23 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
   }, [projectPath]);
 
   if (error) {
+    let friendlyText = error;
+    if (error.includes('SQLITE_CORRUPT')) {
+      friendlyText = 'The project database appears to be corrupted. Try restoring from a backup.';
+    } else if (error.includes('SQLITE_BUSY')) {
+      friendlyText = 'The project database is currently locked by another application.';
+    } else if (error.includes('ENOENT')) {
+      friendlyText = 'Project folder not found.';
+    }
+
     return (
       <div style={{ padding: 'var(--space-6) var(--space-8)' }}>
         <h2 style={{ color: 'var(--color-danger)' }}>Failed to load project</h2>
-        <p style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-2)' }}>{error}</p>
+        <p style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-2)' }}>{friendlyText}</p>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
+          <Button variant="primary" onClick={() => window.location.reload()}>Retry Connection</Button>
+          <Button variant="secondary" onClick={() => window.location.href = '/'}>Return Home</Button>
+        </div>
       </div>
     );
   }

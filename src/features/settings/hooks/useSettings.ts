@@ -10,7 +10,10 @@ export function useSettings() {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchSettings = useCallback(async () => {
-    if (!db) return;
+    if (!db) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const service = new SettingsService(db);

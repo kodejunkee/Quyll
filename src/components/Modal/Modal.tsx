@@ -71,10 +71,11 @@ function Modal({
           </div>
           <Button
             variant="ghost"
-            size="sm"
-            icon={<X />}
             onClick={onClose}
             aria-label="Close dialog"
+            className="modal__close-btn"
+            style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%' }}
+            icon={<X size={25} />}
           />
         </header>
         <div className="modal__body">{children}</div>

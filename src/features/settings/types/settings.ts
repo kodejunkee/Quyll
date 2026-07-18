@@ -9,6 +9,7 @@ export const settingsSchema = z.object({
   autosave_interval: z.number().min(1).max(60), // in minutes
   sidebar_collapsed: z.number().min(0).max(1),
   inspector_collapsed: z.number().min(0).max(1),
+  backup_interval: z.number().min(0).max(1440),
 });
 
 export type SettingsFormData = z.infer<typeof settingsSchema>;

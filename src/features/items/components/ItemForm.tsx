@@ -27,16 +27,14 @@ export function ItemForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Sav
 
   return (
     <form className="entity-form" onSubmit={handleSubmit(onSubmit)}>
+      <div className="form-row" style={{marginBottom: '1rem'}}>
+        <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
+      </div>
       <Input label="Name" placeholder="Item name" error={errors.name?.message} required {...register('name')} />
       <Dropdown label="Type" value={watch('type')} options={ITEM_TYPES.map(t => ({ label: t, value: t }))} onChange={v => setValue('type', v)} />
       <TextArea label="Description" placeholder="Describe this item..." rows={3} {...register('description')} />
       <Dropdown label="Owner" value={watch('owner_character_id') ?? ''} options={ownerOptions} onChange={v => setValue('owner_character_id', v || null)} />
       <TextArea label="Notes" placeholder="Additional notes..." rows={2} {...register('notes')} />
-        <div className="form-row" style={{marginBottom: '1rem'}}>
-
-          <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
-
-        </div>
 
       <div className="entity-form__actions">
         <Button variant="secondary" type="button" onClick={onCancel}>Cancel</Button>

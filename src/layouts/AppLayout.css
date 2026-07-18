@@ -1,7 +1,173 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.app-global-header {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  background: var(--color-bg-elevated, #090a0d);
+  border-bottom: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
+  z-index: 100;
+}
+
+.app-global-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 220px;
+}
+
+.app-global-header__logo {
+  color: var(--color-primary, #F59E0B);
+  flex-shrink: 0;
+}
+
+.app-global-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.app-global-header__divider {
+  color: var(--color-text-tertiary);
+  margin: 0 var(--space-1);
+}
+
+.app-global-header__project {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-global-header__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 520px;
+  margin: 0 var(--space-4);
+}
+
+.app-global-header__search {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-3);
+  background: var(--color-bg-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-global-header__search:hover {
+  border-color: var(--color-border);
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.app-global-header__search-icon {
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+}
+
+.app-global-header__search-placeholder {
+  flex: 1;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.app-global-header__search-shortcut {
+  font-size: 0.7rem;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+}
+
+.app-global-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+  justify-content: flex-end;
+}
+
+.app-global-header__ai-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 34px;
+  padding: 0 var(--space-3);
+  background: var(--color-bg-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-global-header__ai-btn:hover {
+  border-color: var(--color-primary, #F59E0B);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.app-global-header__ai-icon {
+  color: var(--color-primary, #F59E0B);
+}
+
+.app-global-header__ai-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-primary, #F59E0B);
+}
+
+.app-global-header__ai-badge {
+  font-size: 0.68rem;
+  color: var(--color-text-tertiary);
+}
+
+.app-global-header__settings-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-global-header__settings-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+  background: var(--color-bg-hover);
+}
+
 .app-layout {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr var(--inspector-width);
-  height: 100vh;
+  flex: 1;
+  height: calc(100vh - 56px);
   overflow: hidden;
   transition: grid-template-columns var(--transition-slow);
 }
@@ -23,4 +189,5 @@
   overflow-x: hidden;
   background: var(--color-bg);
   position: relative;
+  height: 100%;
 }

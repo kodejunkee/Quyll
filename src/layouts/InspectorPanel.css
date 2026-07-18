@@ -1,6 +1,6 @@
 .inspector-panel {
   background: var(--color-bg-elevated);
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border-subtle);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -33,8 +33,8 @@
   border: none;
   color: var(--color-text-tertiary);
   cursor: pointer;
-  padding: var(--space-1);
-  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,8 +47,10 @@
 }
 
 .inspector-panel__tab.active {
-  color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .inspector-panel__toggle {
@@ -127,11 +129,11 @@
 .inspector-panel__list-item {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-3);
   border-radius: var(--radius-md);
   background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-subtle);
   cursor: pointer;
   transition: all var(--transition-fast);
   font-size: var(--font-size-sm);
@@ -141,6 +143,8 @@
 .inspector-panel__list-item:hover {
   background-color: var(--color-bg-hover);
   border-color: var(--color-primary-subtle);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .inspector-panel__item-icon {

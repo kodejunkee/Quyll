@@ -74,10 +74,12 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <header className="dashboard-page__header">
-        <h1 className="dashboard-page__title">Dashboard</h1>
-        <p className="dashboard-page__subtitle">
-          {total} total entries across your world
-        </p>
+        <div>
+          <h1 className="dashboard-page__title">Dashboard</h1>
+          <p className="dashboard-page__subtitle">
+            {total} total entries across your world
+          </p>
+        </div>
       </header>
 
       <section className="dashboard-page__writing-stats">
@@ -105,6 +107,7 @@ export default function DashboardPage() {
         </Card>
       </section>
 
+
       <h2 className="dashboard-page__section-title">World Building</h2>
       <div className="dashboard-page__stats">
         {STAT_CONFIGS.map(({ label, table, icon: Icon }) => (
@@ -130,6 +133,8 @@ export default function DashboardPage() {
           </p>
         </Card>
       </section>
+
+
     </div>
   );
 }

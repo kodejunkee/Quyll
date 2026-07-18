@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { trashService, TrashedItem } from '@/services/trashService';
-import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Trash2, RotateCcw } from 'lucide-react';
 import { Dialog } from '@/components/Dialog';
 import { Button } from '@/components/Button';
 import './TrashPage.css';

@@ -2,19 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   FORMAT_TEXT_COMMAND,
-  UNDO_COMMAND,
-  REDO_COMMAND,
   $getSelection,
   $isRangeSelection,
+  $createParagraphNode,
 } from 'lexical';
 import { $isHeadingNode, $createHeadingNode, type HeadingTagType } from '@lexical/rich-text';
 import {
   INSERT_UNORDERED_LIST_COMMAND,
   INSERT_ORDERED_LIST_COMMAND,
 } from '@lexical/list';
-import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
-import { $createParagraphNode } from 'lexical';
-import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
+import { $setBlocksType } from '@lexical/selection';
 import { $createQuoteNode } from '@lexical/rich-text';
 import {
   Bold,
@@ -24,15 +21,13 @@ import {
   Heading1,
   Heading2,
   Heading3,
-  Pilcrow,
   List,
   ListOrdered,
   Quote,
-  Minus,
-  Undo2,
-  Redo2,
   Search,
+  Sparkles,
 } from 'lucide-react';
+import { useLayoutStore } from '@/store/layoutStore';
 import './EditorToolbar.css';
 
 interface ToolbarButtonProps {
@@ -62,17 +57,6 @@ function ToolbarSeparator() {
   return <div className="editor-toolbar__separator" />;
 }
 
-const FONT_OPTIONS = [
-  { label: 'Default', value: '' },
-  { label: 'Arial', value: 'Arial' },
-  { label: 'Courier New', value: '"Courier New", Courier, monospace' },
-  { label: 'Georgia', value: 'Georgia, serif' },
-  { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
-  { label: 'Trebuchet MS', value: '"Trebuchet MS", Helvetica, sans-serif' },
-  { label: 'Verdana', value: 'Verdana, Geneva, sans-serif' },
-  { label: 'Comic Sans MS', value: '"Comic Sans MS", cursive, sans-serif' },
-];
-
 export function EditorToolbar() {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
@@ -80,7 +64,7 @@ export function EditorToolbar() {
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [blockType, setBlockType] = useState<string>('paragraph');
-  const [fontFamily, setFontFamily] = useState<string>('');
+  const { showKeywords, toggleShowKeywords } = useLayoutStore();
 
   /** Update toolbar state based on current selection. */
   const updateToolbar = useCallback(() => {
@@ -92,13 +76,6 @@ export function EditorToolbar() {
       setIsItalic(selection.hasFormat('italic'));
       setIsUnderline(selection.hasFormat('underline'));
       setIsStrikethrough(selection.hasFormat('strikethrough'));
-
-      try {
-        const font = $getSelectionStyleValueForProperty(selection, 'font-family', '');
-        setFontFamily(font);
-      } catch (e) {
-        // Fallback if utility missing
-      }
 
       const anchorNode = selection.anchor.getNode();
       const element = anchorNode.getKey() === 'root'
@@ -151,35 +128,8 @@ export function EditorToolbar() {
     });
   }, [editor, blockType]);
 
-  const applyFontFamily = useCallback((font: string) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        $patchStyleText(selection, {
-          'font-family': font || null,
-        });
-      }
-    });
-  }, [editor]);
-
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Formatting toolbar">
-      <select
-        className="editor-toolbar__font-select"
-        value={fontFamily}
-        onChange={(e) => applyFontFamily(e.target.value)}
-        title="Font Family"
-        aria-label="Font Family"
-      >
-        {FONT_OPTIONS.map(option => (
-          <option key={option.label} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      
-      <ToolbarSeparator />
-
       <ToolbarButton
         icon={<Bold size={16} />}
         label="Bold (Ctrl+B)"
@@ -226,21 +176,11 @@ export function EditorToolbar() {
         onClick={() => formatHeading('h3')}
       />
       <ToolbarButton
-        icon={<Pilcrow size={16} />}
-        label="Normal text"
-        active={blockType === 'paragraph'}
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              $setBlocksType(selection, () => $createParagraphNode());
-            }
-          });
-        }}
+        icon={<Quote size={16} />}
+        label="Block Quote"
+        active={blockType === 'quote'}
+        onClick={formatQuote}
       />
-
-      <ToolbarSeparator />
-
       <ToolbarButton
         icon={<List size={16} />}
         label="Bullet List"
@@ -253,38 +193,28 @@ export function EditorToolbar() {
         active={blockType === 'ol'}
         onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}
       />
-      <ToolbarButton
-        icon={<Quote size={16} />}
-        label="Block Quote"
-        active={blockType === 'quote'}
-        onClick={formatQuote}
-      />
-      <ToolbarButton
-        icon={<Minus size={16} />}
-        label="Horizontal Rule"
-        onClick={() => editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)}
-      />
 
       <ToolbarSeparator />
 
-      <ToolbarButton
-        icon={<Undo2 size={16} />}
-        label="Undo (Ctrl+Z)"
-        onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
-      />
-      <ToolbarButton
-        icon={<Redo2 size={16} />}
-        label="Redo (Ctrl+Shift+Z)"
-        onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
-      />
-
-      <ToolbarSeparator />
-
-      <ToolbarButton
-        icon={<Search size={16} />}
-        label="Find & Replace (Ctrl+F)"
+      <button
+        className="editor-toolbar__pill-btn"
         onClick={() => window.dispatchEvent(new CustomEvent('quyll:find'))}
-      />
+        title="Find & Replace (Ctrl+F)"
+        type="button"
+      >
+        <Search size={14} />
+        <span>Find & Replace</span>
+      </button>
+
+      <button
+        className={`editor-toolbar__pill-btn ${showKeywords ? 'editor-toolbar__pill-btn--keyword' : ''}`}
+        onClick={toggleShowKeywords}
+        title="Toggle Keyword Highlighting"
+        type="button"
+      >
+        <Sparkles size={14} />
+        <span>Keywords</span>
+      </button>
     </div>
   );
 }

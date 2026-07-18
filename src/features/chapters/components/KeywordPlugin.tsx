@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $isTextNode, TextNode, type LexicalNode, type LexicalEditor } from 'lexical';
+import { $getRoot, TextNode, type LexicalEditor } from 'lexical';
 import { $createKeywordNode, $isKeywordNode, KeywordNode } from './KeywordNode';
 import { keywordService } from '@/services/keywordService';
 import { useProjectDb } from '@/hooks/useProjectDb';

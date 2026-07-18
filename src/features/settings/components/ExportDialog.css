@@ -1,0 +1,74 @@
+.export-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 480px;
+}
+
+.export-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.export-dialog__section-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.export-dialog__options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.export-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  color: var(--color-text-primary);
+}
+
+.export-dialog__option:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
+
+.export-dialog__option--selected {
+  border-color: var(--color-accent);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-accent);
+}
+
+.export-dialog__option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.export-dialog__chapters {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.export-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}

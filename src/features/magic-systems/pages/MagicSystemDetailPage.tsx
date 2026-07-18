@@ -6,7 +6,7 @@ import { useProjectDb } from '@/hooks/useProjectDb';
 import { magicSystemService } from '../services/magicSystemService';
 import { MagicSystemForm } from '../components/MagicSystemForm';
 import type { MagicSystem } from '@/types/database';
-import { MAGIC_SYSTEM_TYPES, type MagicSystemFormData } from '../types/magicSystem';
+import { type MagicSystemFormData } from '../types/magicSystem';
 import { EntityType } from '@/types/common';
 import '../../locations/pages/LocationDetailPage.css';
 export default function MagicSystemDetailPage() {

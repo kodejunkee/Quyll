@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import { relationshipService } from '@/services/relationshipService';
@@ -23,7 +22,6 @@ interface EntityData {
 
 export function GlobalKeywordHoverCard() {
   const { db, projectId } = useProjectDb();
-  const navigate = useNavigate();
   const { openEntityModal } = useLayoutStore();
   const [hoverState, setHoverState] = useState<HoverState | null>(null);
   const [entityData, setEntityData] = useState<EntityData | null>(null);
@@ -36,6 +34,11 @@ export function GlobalKeywordHoverCard() {
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const keywordEl = target.closest && target.closest('.editor__keyword') as HTMLElement;
+      
+      // Ignore if keywords are visually toggled off
+      if (keywordEl && !keywordEl.closest('.show-keywords')) {
+        return;
+      }
       
       if (keywordEl) {
         const keywordId = keywordEl.dataset.keywordId;
@@ -91,6 +94,12 @@ export function GlobalKeywordHoverCard() {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const keywordEl = target.closest && target.closest('.editor__keyword') as HTMLElement;
+      
+      // Ignore clicks if keywords are visually toggled off
+      if (keywordEl && !keywordEl.closest('.show-keywords')) {
+        return;
+      }
+      
       if (keywordEl && db && projectId) {
         const keywordId = keywordEl.dataset.keywordId;
         const entityType = keywordEl.dataset.entityType;
@@ -98,9 +107,10 @@ export function GlobalKeywordHoverCard() {
           e.preventDefault();
           select<{entity_id: string}>(db, `SELECT entity_id FROM keywords WHERE id = $1`, [keywordId])
             .then(rows => {
-              if (rows.length > 0) {
+              const firstRow = rows[0];
+              if (firstRow) {
                  const rect = keywordEl.getBoundingClientRect();
-                 openEntityModal(rows[0].entity_id, entityType, rect.left + rect.width / 2, rect.top + 20);
+                 openEntityModal(firstRow.entity_id, entityType, rect.left + rect.width / 2, rect.top + 20);
                  setHoverState(null);
                  if (showTimerRef.current) window.clearTimeout(showTimerRef.current);
                  if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
@@ -118,12 +128,17 @@ export function GlobalKeywordHoverCard() {
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
       document.removeEventListener('click', handleClick);
+      if (showTimerRef.current) window.clearTimeout(showTimerRef.current);
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
     };
-  }, []);
+  }, [db, openEntityModal]);
 
   // Fetch entity data when hoverState changes
   useEffect(() => {
-    if (!hoverState || !db || !projectId) return;
+    if (!hoverState || !db || !projectId) {
+      setEntityData(null);
+      return;
+    }
 
     let isMounted = true;
     setLoading(true);
@@ -132,11 +147,10 @@ export function GlobalKeywordHoverCard() {
       try {
         const { entityType, keywordId } = hoverState;
         
-        // Find the entity ID first from the keyword
         const kwRows = await select<{entity_id: string}>(db, `SELECT entity_id FROM keywords WHERE id = $1`, [keywordId]);
-        if (kwRows.length === 0) return;
-        
-        const entityId = kwRows[0]!.entity_id;
+        const firstKwRow = kwRows[0];
+        if (!firstKwRow) return;
+        const entityId = firstKwRow.entity_id;
         
         // Map entity type to table and columns
         let tableName = '';
@@ -156,12 +170,13 @@ export function GlobalKeywordHoverCard() {
 
         if (tableName) {
           const rows = await select<any>(db, `SELECT * FROM ${tableName} WHERE id = $1`, [entityId]);
-          if (rows.length > 0 && isMounted) {
+          const firstRow = rows[0];
+          if (firstRow && isMounted) {
             setEntityData({
-              name: rows[0][nameCol],
-              description: descCol ? rows[0][descCol] : undefined,
-              status: rows[0].status,
-              image_id: rows[0].image_id,
+              name: firstRow[nameCol],
+              description: descCol ? firstRow[descCol] : undefined,
+              status: firstRow.status,
+              image_id: firstRow.image_id,
             });
           }
         }
@@ -182,9 +197,10 @@ export function GlobalKeywordHoverCard() {
       // Find the entity ID from keyword
       select<{entity_id: string}>(db!, `SELECT entity_id FROM keywords WHERE id = $1`, [hoverState.keywordId])
         .then(rows => {
-          if (rows.length > 0) {
+          const firstRow = rows[0];
+          if (firstRow) {
              const rect = hoverState.rect;
-             openEntityModal(rows[0].entity_id, hoverState.entityType, rect.left + rect.width / 2, rect.top + 20);
+             openEntityModal(firstRow.entity_id, hoverState.entityType, rect.left + rect.width / 2, rect.top + 20);
              setHoverState(null);
           }
         });
@@ -205,8 +221,9 @@ export function GlobalKeywordHoverCard() {
     e.stopPropagation();
     if (hoverState && db && projectId) {
       const kwRows = await select<{entity_id: string}>(db, `SELECT entity_id FROM keywords WHERE id = $1`, [hoverState.keywordId]);
-      if (kwRows.length > 0) {
-         const entityId = kwRows[0]!.entity_id;
+      const firstKwRow = kwRows[0];
+      if (firstKwRow) {
+         const entityId = firstKwRow.entity_id;
          const rect = hoverState.rect;
          // Pin it near the keyword
          await relationshipService.pinReference(db, projectId, hoverState.entityType as EntityType, entityId, rect.left + 50, rect.top - 50);

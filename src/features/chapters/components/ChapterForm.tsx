@@ -48,7 +48,7 @@ export function ChapterForm({ onSubmit, onCancel, submitLabel, defaultValues }: 
       </div>
 
       <div className="chapter-form__actions">
-        <Button variant="secondary" onClick={onCancel} type="button">
+        <Button variant="secondary" type="button" onClick={onCancel}>
           Cancel
         </Button>
         <Button variant="primary" type="submit" disabled={isSubmitting}>

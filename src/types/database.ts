@@ -260,6 +260,7 @@ export interface Settings {
   readonly autosave_interval: number;
   readonly sidebar_collapsed: number;
   readonly inspector_collapsed: number;
+  readonly backup_interval: number;
 }
 
 /** A reusable AI prompt template (future). */

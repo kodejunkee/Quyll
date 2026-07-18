@@ -268,7 +268,8 @@ CREATE TABLE IF NOT EXISTS settings (
   editor_font_size      INTEGER NOT NULL DEFAULT 16,
   autosave_interval     INTEGER NOT NULL DEFAULT 30,
   sidebar_collapsed     INTEGER NOT NULL DEFAULT 0,
-  inspector_collapsed   INTEGER NOT NULL DEFAULT 0
+  inspector_collapsed   INTEGER NOT NULL DEFAULT 0,
+  backup_interval       INTEGER NOT NULL DEFAULT 0
 );
 
 -- Future AI Tables (schema only, unused in v1)
@@ -333,4 +334,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;

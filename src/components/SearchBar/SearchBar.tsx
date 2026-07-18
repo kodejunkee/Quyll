@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Search, X, Hash } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';

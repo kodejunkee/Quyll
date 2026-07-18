@@ -4,6 +4,7 @@ import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { usePlotPoints } from '../hooks/usePlotPoints';
 import { PlotPointCard } from '../components/PlotPointCard';
 import { PlotPointForm } from '../components/PlotPointForm';
+import { PlotFlowchart } from '../components/PlotFlowchart';
 import { useSearch } from '@/hooks';
 import type { PlotPointFormData } from '../types/plotPoint';
 import './PlotPlannerPage.css';
@@ -11,6 +12,7 @@ import './PlotPlannerPage.css';
 export default function PlotPlannerPage() {
   const { items, loading, create } = usePlotPoints();
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'flowchart'>('flowchart');
   const { query, setQuery, filterItems } = useSearch();
 
   const filtered = filterItems(items, p => `${p.title} ${p.arc} ${p.description}`);
@@ -39,6 +41,20 @@ export default function PlotPlannerPage() {
 
       <div className="plot-page__search">
         <SearchBar value={query} onChange={setQuery} placeholder="Search plot points..." />
+        <div className="plot-page__view-toggle">
+          <Button 
+            variant={viewMode === 'list' ? 'primary' : 'secondary'} 
+            onClick={() => setViewMode('list')}
+          >
+            List
+          </Button>
+          <Button 
+            variant={viewMode === 'flowchart' ? 'primary' : 'secondary'} 
+            onClick={() => setViewMode('flowchart')}
+          >
+            Flowchart
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -50,11 +66,15 @@ export default function PlotPlannerPage() {
           <EmptyState icon={GitBranch} title="No plot points yet" description="Plan your story beats and track their progress." actionLabel="Create Plot Point" onAction={() => setCreateOpen(true)} />
         )
       ) : (
-        <div className="plot-page__list">
-          {sorted.map(p => (
-            <PlotPointCard key={p.id} plotPoint={p} />
-          ))}
-        </div>
+        viewMode === 'flowchart' ? (
+          <PlotFlowchart items={sorted} />
+        ) : (
+          <div className="plot-page__list">
+            {sorted.map(p => (
+              <PlotPointCard key={p.id} plotPoint={p} />
+            ))}
+          </div>
+        )
       )}
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Plot Point" size="md">

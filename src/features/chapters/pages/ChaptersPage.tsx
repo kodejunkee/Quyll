@@ -11,9 +11,11 @@ import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState, LexicalEditor } from 'lexical';
 import { $getRoot } from 'lexical';
-import { PenLine } from 'lucide-react';
+import { PenLine, Download, RotateCcw } from 'lucide-react';
 import { EmptyState } from '@/components';
 import { useSettings } from '@/features/settings';
+import { ExportDialog } from '@/features/settings/components';
+import { useLayoutStore } from '@/store/layoutStore';
 import { useChapters } from '../hooks/useChapters';
 import { useAutosave } from '../hooks/useAutosave';
 import { useDraftRecovery } from '../hooks/useDraftRecovery';
@@ -30,6 +32,7 @@ import {
   countCharacters,
   countParagraphs,
   estimateReadingTime,
+  formatTimeAgo,
 } from '../utils/writingStats';
 import type { Chapter } from '@/types/database';
 import type { ChapterFormData } from '../types/chapter';
@@ -98,6 +101,7 @@ export default function ChaptersPage() {
   const [nextNum, setNextNum] = useState(1);
   const [editorKey, setEditorKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   // Writing stats (updated live on each keystroke)
   const [wordCount, setWordCount] = useState(0);
@@ -130,6 +134,7 @@ export default function ChaptersPage() {
   }, [activeChapterId, updateContent, clearDraft]);
 
   const { settings } = useSettings();
+  const { chapterListCollapsed, showKeywords } = useLayoutStore();
 
   const { saveStatus, lastSavedAt, markDirty, saveNow, reset: resetAutosave } = useAutosave({
     intervalMinutes: settings?.autosave_interval ?? 5,
@@ -317,28 +322,61 @@ export default function ChaptersPage() {
   } as React.CSSProperties;
 
   return (
-    <div className="chapters-page" style={editorStyles}>
+    <div className={`chapters-page ${chapterListCollapsed ? 'chapters-page--panel-collapsed' : ''}`} style={editorStyles}>
       {/* Main editing area */}
-      <div className="chapters-page__editor-area">
+      <div className={`chapters-page__editor-area ${showKeywords ? 'show-keywords' : ''}`}>
         {activeChapter ? (
-          <LexicalComposer key={editorKey} initialConfig={createEditorConfig(editorInitialContent)}>
-            <EditorToolbar />
-            <div className="chapters-page__editor-scroll">
-              <KeywordPlugin />
-              <RichTextPlugin
-                contentEditable={<ContentEditable className="writing-editor__input" />}
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-              <HistoryPlugin />
-              <ListPlugin />
-              <HorizontalRulePlugin />
-              <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
-              <EditorRefPlugin editorRef={editorRef} />
-              <FindAndReplacePlugin />
-              <AutoFormatPlugin />
-              <SaveShortcutPlugin onSave={handleManualSave} />
+          <>
+            <div className="chapters-page__chapter-header">
+              <div className="chapters-page__chapter-info">
+                <span className="chapters-page__chapter-num">
+                  Chapter {String(activeChapter.chapter_number).padStart(2, '0')}
+                </span>
+                <h1 className="chapters-page__chapter-title">{activeChapter.title}</h1>
+                <span className="chapters-page__chapter-meta">
+                  Draft · Last edited {formatTimeAgo(activeChapter.updated_at)}
+                </span>
+              </div>
+              <div className="chapters-page__chapter-actions">
+                <button
+                  className="chapters-page__action-btn"
+                  onClick={() => setExportOpen(true)}
+                  title="Export Chapter"
+                  type="button"
+                >
+                  <Download size={15} />
+                  <span>Export</span>
+                </button>
+                <button
+                  className="chapters-page__action-btn"
+                  onClick={() => setDraftRecoveryOpen(true)}
+                  title="Restore Draft or Version"
+                  type="button"
+                >
+                  <RotateCcw size={15} />
+                  <span>Restore</span>
+                </button>
+              </div>
             </div>
-          </LexicalComposer>
+            <LexicalComposer key={editorKey} initialConfig={createEditorConfig(editorInitialContent)}>
+              <EditorToolbar />
+              <div className="chapters-page__editor-scroll">
+                <KeywordPlugin />
+                <RichTextPlugin
+                  contentEditable={<ContentEditable className="writing-editor__input" />}
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                <HistoryPlugin />
+                <ListPlugin />
+                <HorizontalRulePlugin />
+                <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
+                <EditorRefPlugin editorRef={editorRef} />
+                <FindAndReplacePlugin />
+                <AutoFormatPlugin />
+                <SaveShortcutPlugin onSave={handleManualSave} />
+              </div>
+            </LexicalComposer>
+          </>
         ) : (
           <div className="chapters-page__empty">
             <EmptyState
@@ -386,6 +424,12 @@ export default function ChaptersPage() {
         open={draftRecoveryOpen}
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
+      />
+
+      {/* Export dialog */}
+      <ExportDialog
+        isOpen={exportOpen}
+        onClose={() => setExportOpen(false)}
       />
     </div>
   );

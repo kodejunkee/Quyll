@@ -11,11 +11,16 @@ export interface EntityModalData {
 interface LayoutState {
   sidebarCollapsed: boolean;
   inspectorCollapsed: boolean;
+  chapterListCollapsed: boolean;
+  showKeywords: boolean;
   activeEntityModals: EntityModalData[];
   toggleSidebar: () => void;
   toggleInspector: () => void;
+  toggleChapterList: () => void;
+  toggleShowKeywords: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setInspectorCollapsed: (collapsed: boolean) => void;
+  setChapterListCollapsed: (collapsed: boolean) => void;
   openEntityModal: (entityId: string, entityType: string, x?: number, y?: number) => void;
   closeEntityModal: (entityId: string) => void;
   bringToFront: (entityId: string) => void;
@@ -29,7 +34,16 @@ function loadBool(key: string, fallback: boolean): boolean {
 export const useLayoutStore = create<LayoutState>((set) => ({
   sidebarCollapsed: loadBool('quyll-sidebar-collapsed', false),
   inspectorCollapsed: loadBool('quyll-inspector-collapsed', true),
+  chapterListCollapsed: loadBool('quyll-chapter-list-collapsed', false),
+  showKeywords: loadBool('quyll-show-keywords', true),
   activeEntityModals: [],
+
+  toggleShowKeywords: () =>
+    set((s) => {
+      const next = !s.showKeywords;
+      localStorage.setItem('quyll-show-keywords', String(next));
+      return { showKeywords: next };
+    }),
 
   toggleSidebar: () =>
     set((s) => {
@@ -45,6 +59,13 @@ export const useLayoutStore = create<LayoutState>((set) => ({
       return { inspectorCollapsed: next };
     }),
 
+  toggleChapterList: () =>
+    set((s) => {
+      const next = !s.chapterListCollapsed;
+      localStorage.setItem('quyll-chapter-list-collapsed', String(next));
+      return { chapterListCollapsed: next };
+    }),
+
   setSidebarCollapsed: (collapsed) => {
     localStorage.setItem('quyll-sidebar-collapsed', String(collapsed));
     set({ sidebarCollapsed: collapsed });
@@ -53,6 +74,11 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   setInspectorCollapsed: (collapsed) => {
     localStorage.setItem('quyll-inspector-collapsed', String(collapsed));
     set({ inspectorCollapsed: collapsed });
+  },
+
+  setChapterListCollapsed: (collapsed) => {
+    localStorage.setItem('quyll-chapter-list-collapsed', String(collapsed));
+    set({ chapterListCollapsed: collapsed });
   },
 
   openEntityModal: (entityId, entityType, x, y) => {

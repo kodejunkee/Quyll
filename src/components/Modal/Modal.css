@@ -1,17 +1,20 @@
 .modal {
-  border: none;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background-color: var(--color-bg-elevated);
   color: var(--color-text);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
   padding: 0;
   max-height: 85vh;
   margin: 10vh auto auto auto;
+  overflow: hidden;
   animation: scaleIn var(--transition-normal);
 }
 
 .modal::backdrop {
   background-color: var(--color-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: fadeIn var(--transition-normal);
 }
 
@@ -64,4 +67,21 @@
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+.modal__close-btn {
+  color: var(--color-text-secondary) !important;
+  opacity: 0.8;
+  transition: all var(--transition-fast) !important;
+}
+
+.modal__close-btn:hover {
+  background-color: var(--color-danger-subtle) !important;
+  color: var(--color-danger) !important;
+  opacity: 1;
+}
+
+.modal__close-btn .btn__icon svg {
+  width: 25px !important;
+  height: 25px !important;
 }

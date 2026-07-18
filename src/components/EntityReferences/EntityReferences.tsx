@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Link as LinkIcon, BookOpen, Share2 } from 'lucide-react';
+import { BookOpen, Share2 } from 'lucide-react';
 import { EntityType } from '@/types/common';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';

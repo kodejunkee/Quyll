@@ -43,8 +43,18 @@ async function recordVersion(db: Database, version: number): Promise<void> {
 export async function migrateProjectDatabase(db: Database): Promise<void> {
   const current = await getSchemaVersion(db);
 
-  if (current < CURRENT_SCHEMA_VERSION) {
+  if (current < 2) {
+    // Fresh install or v1 -> run full DDL
     await executeDDL(db, PROJECT_TABLES);
+    await recordVersion(db, CURRENT_SCHEMA_VERSION);
+  } else if (current < CURRENT_SCHEMA_VERSION) {
+    if (current < 3) {
+      try {
+        await execute(db, 'ALTER TABLE settings ADD COLUMN backup_interval INTEGER NOT NULL DEFAULT 0');
+      } catch {
+        // Column might already exist
+      }
+    }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 }

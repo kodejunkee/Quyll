@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { execute, select } from '@/database/databaseService';
 import { graphService, GraphNode } from '@/services/graphService';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search } from 'lucide-react';
 import { Button } from '../Button';
 import './RelationshipEditor.css';
 

@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Feather, Plus, FolderOpen } from 'lucide-react';
-import { Button, EmptyState, Card } from '@/components';
-import { Modal } from '@/components';
-import { Input } from '@/components';
-import { TextArea } from '@/components';
-import { Dialog } from '@/components';
+import { Feather, Plus, FolderOpen, MoreVertical, Edit2, Trash2, Book } from 'lucide-react';
+import { Button, Modal, Input, TextArea, Dialog } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import { initAppDatabase, registerProject, listProjects, renameProject as dbRename, unregisterProject, initializeProjectDatabase } from '@/database';
 import { generateId } from '@/utils/uuid';
 import './HomePage.css';
+
+// Helper to generate a consistent gradient based on a string (like genre)
+function getGenreGradient(genre: string) {
+  const hash = genre.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+  const hue1 = Math.abs(hash % 360);
+  const hue2 = (hue1 + 40) % 360;
+  return `linear-gradient(135deg, hsl(${hue1}, 70%, 40%), hsl(${hue2}, 80%, 30%))`;
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -22,6 +26,9 @@ export default function HomePage() {
   const [newAuthor, setNewAuthor] = useState('');
   const [newGenre, setNewGenre] = useState('');
   const [renameName, setRenameName] = useState('');
+  
+  // Track which project's action menu is open
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -46,6 +53,17 @@ export default function HomePage() {
   useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (openMenuId && !(event.target as Element).closest('.home-page__project-card')) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
 
   async function handleCreate() {
     if (!newTitle.trim()) return;
@@ -108,71 +126,104 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <header className="home-page__header">
-        <div className="home-page__brand">
-          <Feather size={32} className="home-page__logo" />
-          <h1 className="home-page__title">Quyll</h1>
+      <div className="home-page__background" />
+      
+      <div className="home-page__content-wrapper">
+        <header className="home-page__header animate-fade-in">
+          <div className="home-page__brand">
+            <Feather size={40} className="home-page__logo" />
+            <h1 className="home-page__title">Quyll</h1>
+          </div>
+          <p className="home-page__subtitle">Your professional writing workspace</p>
+        </header>
+
+        <div className="home-page__actions animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
+          <Button variant="primary" onClick={() => setCreateOpen(true)}>
+            <Plus size={18} />
+            New Project
+          </Button>
         </div>
-        <p className="home-page__subtitle">Your professional writing workspace</p>
-      </header>
 
-      <div className="home-page__actions">
-        <Button variant="primary" onClick={() => setCreateOpen(true)}>
-          <Plus size={16} />
-          New Project
-        </Button>
-      </div>
+        <section className="home-page__content animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
+          {projects.length === 0 ? (
+            <div className="home-page__empty">
+              <FolderOpen className="home-page__empty-icon" />
+              <h2 className="home-page__empty-title">No projects yet</h2>
+              <p className="home-page__empty-desc">
+                Your workspace is empty. Create your first project to start building your world, writing chapters, and organizing lore.
+              </p>
+              <Button variant="primary" onClick={() => setCreateOpen(true)}>
+                <Plus size={16} />
+                Create Project
+              </Button>
+            </div>
+          ) : (
+            <div className="home-page__grid">
+              {projects.map((project) => (
+                <div key={project.id} className="home-page__project-card">
+                  
+                  {/* Dynamic Cover Art */}
+                  <div 
+                    className="home-page__project-cover" 
+                    style={{ background: getGenreGradient(project.genre || project.name) }}
+                    onClick={() => openProject(project.id)}
+                  >
+                    <Book size={48} className="home-page__project-icon" />
+                  </div>
 
-      <section className="home-page__content">
-        {projects.length === 0 ? (
-          <EmptyState
-            icon={FolderOpen}
-            title="No projects yet"
-            description="Create your first project to start writing."
-            actionLabel="Create Project"
-            onAction={() => setCreateOpen(true)}
-          />
-        ) : (
-          <div className="home-page__grid">
-            {projects.map((project) => (
-              <Card key={project.id} className="home-page__project-card">
-                <div
-                  className="home-page__project-content"
-                  onClick={() => openProject(project.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && openProject(project.id)}
-                >
-                  <h3 className="home-page__project-name">{project.name}</h3>
-                  {project.description && (
-                    <p className="home-page__project-desc">{project.description}</p>
-                  )}
-                  <div className="home-page__project-meta">
-                    {project.genre && <span className="home-page__project-genre">{project.genre}</span>}
-                    {project.author && <span className="home-page__project-author">by {project.author}</span>}
+                  {/* Actions Menu */}
+                  <button 
+                    className="home-page__project-actions-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === project.id ? null : project.id);
+                    }}
+                    aria-label="Project Actions"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+
+                  <div className={`home-page__project-actions-menu ${openMenuId === project.id ? 'open' : ''}`}>
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(null);
+                      setRenameTarget({ id: project.id, name: project.name });
+                      setRenameName(project.name);
+                    }}>
+                      <Edit2 size={14} /> Rename
+                    </button>
+                    <button className="danger" onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(null);
+                      setDeleteTarget({ id: project.id, name: project.name });
+                    }}>
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </div>
+
+                  {/* Card Details */}
+                  <div
+                    className="home-page__project-details"
+                    onClick={() => openProject(project.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && openProject(project.id)}
+                  >
+                    <h3 className="home-page__project-name">{project.name}</h3>
+                    {project.description && (
+                      <p className="home-page__project-desc">{project.description}</p>
+                    )}
+                    <div className="home-page__project-meta">
+                      {project.genre && <span className="home-page__project-genre">{project.genre}</span>}
+                      {project.author && <span className="home-page__project-author">by {project.author}</span>}
+                    </div>
                   </div>
                 </div>
-                <div className="home-page__project-actions">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setRenameTarget({ id: project.id, name: project.name }); setRenameName(project.name); }}
-                  >
-                    Rename
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteTarget({ id: project.id, name: project.name })}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Create Project Modal */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create New Project" size="md">
@@ -183,6 +234,7 @@ export default function HomePage() {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             required
+            autoFocus
           />
           <TextArea
             label="Description"
@@ -204,7 +256,6 @@ export default function HomePage() {
             onChange={(e) => setNewGenre(e.target.value)}
           />
           <div className="home-page__form-actions">
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button variant="primary" onClick={handleCreate} disabled={!newTitle.trim()}>
               Create Project
             </Button>
@@ -219,9 +270,14 @@ export default function HomePage() {
             label="New Name"
             value={renameName}
             onChange={(e) => setRenameName(e.target.value)}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && renameName.trim()) {
+                handleRename();
+              }
+            }}
           />
           <div className="home-page__form-actions">
-            <Button variant="secondary" onClick={() => setRenameTarget(null)}>Cancel</Button>
             <Button variant="primary" onClick={handleRename} disabled={!renameName.trim()}>
               Rename
             </Button>

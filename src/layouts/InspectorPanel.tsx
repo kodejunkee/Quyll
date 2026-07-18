@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PanelRightClose, PanelRight, Pin, Link, Clock } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { relationshipService } from '@/services/relationshipService';

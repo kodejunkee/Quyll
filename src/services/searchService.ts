@@ -1,6 +1,5 @@
-import { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import { select } from '@/database/databaseService';
-import { EntityType } from '@/types/common';
 
 export interface SearchResult {
   id: string;

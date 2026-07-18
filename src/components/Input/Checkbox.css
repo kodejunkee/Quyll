@@ -19,7 +19,7 @@
 }
 
 .checkbox-group__label {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--color-text);
   cursor: pointer;
   user-select: none;

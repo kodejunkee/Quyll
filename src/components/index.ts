@@ -16,3 +16,5 @@ export { TextArea } from './TextArea';
 export { Toolbar } from './Toolbar';
 export * from './ReferenceBubbles';
 export * from './EntityReferences';
+export { NotificationProvider, useNotification } from './Notification';
+export type { NotificationVariant } from './Notification';

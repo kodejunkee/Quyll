@@ -2,15 +2,16 @@
 
 :root {
   /* ── Primary / Accent ── */
-  --color-primary: hsl(175, 87%, 46%);
-  --color-primary-hover: hsl(175, 87%, 38%);
-  --color-primary-active: hsl(175, 87%, 32%);
-  --color-primary-subtle: hsla(175, 87%, 46%, 0.12);
-  --color-accent: hsl(173, 89%, 72%);
+  --color-primary: hsl(222, 85%, 52%);      /* Royal Blue */
+  --color-primary-hover: hsl(222, 85%, 46%);
+  --color-primary-active: hsl(222, 85%, 40%);
+  --color-primary-subtle: hsla(222, 85%, 52%, 0.08);
+  --color-accent: hsl(202, 85%, 48%);       /* Steel Blue */
 
   /* ── Typography ── */
-  --font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --color-primary-text: white; /* Contrast text for primary buttons */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
@@ -38,11 +39,11 @@
   --space-16: 4rem;
 
   /* ── Border Radius ── */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
 
   /* ── Shadows ── */
@@ -52,79 +53,230 @@
   --shadow-xl: 0 8px 32px hsla(0, 0%, 0%, 0.3);
 
   /* ── Transitions ── */
-  --transition-fast: 120ms ease;
-  --transition-normal: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-fast: 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* ── Layout ── */
   --sidebar-width: 240px;
   --sidebar-collapsed-width: 56px;
   --inspector-width: 280px;
+  --chapter-panel-width: 260px;
+  --chapter-panel-collapsed-width: 56px;
   --toolbar-height: 48px;
+
+  /* ── Category & Entity Icon Colors ── */
+  /* Hues are spaced 25-40° apart around the color wheel for maximum distinction */
+  --color-icon-dashboard: hsl(215, 85%, 58%);          /* Steel Blue */
+  --color-icon-chapters: hsl(168, 70%, 42%);            /* Teal */
+  --color-icon-character: hsl(142, 72%, 46%);           /* Emerald Green */
+  --color-icon-location: hsl(355, 78%, 58%);            /* Coral Red */
+  --color-icon-organization: hsl(32, 90%, 52%);         /* Warm Orange */
+  --color-icon-species: hsl(285, 68%, 58%);             /* Royal Purple */
+  --color-icon-item: hsl(80, 62%, 46%);                 /* Olive Lime */
+  --color-icon-magic_system: hsl(195, 85%, 48%);        /* Ocean Cyan */
+  --color-icon-lore: hsl(52, 82%, 46%);                 /* Rich Gold */
+  --color-icon-timeline_event: hsl(250, 68%, 62%);      /* Deep Indigo */
+  --color-icon-plot_planner: hsl(330, 72%, 55%);        /* Rose Pink */
+  --color-icon-graph: hsl(205, 80%, 55%);               /* Sky Blue */
+  --color-icon-trash: hsl(0, 72%, 55%);                 /* True Red */
+  --color-icon-settings: hsl(220, 15%, 62%);            /* Slate Gray */
+  --color-icon-home: hsl(215, 80%, 58%);                /* Blue */
+
+  /* White/black dynamic variables based on theme (used by white accent) */
+  --color-accent-white-primary: hsl(0, 0%, 94%);
+  --color-accent-white-hover: hsl(0, 0%, 100%);
+  --color-accent-white-active: hsl(0, 0%, 85%);
+  --color-accent-white-subtle: rgba(255, 255, 255, 0.1);
+  --color-accent-white-secondary: hsl(0, 0%, 80%);
 }
 
 /* ===== Dark Theme (default) ===== */
 [data-theme='dark'],
 :root {
-  --color-bg: hsl(220, 20%, 10%);
-  --color-bg-elevated: hsl(220, 18%, 13%);
-  --color-bg-surface: hsl(220, 16%, 16%);
-  --color-bg-hover: hsl(220, 14%, 20%);
-  --color-bg-active: hsl(220, 14%, 24%);
+  --color-bg: #000000;
+  --color-bg-elevated: #090a0d;
+  --color-bg-surface: #12141a;
+  --color-bg-hover: #1c1f26;
+  --color-bg-active: #262933;
 
-  --color-border: hsl(220, 14%, 22%);
-  --color-border-subtle: hsl(220, 14%, 18%);
+  --color-border: rgba(255, 255, 255, 0.14);
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
 
-  --color-text: hsl(220, 20%, 92%);
-  --color-text-secondary: hsl(220, 12%, 65%);
-  --color-text-tertiary: hsl(220, 10%, 48%);
-  --color-text-inverse: hsl(220, 20%, 10%);
+  --color-text: #f5f6f8;
+  --color-text-secondary: #a0a6b2;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #000000;
 
-  --color-danger: hsl(0, 72%, 56%);
-  --color-danger-hover: hsl(0, 72%, 48%);
-  --color-danger-subtle: hsla(0, 72%, 56%, 0.12);
+  --color-danger: hsl(354, 78%, 56%);
+  --color-danger-hover: hsl(354, 78%, 48%);
+  --color-danger-subtle: hsla(354, 78%, 56%, 0.1);
 
-  --color-warning: hsl(40, 90%, 56%);
-  --color-success: hsl(145, 65%, 46%);
+  --color-warning: hsl(38, 92%, 54%);
+  --color-success: hsl(142, 70%, 45%);
 
-  --color-overlay: hsla(0, 0%, 0%, 0.6);
+  --color-overlay: rgba(0, 0, 0, 0.75);
 
-  --scrollbar-track: hsl(220, 18%, 13%);
-  --scrollbar-thumb: hsl(220, 14%, 28%);
-  --scrollbar-thumb-hover: hsl(220, 14%, 36%);
+  --scrollbar-track: #000000;
+  --scrollbar-thumb: #222630;
+  --scrollbar-thumb-hover: #333947;
+
+  /* Glassmorphic values */
+  --glass-bg: rgba(0, 0, 0, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-blur: blur(14px);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.12);
 }
 
 /* ===== Light Theme ===== */
 [data-theme='light'] {
-  --color-bg: hsl(220, 20%, 97%);
+  --color-bg: hsl(220, 20%, 98%);
   --color-bg-elevated: hsl(0, 0%, 100%);
-  --color-bg-surface: hsl(220, 16%, 94%);
-  --color-bg-hover: hsl(220, 14%, 90%);
-  --color-bg-active: hsl(220, 14%, 86%);
+  --color-bg-surface: hsl(220, 16%, 93%);
+  --color-bg-hover: hsl(220, 14%, 88%);
+  --color-bg-active: hsl(220, 14%, 84%);
 
-  --color-border: hsl(220, 14%, 84%);
-  --color-border-subtle: hsl(220, 14%, 90%);
+  --color-border: hsl(220, 14%, 86%);
+  --color-border-subtle: hsl(220, 14%, 91%);
 
-  --color-text: hsl(220, 20%, 14%);
-  --color-text-secondary: hsl(220, 10%, 44%);
-  --color-text-tertiary: hsl(220, 8%, 60%);
-  --color-text-inverse: hsl(220, 20%, 97%);
+  --color-text: hsl(220, 20%, 12%);
+  --color-text-secondary: hsl(220, 10%, 40%);
+  --color-text-tertiary: hsl(220, 8%, 56%);
+  --color-text-inverse: hsl(220, 20%, 98%);
 
-  --color-danger: hsl(0, 72%, 50%);
-  --color-danger-hover: hsl(0, 72%, 42%);
-  --color-danger-subtle: hsla(0, 72%, 50%, 0.08);
+  --color-danger: hsl(354, 78%, 48%);
+  --color-danger-hover: hsl(354, 78%, 40%);
+  --color-danger-subtle: hsla(354, 78%, 48%, 0.08);
 
-  --color-warning: hsl(40, 90%, 44%);
-  --color-success: hsl(145, 65%, 38%);
+  --color-warning: hsl(38, 92%, 40%);
+  --color-success: hsl(142, 70%, 38%);
 
-  --color-overlay: hsla(0, 0%, 0%, 0.4);
+  --color-overlay: rgba(3, 7, 18, 0.4);
 
-  --shadow-sm: 0 1px 2px hsla(0, 0%, 0%, 0.06);
-  --shadow-md: 0 2px 8px hsla(0, 0%, 0%, 0.08);
-  --shadow-lg: 0 4px 16px hsla(0, 0%, 0%, 0.1);
-  --shadow-xl: 0 8px 32px hsla(0, 0%, 0%, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12);
 
-  --scrollbar-track: hsl(220, 16%, 94%);
-  --scrollbar-thumb: hsl(220, 14%, 78%);
-  --scrollbar-thumb-hover: hsl(220, 14%, 68%);
+  --scrollbar-track: hsl(220, 16%, 93%);
+  --scrollbar-thumb: hsl(220, 14%, 76%);
+  --scrollbar-thumb-hover: hsl(220, 14%, 66%);
+
+  /* Glassmorphic values for Light theme */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(14px);
+  --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.03);
+
+  --color-accent-white-primary: hsl(0, 0%, 12%);
+  --color-accent-white-hover: hsl(0, 0%, 0%);
+  --color-accent-white-active: hsl(0, 0%, 20%);
+  --color-accent-white-subtle: rgba(0, 0, 0, 0.08);
+  --color-accent-white-secondary: hsl(0, 0%, 30%);
+}
+
+/* ===== Oceans Blue Theme ===== */
+[data-theme='oceans-blue'] {
+  --color-bg: hsl(205, 38%, 9%);
+  --color-bg-elevated: hsl(205, 32%, 13%);
+  --color-bg-surface: hsl(205, 26%, 17%);
+  --color-bg-hover: hsl(205, 24%, 23%);
+  --color-bg-active: hsl(205, 24%, 27%);
+
+  --color-border: hsl(205, 24%, 21%);
+  --color-border-subtle: hsl(205, 24%, 15%);
+
+  --color-text: hsl(205, 30%, 94%);
+  --color-text-secondary: hsl(205, 16%, 70%);
+  --color-text-tertiary: hsl(205, 12%, 50%);
+  --color-text-inverse: hsl(205, 38%, 9%);
+
+  --color-danger: hsl(354, 78%, 56%);
+  --color-danger-hover: hsl(354, 78%, 48%);
+  --color-danger-subtle: hsla(354, 78%, 56%, 0.1);
+
+  --color-warning: hsl(38, 92%, 54%);
+  --color-success: hsl(142, 70%, 45%);
+
+  --color-overlay: rgba(3, 7, 18, 0.65);
+
+  --scrollbar-track: hsl(205, 38%, 9%);
+  --scrollbar-thumb: hsl(205, 20%, 25%);
+  --scrollbar-thumb-hover: hsl(205, 20%, 33%);
+
+  /* Glassmorphic values */
+  --glass-bg: rgba(10, 19, 32, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(14px);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.12);
+
+  --color-accent-white-primary: hsl(0, 0%, 94%);
+  --color-accent-white-hover: hsl(0, 0%, 100%);
+  --color-accent-white-active: hsl(0, 0%, 85%);
+  --color-accent-white-subtle: rgba(255, 255, 255, 0.1);
+  --color-accent-white-secondary: hsl(0, 0%, 80%);
+}
+
+/* ===== Accent Color Customizations ===== */
+[data-accent='pink'] {
+  --color-primary: hsl(342, 85%, 60%);
+  --color-primary-hover: hsl(342, 85%, 52%);
+  --color-primary-active: hsl(342, 85%, 44%);
+  --color-primary-subtle: hsla(342, 85%, 60%, 0.08);
+  --color-accent: hsl(325, 90%, 70%);
+  --color-primary-text: white;
+}
+
+[data-accent='green'] {
+  --color-primary: hsl(150, 70%, 32%);
+  --color-primary-hover: hsl(150, 70%, 26%);
+  --color-primary-active: hsl(150, 70%, 20%);
+  --color-primary-subtle: hsla(150, 70%, 32%, 0.08);
+  --color-accent: hsl(135, 60%, 45%);
+  --color-primary-text: white;
+}
+
+[data-accent='grey'] {
+  --color-primary: hsl(215, 12%, 40%);
+  --color-primary-hover: hsl(215, 12%, 34%);
+  --color-primary-active: hsl(215, 12%, 28%);
+  --color-primary-subtle: hsla(215, 12%, 40%, 0.08);
+  --color-accent: hsl(215, 10%, 60%);
+  --color-primary-text: white;
+}
+
+[data-accent='white'] {
+  --color-primary: var(--color-accent-white-primary);
+  --color-primary-hover: var(--color-accent-white-hover);
+  --color-primary-active: var(--color-accent-white-active);
+  --color-primary-subtle: var(--color-accent-white-subtle);
+  --color-accent: var(--color-accent-white-secondary);
+  --color-primary-text: var(--color-text-inverse);
+}
+
+[data-accent='fire'] {
+  --color-primary: hsl(15, 85%, 55%);
+  --color-primary-hover: hsl(15, 85%, 48%);
+  --color-primary-active: hsl(15, 85%, 42%);
+  --color-primary-subtle: hsla(15, 85%, 55%, 0.08);
+  --color-accent: hsl(5, 90%, 60%);
+  --color-primary-text: white;
+}
+
+[data-accent='apple'] {
+  --color-primary: hsl(100, 65%, 45%);
+  --color-primary-hover: hsl(100, 65%, 38%);
+  --color-primary-active: hsl(100, 65%, 32%);
+  --color-primary-subtle: hsla(100, 65%, 45%, 0.08);
+  --color-accent: hsl(80, 80%, 55%);
+  --color-primary-text: hsl(100, 80%, 10%);
+}
+
+[data-accent='yellow'] {
+  --color-primary: hsl(45, 90%, 50%);
+  --color-primary-hover: hsl(45, 90%, 42%);
+  --color-primary-active: hsl(45, 90%, 35%);
+  --color-primary-subtle: hsla(45, 90%, 50%, 0.08);
+  --color-accent: hsl(35, 95%, 60%);
+  --color-primary-text: hsl(45, 95%, 12%);
 }

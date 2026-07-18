@@ -111,9 +111,9 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         );
         if (updatedRows.length > 0) {
           const row = updatedRows[0];
-          if (row.keyword_enabled) {
+          if (row && row.keyword_enabled) {
             await keywordService.upsert(db, row.project_id, config.entityType, id, row[config.nameColumn]);
-          } else {
+          } else if (row) {
             await keywordService.remove(db, row.project_id, id);
           }
         }
@@ -131,8 +131,9 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
       if (config.entityType) {
         // Remove keyword when soft deleted
         const rows = await select<{ project_id: string }>(db, `SELECT project_id FROM ${tableName} WHERE id = $1`, [id]);
-        if (rows.length > 0) {
-          await keywordService.remove(db, rows[0].project_id, id);
+        const firstRow = rows[0];
+        if (firstRow) {
+          await keywordService.remove(db, firstRow.project_id, id);
         }
       }
     },
@@ -152,8 +153,9 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
           `SELECT * FROM ${tableName} WHERE id = $1`,
           [id]
         );
-        if (rows.length > 0 && rows[0].keyword_enabled) {
-          await keywordService.upsert(db, rows[0].project_id, config.entityType, id, rows[0][config.nameColumn]);
+        const firstRow = rows[0];
+        if (firstRow && firstRow.keyword_enabled) {
+          await keywordService.upsert(db, firstRow.project_id, config.entityType, id, firstRow[config.nameColumn]);
         }
       }
     },
@@ -162,8 +164,9 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
     async hardDelete(db: Database, id: string): Promise<void> {
       if (config.entityType) {
         const rows = await select<{ project_id: string }>(db, `SELECT project_id FROM ${tableName} WHERE id = $1`, [id]);
-        if (rows.length > 0) {
-          await keywordService.remove(db, rows[0].project_id, id);
+        const firstRow = rows[0];
+        if (firstRow) {
+          await keywordService.remove(db, firstRow.project_id, id);
         }
       }
       await execute(db, `DELETE FROM ${tableName} WHERE id = $1`, [id]);

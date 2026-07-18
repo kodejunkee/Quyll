@@ -1,10 +1,13 @@
 import { StrictMode } from 'react';
 import { AppRouter } from '@/routes/AppRouter';
+import { NotificationProvider } from '@/components/Notification';
 
 export function App() {
   return (
     <StrictMode>
-      <AppRouter />
+      <NotificationProvider>
+        <AppRouter />
+      </NotificationProvider>
     </StrictMode>
   );
 }

@@ -22,14 +22,14 @@ export function AutoFormatPlugin() {
 
       // 4. Auto-capitalize first letter after sentence boundary
       // Match a sentence boundary (. ! ?) followed by 1+ spaces, then a lowercase letter
-      newText = newText.replace(/([.!?]\s+)([a-z])/g, (match, space, letter) => {
+      newText = newText.replace(/([.!?]\s+)([a-z])/g, (_match, space, letter) => {
         return space + letter.toUpperCase();
       });
 
       // 5. Auto-capitalize first letter of a paragraph
       const prevSibling = textNode.getPreviousSibling();
       if (!prevSibling) {
-        newText = newText.replace(/^[a-z]/, (match) => match.toUpperCase());
+        newText = newText.replace(/^[a-z]/, (_match) => _match.toUpperCase());
       }
 
       // 6. Smart quotes

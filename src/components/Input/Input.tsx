@@ -8,7 +8,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, id, className = '', ...rest }, ref) => {
+  ({ label, error, hint, id, className = '', autoComplete = 'off', ...rest }, ref) => {
     const inputId = id ?? (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
     const hasError = Boolean(error);
 
@@ -25,6 +25,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           className={`input-group__input ${hasError ? 'input-group__input--error' : ''}`}
           aria-invalid={hasError}
           aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
+          autoComplete={autoComplete}
           {...rest}
         />
         {error && (
