@@ -1,4 +1,4 @@
-import { Cloud, CloudOff } from 'lucide-react';
+import { Cloud, CloudOff, Wand2 } from 'lucide-react';
 import { formatNumber, formatReadingTime } from '../utils/writingStats';
 import './EditorStatusBar.css';
 
@@ -11,6 +11,7 @@ interface EditorStatusBarProps {
   readingTime: number;
   saveStatus: SaveStatus;
   lastSavedAt: string | null;
+  onGrammarCheck?: () => void;
 }
 
 export function EditorStatusBar({
@@ -18,6 +19,7 @@ export function EditorStatusBar({
   characterCount,
   readingTime,
   saveStatus,
+  onGrammarCheck,
 }: EditorStatusBarProps) {
   return (
     <div className="editor-status-bar">
@@ -45,6 +47,17 @@ export function EditorStatusBar({
           )}
         </span>
       </div>
+      {onGrammarCheck && (
+        <button
+          type="button"
+          className="editor-status-bar__grammar-btn"
+          onClick={onGrammarCheck}
+          title="Check grammar and writing style"
+        >
+          <Wand2 size={13} className="editor-status-bar__grammar-icon" />
+          <span>Grammar Check</span>
+        </button>
+      )}
     </div>
   );
 }

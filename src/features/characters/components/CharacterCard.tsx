@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { User } from 'lucide-react';
+import { useLayoutStore } from '@/store/layoutStore';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { getImageById, getImageUrl } from '@/services/imageService';
 import type { Character } from '@/types/database';
@@ -11,8 +11,7 @@ interface CharacterCardProps {
 }
 
 export function CharacterCard({ character }: CharacterCardProps) {
-  const navigate = useNavigate();
-  const { projectId } = useParams<{ projectId: string }>();
+  const { openEntityModal } = useLayoutStore();
   const { db, projectPath } = useProjectDb();
   const [imgUrl, setImgUrl] = useState<string | null>(null);
 
@@ -36,8 +35,8 @@ export function CharacterCard({ character }: CharacterCardProps) {
       className="character-card"
       role="button"
       tabIndex={0}
-      onClick={() => navigate(`/project/${projectId}/characters/${character.id}`)}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(`/project/${projectId}/characters/${character.id}`)}
+      onClick={() => openEntityModal(character.id, 'character')}
+      onKeyDown={(e) => e.key === 'Enter' && openEntityModal(character.id, 'character')}
     >
       <div className="character-card__image-container">
         {imgUrl ? (

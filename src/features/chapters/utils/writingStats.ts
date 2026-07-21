@@ -48,12 +48,18 @@ export function formatReadingTime(minutes: number): string {
 /** Format a timestamp into a relative time string (e.g. "12m ago"). */
 export function formatTimeAgo(timestamp: string | null | undefined): string {
   if (!timestamp) return 'recently';
-  const date = new Date(timestamp);
+  let normalized = timestamp;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(normalized)) {
+    normalized = normalized.replace(' ', 'T') + 'Z';
+  } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(normalized)) {
+    normalized = normalized + 'Z';
+  }
+  const date = new Date(normalized);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'just now';
+  if (diffMins < 1 || diffMs < 60000) return 'just now';
   if (diffMins === 1) return '1m ago';
   if (diffMins < 60) return `${diffMins}m ago`;
 

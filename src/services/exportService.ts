@@ -1,7 +1,7 @@
 import { writeTextFile, writeFile } from '@tauri-apps/plugin-fs';
 import { save } from '@tauri-apps/plugin-dialog';
 import { select } from '@/database/databaseService';
-import { htmlToMarkdown, htmlToPlainText } from './htmlToMarkdown';
+import { htmlToMarkdown, htmlToPlainText, lexicalJsonToHtml } from './htmlToMarkdown';
 import type Database from '@tauri-apps/plugin-sql';
 import type {
   Chapter,
@@ -15,7 +15,7 @@ import type {
   MagicSystem,
   PlotPoint,
 } from '@/types/database';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak, UnderlineType } from 'docx';
 
 export type ExportFormat = 'markdown' | 'text' | 'pdf' | 'docx';
 export type ExportScope =
@@ -183,6 +183,114 @@ export async function buildPlainTextContent(
 }
 
 /**
+ * Helper to process Lexical JSON or HTML content into rich DOCX Paragraphs.
+ */
+function addChapterContentToDocx(paragraphs: Paragraph[], content: string) {
+  const html = lexicalJsonToHtml(content || '');
+  if (!html.trim()) return;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const processNodeToDocx = (node: Node) => {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      const tag = el.tagName.toLowerCase();
+
+      if (/^h[1-6]$/.test(tag)) {
+        const levelNum = parseInt(tag.charAt(1), 10);
+        const headingLevel =
+          levelNum === 1
+            ? HeadingLevel.HEADING_2
+            : levelNum === 2
+            ? HeadingLevel.HEADING_3
+            : HeadingLevel.HEADING_4;
+        paragraphs.push(
+          new Paragraph({
+            text: el.textContent || '',
+            heading: headingLevel,
+            spacing: { before: 200, after: 120 },
+          }),
+        );
+      } else if (tag === 'p' || tag === 'div' || tag === 'blockquote' || tag === 'li') {
+        const runs: TextRun[] = [];
+        const extractRuns = (
+          n: Node,
+          bold: boolean,
+          italic: boolean,
+          underline: boolean,
+          strike: boolean,
+        ) => {
+          if (n.nodeType === Node.TEXT_NODE) {
+            const txt = n.textContent || '';
+            if (txt) {
+              runs.push(
+                new TextRun({
+                  text: txt,
+                  bold,
+                  italics: italic,
+                  underline: underline ? { type: UnderlineType.SINGLE } : undefined,
+                  strike,
+                }),
+              );
+            }
+          } else if (n.nodeType === Node.ELEMENT_NODE) {
+            const childEl = n as HTMLElement;
+            const childTag = childEl.tagName.toLowerCase();
+            if (childTag === 'br') {
+              runs.push(new TextRun({ text: '\n' }));
+            } else {
+              extractRuns(
+                n,
+                bold || childTag === 'strong' || childTag === 'b',
+                italic || childTag === 'em' || childTag === 'i',
+                underline || childTag === 'u',
+                strike || childTag === 's' || childTag === 'del',
+              );
+            }
+          } else {
+            n.childNodes.forEach((c) => extractRuns(c, bold, italic, underline, strike));
+          }
+        };
+
+        el.childNodes.forEach((c) => extractRuns(c, false, false, false, false));
+        if (runs.length > 0) {
+          paragraphs.push(
+            new Paragraph({
+              children: runs,
+              bullet: tag === 'li' ? { level: 0 } : undefined,
+              spacing: { after: 160 },
+            }),
+          );
+        }
+      } else if (tag === 'ul' || tag === 'ol') {
+        el.childNodes.forEach(processNodeToDocx);
+      } else {
+        el.childNodes.forEach(processNodeToDocx);
+      }
+    } else if (
+      node.nodeType === Node.TEXT_NODE &&
+      node.parentNode &&
+      (node.parentNode as HTMLElement).tagName.toLowerCase() === 'body'
+    ) {
+      const txt = (node.textContent || '').trim();
+      if (txt) {
+        paragraphs.push(
+          new Paragraph({
+            children: [new TextRun({ text: txt })],
+            spacing: { after: 160 },
+          }),
+        );
+      }
+    } else {
+      node.childNodes.forEach(processNodeToDocx);
+    }
+  };
+
+  doc.body.childNodes.forEach(processNodeToDocx);
+}
+
+/**
  * Builds the DOCX document using the `docx` library.
  */
 export async function buildDocxDocument(
@@ -206,19 +314,7 @@ export async function buildDocxDocument(
         }),
       );
 
-      const textBody = htmlToPlainText(ch.content);
-      const lines = textBody.split(/\n+/);
-      lines.forEach((line) => {
-        const trimmed = line.trim();
-        if (trimmed) {
-          paragraphs.push(
-            new Paragraph({
-              children: [new TextRun({ text: trimmed })],
-              spacing: { after: 200 },
-            }),
-          );
-        }
-      });
+      addChapterContentToDocx(paragraphs, ch.content);
     });
   } else {
     const entities = await getEntitiesForExport(db, projectId, options.scope);
@@ -301,7 +397,8 @@ export async function buildHtmlContent(
     const chapters = await getChaptersForExport(db, projectId, options);
     return chapters
       .map((ch) => {
-        return `<div class="chapter"><h1>Chapter ${ch.chapter_number}: ${ch.title}</h1><div class="content">${ch.content || ''}</div></div>`;
+        const cleanBody = lexicalJsonToHtml(ch.content || '');
+        return `<div class="chapter"><h1>Chapter ${ch.chapter_number}: ${ch.title}</h1><div class="content">${cleanBody}</div></div>`;
       })
       .join('\n');
   } else {
@@ -577,7 +674,7 @@ async function getEntitiesForExport(
           { label: 'Description', value: r.description, isLong: true },
           { label: 'Rules', value: r.rules, isLong: true },
           { label: 'Limitations', value: r.limitations, isLong: true },
-          { label: 'Examples', value: r.examples, isLong: true },
+          { label: 'Notes', value: r.examples, isLong: true },
         ],
       }));
     }

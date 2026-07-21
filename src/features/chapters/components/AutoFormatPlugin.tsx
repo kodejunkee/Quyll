@@ -16,8 +16,7 @@ export function AutoFormatPlugin() {
       // 2. Ellipsis: replace '...' with '…'
       newText = newText.replace(/\.\.\./g, '…');
 
-      // 3. Autocorrect standalone 'i' to 'I'
-      // Match 'i' when preceded by start-of-string or whitespace, and followed by whitespace or punctuation
+      // 3. Autocorrect standalone 'i' to 'I' when followed by space or punctuation (never when 'i' begins a word like 'is')
       newText = newText.replace(/(^|\s)i(?=\s|[.,!?;:])/g, '$1I');
 
       // 4. Auto-capitalize first letter after sentence boundary
@@ -27,8 +26,11 @@ export function AutoFormatPlugin() {
       });
 
       // 5. Auto-capitalize first letter of a paragraph
+      // Only if this textNode is the very first node of the top-level block/paragraph element
       const prevSibling = textNode.getPreviousSibling();
-      if (!prevSibling) {
+      const topLevelElement = textNode.getTopLevelElement();
+      const isFirstNodeInBlock = topLevelElement && topLevelElement.getFirstChild()?.getKey() === textNode.getKey();
+      if (!prevSibling && isFirstNodeInBlock) {
         newText = newText.replace(/^[a-z]/, (_match) => _match.toUpperCase());
       }
 

@@ -5,7 +5,8 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type Database from '@tauri-apps/plugin-sql';
-import { openProjectDatabase, closeProjectDatabase } from '@/database/projectDatabase';
+import { openProjectDatabase } from '@/database/projectDatabase';
+import { initAppDatabase, listProjects, touchProject } from '@/database';
 import { useProjectStore } from '@/store/projectStore';
 import { Button, LoadingSkeleton } from '@/components';
 
@@ -37,7 +38,7 @@ interface ProjectDbProviderProps {
 export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProps) {
   const [db, setDb] = useState<Database | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { projects } = useProjectStore();
+  const { projects, setProjects, setCurrentProject } = useProjectStore();
   const project = projects.find((p) => p.id === projectId);
   const projectPath = project?.path ?? `projects/${projectId}.quyll`;
 
@@ -46,8 +47,58 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
 
     async function open() {
       try {
-        const conn = await openProjectDatabase(projectPath);
-        if (!cancelled) setDb(conn);
+        let currentProjects = projects;
+        if (currentProjects.length === 0) {
+          try {
+            await initAppDatabase();
+            const rows = await listProjects();
+            currentProjects = rows.map((r) => ({
+              id: r.id,
+              name: r.name,
+              path: r.path,
+              description: r.description ?? '',
+              author: r.author ?? '',
+              genre: r.genre ?? '',
+              last_opened_at: r.last_opened_at,
+              created_at: r.created_at,
+              updated_at: r.updated_at,
+            }));
+            if (!cancelled) setProjects(currentProjects);
+          } catch (listErr) {
+            console.error('[ProjectDbProvider] Failed to load global projects list:', listErr);
+          }
+        }
+
+        const activeProj = currentProjects.find((p) => p.id === projectId);
+        const resolvedPath = activeProj?.path ?? `projects/${projectId}.quyll`;
+
+        const conn = await openProjectDatabase(resolvedPath);
+        if (cancelled) return;
+        setDb(conn);
+        await touchProject(projectId);
+
+        try {
+          const metaRows = await conn.select<{ id: string; title: string; description?: string; author?: string; genre?: string }[]>('SELECT * FROM project_meta LIMIT 1');
+          const meta = metaRows[0];
+          if (meta) {
+            setCurrentProject({
+              id: meta.id || projectId,
+              name: meta.title || activeProj?.name || 'Untitled Project',
+              path: resolvedPath,
+              description: meta.description || activeProj?.description || '',
+              author: meta.author || activeProj?.author || '',
+              genre: meta.genre || activeProj?.genre || '',
+              last_opened_at: new Date().toISOString(),
+              created_at: activeProj?.created_at || new Date().toISOString(),
+              updated_at: activeProj?.updated_at || new Date().toISOString(),
+            });
+          } else if (activeProj) {
+            setCurrentProject({ ...activeProj, last_opened_at: new Date().toISOString() });
+          }
+        } catch (metaErr) {
+          console.error('[ProjectDbProvider] Failed to fetch project_meta:', metaErr);
+          if (activeProj) setCurrentProject(activeProj);
+        }
       } catch (err) {
         console.error('[ProjectDbProvider] Failed to open project DB:', err);
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to open project');
@@ -58,9 +109,10 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
 
     return () => {
       cancelled = true;
-      void closeProjectDatabase(projectPath).catch(() => {});
+      setCurrentProject(null);
     };
-  }, [projectPath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   if (error) {
     let friendlyText = error;

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useCallback } from 'react';
+import { type ReactNode, useEffect, useRef, useCallback, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import './Modal.css';
@@ -11,6 +11,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
   footer?: ReactNode;
+  draggable?: boolean;
 }
 
 function Modal({
@@ -21,8 +22,13 @@ function Modal({
   size = 'md',
   children,
   footer,
+  draggable = false,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -32,6 +38,9 @@ function Modal({
       dialog.showModal();
     } else if (!open && dialog.open) {
       dialog.close();
+    }
+    if (!open) {
+      setPosition({ x: 0, y: 0 });
     }
   }, [open]);
 
@@ -52,17 +61,56 @@ function Modal({
     [onClose],
   );
 
+  const handleHeaderMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!draggable) return;
+      if ((e.target as HTMLElement).closest('button')) return;
+
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      };
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDraggingRef.current) return;
+        setPosition({
+          x: moveEvent.clientX - dragStartRef.current.x,
+          y: moveEvent.clientY - dragStartRef.current.y,
+        });
+      };
+
+      const handleMouseUp = () => {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    },
+    [draggable, position],
+  );
+
   if (!open) return null;
 
   return (
     <dialog
       ref={dialogRef}
-      className={`modal modal--${size}`}
+      className={`modal modal--${size} ${draggable ? 'modal--draggable' : ''}`}
       onClick={handleBackdropClick}
       onCancel={handleCancel}
+      style={draggable ? { transform: `translate(${position.x}px, ${position.y}px)` } : undefined}
     >
       <div className="modal__content">
-        <header className="modal__header">
+        <header
+          className="modal__header"
+          onMouseDown={handleHeaderMouseDown}
+          style={draggable ? { cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none' } : undefined}
+          title={draggable ? 'Click and drag to move modal' : undefined}
+        >
           <div className="modal__header-text">
             <h2 className="modal__title">{title}</h2>
             {description && (

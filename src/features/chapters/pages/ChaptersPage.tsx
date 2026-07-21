@@ -10,7 +10,7 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState, LexicalEditor } from 'lexical';
-import { $getRoot } from 'lexical';
+import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
 import { PenLine, Download, RotateCcw } from 'lucide-react';
 import { EmptyState } from '@/components';
 import { useSettings } from '@/features/settings';
@@ -26,6 +26,9 @@ import { DraftRecoveryDialog } from '../components/DraftRecoveryDialog';
 import { FindAndReplacePlugin } from '../components/FindAndReplacePlugin';
 import { KeywordPlugin } from '../components/KeywordPlugin';
 import { AutoFormatPlugin } from '../components/AutoFormatPlugin';
+import { LexicalContextMenu } from '../components/LexicalContextMenu';
+import { GrammarCheckModal } from '../components/GrammarCheckModal';
+import { checkGrammar, type GrammarIssue } from '@/services/grammarService';
 import { createEditorConfig } from '../utils/editorConfig';
 import {
   countWords,
@@ -35,6 +38,7 @@ import {
   formatTimeAgo,
 } from '../utils/writingStats';
 import type { Chapter } from '@/types/database';
+import type { Timestamp } from '@/types/common';
 import type { ChapterFormData } from '../types/chapter';
 import './ChaptersPage.css';
 
@@ -89,6 +93,7 @@ export default function ChaptersPage() {
     create,
     update,
     remove,
+    refresh,
 
     getById,
     updateContent,
@@ -118,6 +123,11 @@ export default function ChaptersPage() {
   const [draftRecoveryOpen, setDraftRecoveryOpen] = useState(false);
   const pendingDraftRef = useRef<string | null>(null);
 
+  // Grammar check
+  const [grammarModalOpen, setGrammarModalOpen] = useState(false);
+  const [grammarIssues, setGrammarIssues] = useState<GrammarIssue[]>([]);
+  const [isGrammarSelection, setIsGrammarSelection] = useState(false);
+
   // Autosave
   const handleSave = useCallback(async () => {
     if (!activeChapterId || !editorRef.current) return;
@@ -127,11 +137,25 @@ export default function ChaptersPage() {
     const text = editor.getEditorState().read(() => $getRoot().getTextContent());
     const words = countWords(text);
     const time = estimateReadingTime(words);
+    const nowIso = new Date().toISOString();
 
-    await updateContent(activeChapterId, stateJson, words, time);
+    await updateContent(activeChapterId, stateJson, words, time, nowIso);
     clearDraft(activeChapterId);
     latestContentRef.current = stateJson;
-  }, [activeChapterId, updateContent, clearDraft]);
+
+    setActiveChapter((prev) =>
+      prev
+        ? {
+            ...prev,
+            content: stateJson,
+            word_count: words,
+            reading_time: time,
+            updated_at: nowIso as Timestamp,
+          }
+        : null,
+    );
+    void refresh();
+  }, [activeChapterId, updateContent, clearDraft, refresh]);
 
   const { settings } = useSettings();
   const { chapterListCollapsed, showKeywords } = useLayoutStore();
@@ -313,6 +337,85 @@ export default function ChaptersPage() {
     void saveNow();
   }, [saveNow]);
 
+  /** Grammar Check from Status Bar */
+  const handleOpenGrammarCheck = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    let textToCheck = '';
+    let isSelectionCheck = false;
+
+    editor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection) && !selection.isCollapsed()) {
+        textToCheck = selection.getTextContent();
+        isSelectionCheck = true;
+      } else {
+        textToCheck = $getRoot().getTextContent();
+        isSelectionCheck = false;
+      }
+    });
+
+    const found = checkGrammar(textToCheck);
+    setGrammarIssues(found);
+    setIsGrammarSelection(isSelectionCheck);
+    setGrammarModalOpen(true);
+  }, []);
+
+  const handleApplyGrammarSuggestion = useCallback((issue: GrammarIssue) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.update(() => {
+      const root = $getRoot();
+      const allTextNodes = root.getAllTextNodes();
+      for (const node of allTextNodes) {
+        const content = node.getTextContent();
+        const idx = content.indexOf(issue.matchText);
+        if (idx !== -1 && issue.suggestion !== undefined) {
+          const before = content.slice(0, idx);
+          const after = content.slice(idx + issue.matchText.length);
+          node.setTextContent(before + issue.suggestion + after);
+          break;
+        }
+      }
+    });
+
+    setGrammarIssues((prev) => prev.filter((i) => i.id !== issue.id));
+  }, []);
+
+  const handleLocateGrammarIssue = useCallback((issue: GrammarIssue) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.update(() => {
+      const root = $getRoot();
+      const allTextNodes = root.getAllTextNodes();
+      for (const node of allTextNodes) {
+        const content = node.getTextContent();
+        const idx = content.indexOf(issue.matchText);
+        if (idx !== -1) {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.anchor.set(node.getKey(), idx, 'text');
+            selection.focus.set(node.getKey(), idx + issue.matchText.length, 'text');
+          } else {
+            node.select(idx, idx + issue.matchText.length);
+          }
+          const domElement = editor.getElementByKey(node.getKey());
+          if (domElement) {
+            domElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          break;
+        }
+      }
+    });
+  }, []);
+
+  const handleDismissGrammarIssue = useCallback((issueId: string) => {
+    setGrammarIssues((prev) => prev.filter((i) => i.id !== issueId));
+  }, []);
+
   const editorInitialContent = activeChapter?.content || null;
 
   // Apply custom editor font and size from settings
@@ -374,6 +477,7 @@ export default function ChaptersPage() {
                 <FindAndReplacePlugin />
                 <AutoFormatPlugin />
                 <SaveShortcutPlugin onSave={handleManualSave} />
+                <LexicalContextMenu />
               </div>
             </LexicalComposer>
           </>
@@ -417,6 +521,7 @@ export default function ChaptersPage() {
         readingTime={readingTime}
         saveStatus={activeChapter ? saveStatus : 'saved'}
         lastSavedAt={lastSavedAt}
+        onGrammarCheck={activeChapter ? handleOpenGrammarCheck : undefined}
       />
 
       {/* Draft recovery dialog */}
@@ -430,6 +535,17 @@ export default function ChaptersPage() {
       <ExportDialog
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
+      />
+
+      {/* Grammar check modal */}
+      <GrammarCheckModal
+        isOpen={grammarModalOpen}
+        onClose={() => setGrammarModalOpen(false)}
+        issues={grammarIssues}
+        isSelection={isGrammarSelection}
+        onApplySuggestion={handleApplyGrammarSuggestion}
+        onLocateIssue={handleLocateGrammarIssue}
+        onDismissIssue={handleDismissGrammarIssue}
       />
     </div>
   );

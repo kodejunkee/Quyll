@@ -24,7 +24,16 @@ interface ProjectRow {
 
 /** Initialize the global app database, running migrations if needed. */
 export async function initAppDatabase(): Promise<Database> {
-  if (appDb) return appDb;
+  if (appDb) {
+    // Verify the cached connection is still alive
+    try {
+      await select<{ v: number }>(appDb, 'SELECT 1 as v');
+      return appDb;
+    } catch {
+      // Connection is dead — re-open
+      appDb = null;
+    }
+  }
   appDb = await openDatabase(APP_DB_PATH);
   await migrateAppDatabase(appDb);
   return appDb;
@@ -40,10 +49,11 @@ export async function registerProject(project: {
   genre?: string;
 }): Promise<void> {
   const db = await initAppDatabase();
+  const now = new Date().toISOString();
   await execute(
     db,
-    `INSERT INTO projects (id, name, path, description, author, genre, last_opened_at)
-     VALUES ($1, $2, $3, $4, $5, $6, datetime('now'))`,
+    `INSERT INTO projects (id, name, path, description, author, genre, last_opened_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $7)`,
     [
       project.id,
       project.name,
@@ -51,6 +61,7 @@ export async function registerProject(project: {
       project.description ?? '',
       project.author ?? '',
       project.genre ?? '',
+      now,
     ],
   );
 }
@@ -60,16 +71,19 @@ export async function listProjects(): Promise<ProjectRow[]> {
   const db = await initAppDatabase();
   return select<ProjectRow>(
     db,
-    'SELECT * FROM projects ORDER BY last_opened_at DESC, created_at DESC',
+    'SELECT * FROM projects ORDER BY datetime(COALESCE(last_opened_at, created_at)) DESC, datetime(created_at) DESC',
   );
 }
 
 /** Update the last_opened_at timestamp for a project. */
 export async function touchProject(projectId: string): Promise<void> {
   const db = await initAppDatabase();
-  await execute(db, `UPDATE projects SET last_opened_at = datetime('now') WHERE id = $1`, [
-    projectId,
-  ]);
+  const now = new Date().toISOString();
+  await execute(
+    db,
+    `UPDATE projects SET last_opened_at = $1, updated_at = $1 WHERE id = $2`,
+    [now, projectId],
+  );
 }
 
 /** Rename a project in the app registry. */

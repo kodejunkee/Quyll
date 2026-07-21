@@ -2,6 +2,7 @@ import { readTextFile, readFile } from '@tauri-apps/plugin-fs';
 import { open } from '@tauri-apps/plugin-dialog';
 import { execute, select } from '@/database/databaseService';
 import { generateId } from '@/utils/uuid';
+import { htmlToLexicalJson } from './htmlToMarkdown';
 import type Database from '@tauri-apps/plugin-sql';
 import mammoth from 'mammoth';
 
@@ -9,7 +10,7 @@ export type ImportFormat = 'markdown' | 'text' | 'docx';
 
 export interface ImportedChapter {
   title: string;
-  content: string; // HTML content for Lexical editor
+  content: string; // Lexical editor JSON string
   wordCount: number;
 }
 
@@ -113,11 +114,11 @@ export async function previewImport(
         })
         .filter(Boolean);
 
-      const content = htmlBlocks.join('') || '<p></p>';
-      const wordCount = stripHtml(content).split(/\s+/).filter(Boolean).length;
+      const htmlContent = htmlBlocks.join('') || '<p></p>';
+      const wordCount = stripHtml(htmlContent).split(/\s+/).filter(Boolean).length;
       chapters.push({
         title: sec.title || 'Untitled Section',
-        content,
+        content: htmlToLexicalJson(htmlContent),
         wordCount,
       });
     }
@@ -151,15 +152,15 @@ export async function previewImport(
         bodyLines = sectionLines.slice(1);
       }
       const bodyText = bodyLines.join('\n').trim();
-      const content =
+      const htmlContent =
         bodyText
           .split(/\r?\n\r?\n/)
           .map((p) => (p.trim() ? `<p>${p.trim()}</p>` : ''))
           .join('') || '<p></p>';
-      const wordCount = stripHtml(content).split(/\s+/).filter(Boolean).length;
+      const wordCount = stripHtml(htmlContent).split(/\s+/).filter(Boolean).length;
       chapters.push({
         title,
-        content,
+        content: htmlToLexicalJson(htmlContent),
         wordCount,
       });
     }
@@ -172,9 +173,9 @@ export async function previewImport(
     let match = headingRegex.exec(html);
     if (!match) {
       const cleanTitle = fileName.replace(/\.[^/.]+$/, '') || fileName;
-      const content = html.trim() || '<p></p>';
-      const wordCount = stripHtml(content).split(/\s+/).filter(Boolean).length;
-      chapters.push({ title: cleanTitle, content, wordCount });
+      const htmlContent = html.trim() || '<p></p>';
+      const wordCount = stripHtml(htmlContent).split(/\s+/).filter(Boolean).length;
+      chapters.push({ title: cleanTitle, content: htmlToLexicalJson(htmlContent), wordCount });
     } else {
       let lastIndex = 0;
       let currentTitle = (match[1] || '').replace(/<[^>]+>/g, '').trim() || 'Chapter 1';
@@ -185,7 +186,7 @@ export async function previewImport(
         const wordCount = stripHtml(preamble).split(/\s+/).filter(Boolean).length;
         chapters.push({
           title: fileName.replace(/\.[^/.]+$/, '') || 'Preamble',
-          content: preamble,
+          content: htmlToLexicalJson(preamble),
           wordCount,
         });
       }
@@ -195,7 +196,7 @@ export async function previewImport(
         const wordCount = stripHtml(chunkContent).split(/\s+/).filter(Boolean).length;
         chapters.push({
           title: currentTitle,
-          content: chunkContent || '<p></p>',
+          content: htmlToLexicalJson(chunkContent || '<p></p>'),
           wordCount,
         });
         currentTitle = (match[1] || '').replace(/<[^>]+>/g, '').trim() || `Chapter ${chapters.length + 1}`;
@@ -206,7 +207,7 @@ export async function previewImport(
       const wordCount = stripHtml(lastChunkContent).split(/\s+/).filter(Boolean).length;
       chapters.push({
         title: currentTitle,
-        content: lastChunkContent || '<p></p>',
+        content: htmlToLexicalJson(lastChunkContent || '<p></p>'),
         wordCount,
       });
     }
@@ -230,6 +231,10 @@ export async function importIntoProject(
   for (const ch of chapters) {
     const readingTime = Math.ceil(ch.wordCount / 200) || 1;
     const id = generateId();
+    const finalContent = ch.content && ch.content.trim().startsWith('{')
+      ? ch.content
+      : htmlToLexicalJson(ch.content || '<p></p>');
+
     await execute(
       db,
       `
@@ -241,7 +246,7 @@ export async function importIntoProject(
         projectId,
         ch.title || `Chapter ${nextNum}`,
         nextNum,
-        ch.content || '<p></p>',
+        finalContent,
         ch.wordCount,
         readingTime,
       ],

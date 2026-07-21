@@ -24,13 +24,17 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:app.db"]
+      "preload": [
+        "sqlite:app.db"
+      ]
     }
   },
   "bundle": {

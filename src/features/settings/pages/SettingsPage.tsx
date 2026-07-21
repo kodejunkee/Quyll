@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { useThemeStore } from '@/store/themeStore';
 import { Card, Dropdown, Button } from '@/components';
 import {
-  Sparkles,
   Loader2,
-  Palette,
   Type,
   HardDrive,
   FileStack,
@@ -16,34 +13,6 @@ import { BackupPanel } from '../components/BackupPanel';
 import { ExportDialog } from '../components/ExportDialog';
 import { ImportDialog } from '../components/ImportDialog';
 import './SettingsPage.css';
-
-const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter (Default)' },
-  { value: 'Arial', label: 'Arial' },
-  { value: '"Courier New", Courier, monospace', label: 'Courier New' },
-  { value: 'Georgia, serif', label: 'Georgia' },
-  { value: '"Times New Roman", Times, serif', label: 'Times New Roman' },
-  { value: '"Trebuchet MS", Helvetica, sans-serif', label: 'Trebuchet MS' },
-  { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
-  { value: '"Comic Sans MS", cursive, sans-serif', label: 'Comic Sans MS' },
-];
-
-const THEME_OPTIONS = [
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' },
-  { value: 'oceans-blue', label: 'Oceans Blue' },
-];
-
-const ACCENT_OPTIONS = [
-  { value: 'blue', label: 'Blue (Default)' },
-  { value: 'pink', label: 'Carnation Pink' },
-  { value: 'green', label: 'Dark Green' },
-  { value: 'grey', label: 'Grey' },
-  { value: 'white', label: 'White / Black' },
-  { value: 'fire', label: 'Fire' },
-  { value: 'apple', label: 'Apple' },
-  { value: 'yellow', label: 'Yellow' },
-];
 
 const FONT_SIZE_OPTIONS = [
   { value: '14', label: '14px (Small)' },
@@ -61,12 +30,11 @@ const AUTOSAVE_OPTIONS = [
   { value: '30', label: '30 minutes' },
 ];
 
-type SettingsTab = 'appearance' | 'editor' | 'backup' | 'export-import' | 'ai';
+type SettingsTab = 'editor' | 'backup' | 'export-import';
 
 export default function SettingsPage() {
-  const { theme, setTheme, accent, setAccent, defaultFont, setDefaultFont } = useThemeStore();
   const { settings, loading, updateSettings } = useSettings();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('editor');
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
@@ -74,7 +42,7 @@ export default function SettingsPage() {
     return (
       <div className="settings-page">
         <header className="settings-page__header">
-          <h1 className="settings-page__title">Settings</h1>
+          <h1 className="settings-page__title">Project Settings</h1>
         </header>
         <div className="settings-page__loading">
           <Loader2 className="spinner" size={32} />
@@ -84,17 +52,15 @@ export default function SettingsPage() {
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'appearance', label: 'Appearance', icon: <Palette size={16} className="settings-page__tab-icon" /> },
     { id: 'editor', label: 'Editor', icon: <Type size={16} className="settings-page__tab-icon" /> },
     { id: 'backup', label: 'Backup & Recovery', icon: <HardDrive size={16} className="settings-page__tab-icon" /> },
     { id: 'export-import', label: 'Export & Import', icon: <FileStack size={16} className="settings-page__tab-icon" /> },
-    { id: 'ai', label: 'AI Assistant', icon: <Sparkles size={16} className="settings-page__tab-icon" /> },
   ];
 
   return (
     <div className="settings-page">
       <header className="settings-page__header">
-        <h1 className="settings-page__title">Settings</h1>
+        <h1 className="settings-page__title">Project Settings</h1>
         <div className="settings-page__tabs">
           {tabs.map((tab) => (
             <button
@@ -110,56 +76,8 @@ export default function SettingsPage() {
       </header>
 
       <div className="settings-page__sections">
-        {activeTab === 'appearance' && (
-          <Card title="Appearance" className="settings-page__card">
-            <div className="settings-page__setting">
-              <div className="settings-page__setting-info">
-                <span className="settings-page__setting-label">Theme</span>
-                <span className="settings-page__setting-desc">
-                  Select your preferred visual style
-                </span>
-              </div>
-              <div style={{ width: 200 }}>
-                <Dropdown
-                  options={THEME_OPTIONS}
-                  value={theme}
-                  onChange={(val) => setTheme(val as any)}
-                />
-              </div>
-            </div>
-            <div className="settings-page__setting">
-              <div className="settings-page__setting-info">
-                <span className="settings-page__setting-label">Accent Color</span>
-                <span className="settings-page__setting-desc">
-                  Customize key interactive elements and highlights
-                </span>
-              </div>
-              <div style={{ width: 200 }}>
-                <Dropdown
-                  options={ACCENT_OPTIONS}
-                  value={accent}
-                  onChange={(val) => setAccent(val as any)}
-                />
-              </div>
-            </div>
-          </Card>
-        )}
-
         {activeTab === 'editor' && (
           <Card title="Editor" className="settings-page__card">
-            <div className="settings-page__setting">
-              <div className="settings-page__setting-info">
-                <span className="settings-page__setting-label">Default Editor Font</span>
-                <span className="settings-page__setting-desc">Choose the default font for newly created projects</span>
-              </div>
-              <div style={{ width: 200 }}>
-                <Dropdown
-                  options={FONT_OPTIONS}
-                  value={defaultFont}
-                  onChange={(val) => setDefaultFont(val as string)}
-                />
-              </div>
-            </div>
             <div className="settings-page__setting">
               <div className="settings-page__setting-info">
                 <span className="settings-page__setting-label">Font Size</span>
@@ -223,20 +141,6 @@ export default function SettingsPage() {
             <ExportDialog isOpen={exportOpen} onClose={() => setExportOpen(false)} />
             <ImportDialog isOpen={importOpen} onClose={() => setImportOpen(false)} />
           </>
-        )}
-
-        {activeTab === 'ai' && (
-          <Card title="AI Assistant" className="settings-page__card">
-            <div className="settings-page__ai-coming-soon">
-              <Sparkles size={24} className="settings-page__ai-icon" />
-              <div>
-                <p className="settings-page__ai-title">AI Features Coming Soon</p>
-                <p className="settings-page__ai-desc">
-                  Configure AI assistants, API keys, and preferences once AI features are available.
-                </p>
-              </div>
-            </div>
-          </Card>
         )}
       </div>
     </div>

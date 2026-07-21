@@ -58,6 +58,10 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         ...columns.map((col) => {
           const val = data[col];
           if (typeof val === 'boolean') return val ? 1 : 0;
+          if (typeof val === 'number') return val;
+          if (['word_count', 'reading_time', 'chapter_number', 'order_index'].includes(col)) {
+            return typeof val === 'number' ? val : (Number(val) || 0);
+          }
           return val ?? (col === 'age' ? null : '');
         }),
         now,

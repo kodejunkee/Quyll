@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   FORMAT_TEXT_COMMAND,
+  FORMAT_ELEMENT_COMMAND,
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
@@ -25,7 +26,11 @@ import {
   ListOrdered,
   Quote,
   Search,
-  Sparkles,
+  Highlighter,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
 } from 'lucide-react';
 import { useLayoutStore } from '@/store/layoutStore';
 import './EditorToolbar.css';
@@ -64,6 +69,7 @@ export function EditorToolbar() {
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [blockType, setBlockType] = useState<string>('paragraph');
+  const [alignment, setAlignment] = useState<string>('left');
   const { showKeywords, toggleShowKeywords } = useLayoutStore();
 
   /** Update toolbar state based on current selection. */
@@ -87,6 +93,12 @@ export function EditorToolbar() {
       } else {
         const type = element.getType();
         setBlockType(type);
+      }
+
+      if ('getFormatType' in element && typeof element.getFormatType === 'function') {
+        setAlignment(element.getFormatType() || 'left');
+      } else {
+        setAlignment('left');
       }
     });
   }, [editor]);
@@ -196,6 +208,33 @@ export function EditorToolbar() {
 
       <ToolbarSeparator />
 
+      <ToolbarButton
+        icon={<AlignLeft size={16} />}
+        label="Align Left"
+        active={alignment === 'left'}
+        onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')}
+      />
+      <ToolbarButton
+        icon={<AlignCenter size={16} />}
+        label="Align Center"
+        active={alignment === 'center'}
+        onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')}
+      />
+      <ToolbarButton
+        icon={<AlignRight size={16} />}
+        label="Align Right"
+        active={alignment === 'right'}
+        onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')}
+      />
+      <ToolbarButton
+        icon={<AlignJustify size={16} />}
+        label="Justify"
+        active={alignment === 'justify'}
+        onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')}
+      />
+
+      <ToolbarSeparator />
+
       <button
         className="editor-toolbar__pill-btn"
         onClick={() => window.dispatchEvent(new CustomEvent('quyll:find'))}
@@ -206,15 +245,12 @@ export function EditorToolbar() {
         <span>Find & Replace</span>
       </button>
 
-      <button
-        className={`editor-toolbar__pill-btn ${showKeywords ? 'editor-toolbar__pill-btn--keyword' : ''}`}
+      <ToolbarButton
+        icon={<Highlighter size={16} />}
+        label="Toggle Keyword Highlighting"
+        active={showKeywords}
         onClick={toggleShowKeywords}
-        title="Toggle Keyword Highlighting"
-        type="button"
-      >
-        <Sparkles size={14} />
-        <span>Keywords</span>
-      </button>
+      />
     </div>
   );
 }

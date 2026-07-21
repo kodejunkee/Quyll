@@ -314,7 +314,7 @@ function KnowledgeGraphInner() {
   }, [setNodes, setEdges]);
 
   const onNodeDoubleClick = useCallback((_event: any, node: any) => {
-    openEntityModal(node.data.type, node.id);
+    openEntityModal(node.id, node.data.type);
   }, [openEntityModal]);
 
   return (

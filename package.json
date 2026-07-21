@@ -33,6 +33,8 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.80.0",
     "react-router-dom": "^7.18.1",
+    "synonyms": "^1.0.1",
+    "thesaurus": "^0.0.1",
     "uuid": "^14.0.1",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"

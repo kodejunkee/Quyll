@@ -5,10 +5,12 @@ import './DraggableModal.css';
 interface DraggableModalProps {
   title: React.ReactNode;
   onClose: () => void;
-  onMinimize: (x: number, y: number) => void;
+  onMinimize?: (x: number, y: number) => void;
   children: React.ReactNode;
   initialX?: number;
   initialY?: number;
+  width?: string;
+  maxHeight?: string;
 }
 
 export function DraggableModal({
@@ -18,10 +20,12 @@ export function DraggableModal({
   children,
   initialX,
   initialY,
+  width,
+  maxHeight,
 }: DraggableModalProps) {
   const [position, setPosition] = useState({ 
-    x: initialX ?? window.innerWidth / 2 - 200, 
-    y: initialY ?? window.innerHeight / 2 - 300 
+    x: initialX ?? Math.max(20, window.innerWidth / 2 - (width ? parseInt(width, 10) / 2 : 200)), 
+    y: initialY ?? Math.max(20, window.innerHeight / 2 - 340) 
   });
 
   // Update position if opened from a new location (e.g. clicking a different bubble)
@@ -72,7 +76,12 @@ export function DraggableModal({
     <div 
       className="draggable-modal" 
       ref={modalRef}
-      style={{ left: `${position.x}px`, top: `${position.y}px` }}
+      style={{ 
+        left: `${position.x}px`, 
+        top: `${position.y}px`,
+        width: width || undefined,
+        maxHeight: maxHeight || undefined,
+      }}
     >
       <div 
         className="draggable-modal__header"
@@ -82,13 +91,15 @@ export function DraggableModal({
       >
         <div className="draggable-modal__title">{title}</div>
         <div className="draggable-modal__actions">
-          <button 
-            className="draggable-modal__btn" 
-            onClick={(e) => { e.stopPropagation(); onMinimize(position.x, position.y); }}
-            title="Minimize to Bubble"
-          >
-            <Minus size={14}/>
-          </button>
+          {onMinimize && (
+            <button 
+              className="draggable-modal__btn" 
+              onClick={(e) => { e.stopPropagation(); onMinimize(position.x, position.y); }}
+              title="Minimize to Bubble"
+            >
+              <Minus size={14}/>
+            </button>
+          )}
           <button 
             className="draggable-modal__btn" 
             onClick={(e) => { e.stopPropagation(); onClose(); }}

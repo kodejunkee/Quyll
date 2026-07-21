@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { useLayoutStore, EntityModalData } from '@/store/layoutStore';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
-import { relationshipService } from '@/services/relationshipService';
 import { DraggableModal } from '../DraggableModal/DraggableModal';
 import { getImageUrl, getImageById } from '@/services/imageService';
-import { EntityType } from '@/types/common';
+import { CharacterDetailCard } from '@/features/characters/components/CharacterDetailCard';
 import './EntityDetailsModal.css';
 
 function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) {
@@ -68,37 +67,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
     return () => { isMounted = false; };
   }, [modalData.entityId, modalData.entityType, db, projectId, projectPath]);
 
-  const handleClose = async () => {
-    if (db && projectId) {
-      // Find if this entity has a pinned bubble
-      const bubbles = await relationshipService.getPinnedReferences(db, projectId);
-      const existing = bubbles.find(b => b.entity_id === modalData.entityId);
-      if (existing) {
-        // If it exists and user pressed X, unpin it!
-        await relationshipService.unpinReference(db, existing.id);
-      }
-    }
-    closeEntityModal(modalData.entityId);
-  };
-
-  const handleMinimize = async (posX: number, posY: number) => {
-    if (db && projectId) {
-      const bubbles = await relationshipService.getPinnedReferences(db, projectId);
-      const existing = bubbles.find(b => b.entity_id === modalData.entityId);
-      
-      if (existing) {
-        await relationshipService.updatePinnedPosition(db, existing.id, posX, posY);
-      } else {
-        await relationshipService.pinReference(
-          db, 
-          projectId, 
-          modalData.entityType as EntityType, 
-          modalData.entityId, 
-          posX, 
-          posY
-        );
-      }
-    }
+  const handleClose = () => {
     closeEntityModal(modalData.entityId);
   };
 
@@ -134,6 +103,8 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
     });
   };
 
+  const isCharacter = modalData.entityType === 'character';
+
   return (
     <div 
       onPointerDown={() => bringToFront(modalData.entityId)}
@@ -142,11 +113,14 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
       <DraggableModal
         title={title}
         onClose={handleClose}
-        onMinimize={handleMinimize}
         initialX={modalData.initialX}
         initialY={modalData.initialY}
+        width={isCharacter ? '760px' : '480px'}
+        maxHeight={isCharacter ? '86vh' : '80vh'}
       >
-        {loading ? (
+        {isCharacter ? (
+          <CharacterDetailCard characterId={modalData.entityId} onClose={handleClose} />
+        ) : loading ? (
           <div className="entity-details-modal__loading">Loading details...</div>
         ) : (
           <div className="entity-details-modal__body">

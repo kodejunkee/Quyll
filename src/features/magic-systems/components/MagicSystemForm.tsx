@@ -16,7 +16,7 @@ export function MagicSystemForm({ defaultValues, onSubmit, onCancel, submitLabel
       <TextArea label="Rules" placeholder="How does it work..." rows={3} {...register('rules')} />
       <TextArea label="Limitations" placeholder="What are the limits..." rows={2} {...register('limitations')} />
       <Input label="Energy Source" placeholder="What powers it" {...register('energy_source')} />
-      <TextArea label="Examples" placeholder="Notable examples..." rows={2} {...register('examples')} />
+      <TextArea label="Notes" placeholder="Additional notes..." rows={2} {...register('examples')} />
       <div className="entity-form__actions">
         <Button variant="secondary" type="button" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" type="submit" loading={isSubmitting}>{submitLabel}</Button>

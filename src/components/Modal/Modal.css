@@ -7,7 +7,7 @@
   padding: 0;
   max-height: 85vh;
   margin: 10vh auto auto auto;
-  overflow: hidden;
+  overflow: visible;
   animation: scaleIn var(--transition-normal);
 }
 
@@ -26,6 +26,8 @@
   display: flex;
   flex-direction: column;
   max-height: 85vh;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
 .modal__header {

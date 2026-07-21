@@ -34,8 +34,8 @@ export function useChapters() {
   );
 
   const updateContent = useCallback(
-    (id: string, content: string, wordCount: number, readingTime: number) =>
-      chapterService.updateContent(db, id, content, wordCount, readingTime),
+    (id: string, content: string, wordCount: number, readingTime: number, updatedAt?: string) =>
+      chapterService.updateContent(db, id, content, wordCount, readingTime, updatedAt),
     [db],
   );
 

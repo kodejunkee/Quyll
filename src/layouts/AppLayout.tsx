@@ -16,7 +16,7 @@ import './AppLayout.css';
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
-  const { currentProject } = useProjectStore();
+  const { currentProject, projects } = useProjectStore();
   const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
   const { notify } = useNotification();
@@ -56,7 +56,7 @@ export function AppLayout() {
             <span className="app-global-header__title">Quyll</span>
             <span className="app-global-header__divider">/</span>
             <span className="app-global-header__project">
-              Project - {currentProject?.name || 'The Silver Atlas'}
+              {currentProject?.name || projects.find((p) => p.id === projectId)?.name || 'Untitled Project'}
             </span>
           </div>
 
@@ -67,7 +67,7 @@ export function AppLayout() {
           <div className="app-global-header__actions">
             <button
               className="app-global-header__ai-btn"
-              onClick={() => notify('AI Assistant feature coming soon in Antigravity 2.0', 'info')}
+              onClick={() => notify('AI Assistant feature is coming soon to Quyll!', 'info')}
               title="AI Assistant"
             >
               <Bot size={15} className="app-global-header__ai-icon" />

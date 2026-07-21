@@ -46,7 +46,7 @@ export async function select<T>(
 export async function closeDatabase(path: string): Promise<void> {
   const db = connections.get(path);
   if (db) {
-    await db.close();
+    await db.close(path);
     connections.delete(path);
   }
 }
@@ -54,7 +54,7 @@ export async function closeDatabase(path: string): Promise<void> {
 /** Close every open connection. */
 export async function closeAll(): Promise<void> {
   for (const [path, db] of connections) {
-    await db.close();
+    await db.close(path);
     connections.delete(path);
   }
 }

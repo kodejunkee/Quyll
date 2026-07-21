@@ -1,0 +1,110 @@
+.global-settings-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.global-settings-modal__tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: var(--space-3);
+  overflow-x: auto;
+}
+
+.global-settings-modal__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.global-settings-modal__tab:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+
+.global-settings-modal__tab--active {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.global-settings-modal__body {
+  min-height: 200px;
+  animation: fadeIn 0.18s ease;
+}
+
+.global-settings-modal__section {
+  display: flex;
+  flex-direction: column;
+}
+
+.global-settings-modal__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) 0;
+  gap: var(--space-4);
+}
+
+.global-settings-modal__row + .global-settings-modal__row {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.global-settings-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.global-settings-modal__label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.global-settings-modal__desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.global-settings-modal__ai-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  margin-top: var(--space-2);
+}
+
+.global-settings-modal__ai-icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+}
+
+.global-settings-modal__ai-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.global-settings-modal__ai-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}

@@ -32,12 +32,15 @@ export const chapterService = {
     content: string,
     wordCount: number,
     readingTime: number,
-  ): Promise<void> {
+    updatedAt?: string,
+  ): Promise<string> {
+    const now = updatedAt ?? new Date().toISOString();
     await execute(
       db,
-      `UPDATE chapters SET content = $1, word_count = $2, reading_time = $3, updated_at = datetime('now') WHERE id = $4`,
-      [content, wordCount, readingTime, id],
+      `UPDATE chapters SET content = $1, word_count = $2, reading_time = $3, updated_at = $4 WHERE id = $5`,
+      [content, wordCount, readingTime, now, id],
     );
+    return now;
   },
 
   /** Get the next chapter number for a project. */

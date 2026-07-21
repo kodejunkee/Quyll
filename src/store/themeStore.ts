@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Theme = 'dark' | 'light' | 'oceans-blue';
+export type Theme = 'dark' | 'light' | 'oceans-blue' | 'midnight-violet';
 export type Accent = 'blue' | 'pink' | 'green' | 'grey' | 'white' | 'fire' | 'apple' | 'yellow';
 
 interface ThemeState {

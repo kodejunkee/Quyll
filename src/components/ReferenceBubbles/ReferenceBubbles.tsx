@@ -6,6 +6,7 @@ import type { PinnedReference } from '@/types/database';
 import { select } from '@/database/databaseService';
 import { getImageById, getImageUrl } from '@/services/imageService';
 import { useLayoutStore } from '@/store/layoutStore';
+import { CompactReferenceModal } from './CompactReferenceModal';
 import './ReferenceBubbles.css';
 
 interface BubbleState extends PinnedReference {
@@ -28,8 +29,12 @@ const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
 export function ReferenceBubbles() {
   const { db, projectId, projectPath } = useProjectDb();
   const [bubbles, setBubbles] = useState<BubbleState[]>([]);
+  const [activeBubbleModals, setActiveBubbleModals] = useState<
+    { id: string; entityId: string; entityType: string; x: number; y: number }[]
+  >([]);
   const { activeEntityModals, openEntityModal } = useLayoutStore();
   const draggingRef = useRef<{ id: string; startX: number; startY: number; initPosX: number; initPosY: number } | null>(null);
+  const skipNextClickRef = useRef(false);
 
   const loadBubbles = async () => {
     if (!db || !projectId) return;
@@ -77,8 +82,24 @@ export function ReferenceBubbles() {
     return () => clearInterval(interval);
   }, [db, projectId, projectPath]);
 
+  // Listen for keyword clicks requesting a compact modal
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      const { entityId, entityType, x, y } = detail;
+      setActiveBubbleModals(prev => {
+        if (prev.some(m => m.entityId === entityId)) return prev;
+        return [...prev, { id: `kw-${entityId}`, entityId, entityType, x, y }];
+      });
+    };
+    window.addEventListener('open-compact-modal', handler);
+    return () => window.removeEventListener('open-compact-modal', handler);
+  }, []);
+
   const handlePointerDown = (e: React.PointerEvent, bubble: PinnedReference) => {
     if (e.button !== 0) return; // Only left click
+    if ((e.target as HTMLElement).closest('button')) return; // Ignore clicks on close button
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
     draggingRef.current = {
@@ -103,6 +124,7 @@ export function ReferenceBubbles() {
   };
 
   const handlePointerUp = async (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return; // Ignore clicks on close button
     if (!draggingRef.current) return;
     const { id } = draggingRef.current;
     
@@ -114,10 +136,25 @@ export function ReferenceBubbles() {
       await relationshipService.updatePinnedPosition(db, id, bubble.position_x, bubble.position_y);
     }
     
-    // If it was just a click (no drag), open modal
-    if (Math.abs(e.clientX - draggingRef.current.startX) < 5 && Math.abs(e.clientY - draggingRef.current.startY) < 5) {
+    // If it was just a click (no drag), open compact view-only modal
+    // But skip if the close button was clicked
+    if (skipNextClickRef.current) {
+      skipNextClickRef.current = false;
+    } else if (Math.abs(e.clientX - draggingRef.current.startX) < 5 && Math.abs(e.clientY - draggingRef.current.startY) < 5) {
       if (bubble) {
-        openEntityModal(bubble.entity_id, bubble.entity_type, bubble.position_x, bubble.position_y);
+        setActiveBubbleModals(prev => {
+          if (prev.some(m => m.entityId === bubble.entity_id)) return prev;
+          return [
+            ...prev,
+            {
+              id: bubble.id,
+              entityId: bubble.entity_id,
+              entityType: bubble.entity_type,
+              x: bubble.position_x,
+              y: bubble.position_y,
+            },
+          ];
+        });
       }
     }
     
@@ -126,6 +163,8 @@ export function ReferenceBubbles() {
 
   const handleUnpin = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    e.preventDefault();
+    skipNextClickRef.current = true;
     if (db) {
       await relationshipService.unpinReference(db, id);
       await loadBubbles();
@@ -135,8 +174,11 @@ export function ReferenceBubbles() {
   return (
     <div className="reference-bubbles">
       {bubbles.map(bubble => {
-        // If this bubble is currently open as a modal, hide the bubble
-        if (activeEntityModals.some(m => m.entityId === bubble.entity_id)) {
+        // If this bubble is currently open as a full modal or compact modal, hide the bubble
+        if (
+          activeEntityModals.some(m => m.entityId === bubble.entity_id) ||
+          activeBubbleModals.some(m => m.entityId === bubble.entity_id)
+        ) {
           return null;
         }
 
@@ -162,10 +204,49 @@ export function ReferenceBubbles() {
               </span>
               <span className="reference-bubble__label">{bubble.entityName || bubble.entity_type.replace('_', ' ')}</span>
             </div>
-            <button className="reference-bubble__close" onClick={(e) => handleUnpin(e, bubble.id)}>×</button>
+            <button 
+              className="reference-bubble__close" 
+              onPointerDown={(e) => e.stopPropagation()} 
+              onPointerUp={(e) => e.stopPropagation()} 
+              onClick={(e) => handleUnpin(e, bubble.id)}
+            >
+              ×
+            </button>
           </div>
         );
       })}
+
+      {activeBubbleModals.map(modal => (
+        <CompactReferenceModal
+          key={modal.entityId}
+          bubbleId={modal.id}
+          entityId={modal.entityId}
+          entityType={modal.entityType}
+          initialX={modal.x}
+          initialY={modal.y}
+          onClose={async () => {
+            // X on compact modal = close completely and unpin from DB
+            if (db) {
+              const pinned = await relationshipService.getPinnedReferences(db, projectId);
+              const match = pinned.find(b => b.entity_id === modal.entityId);
+              if (match) {
+                await relationshipService.unpinReference(db, match.id);
+              }
+            }
+            setActiveBubbleModals(prev => prev.filter(m => m.entityId !== modal.entityId));
+            await loadBubbles();
+          }}
+          onMinimize={async () => {
+            // Minimize button (-) = collapse into reference bubble without unpinning
+            setActiveBubbleModals(prev => prev.filter(m => m.entityId !== modal.entityId));
+            await loadBubbles();
+          }}
+          onOpenFull={() => {
+            setActiveBubbleModals(prev => prev.filter(m => m.entityId !== modal.entityId));
+            openEntityModal(modal.entityId, modal.entityType, modal.x, modal.y);
+          }}
+        />
+      ))}
     </div>
   );
 }

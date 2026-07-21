@@ -11,7 +11,6 @@ import {
   ScrollText,
   Clock,
   GitBranch,
-  Settings,
   PanelLeft,
   PanelLeftClose,
   Home,
@@ -70,6 +69,25 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
         {NAV_SECTIONS.map((section) => (
           <div key={section.title} className="nav-sidebar__section">
             {!collapsed && <div className="nav-sidebar__section-title">{section.title}</div>}
+            
+            {section.title === 'NAVIGATION' && (
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
+                }
+                title={collapsed ? 'Home' : undefined}
+                end
+              >
+                <Home
+                  size={18}
+                  className="nav-sidebar__link-icon"
+                  style={{ color: 'var(--color-icon-home)' }}
+                />
+                {!collapsed && <span className="nav-sidebar__link-label">Home</span>}
+              </NavLink>
+            )}
+
             {section.items.map(({ path, label, icon: Icon, colorKey }) => (
               <NavLink
                 key={path}
@@ -119,35 +137,6 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
               style={{ color: 'var(--color-icon-trash)' }}
             />
             {!collapsed && <span className="nav-sidebar__link-label">Trash Bin</span>}
-          </NavLink>
-          <NavLink
-            to={`/project/${projectId}/settings`}
-            className={({ isActive }) =>
-              `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-            }
-            title={collapsed ? 'Settings' : undefined}
-          >
-            <Settings
-              size={18}
-              className="nav-sidebar__link-icon"
-              style={{ color: 'var(--color-icon-settings)' }}
-            />
-            {!collapsed && <span className="nav-sidebar__link-label">Settings</span>}
-          </NavLink>
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-            }
-            title={collapsed ? 'Home' : undefined}
-            end
-          >
-            <Home
-              size={18}
-              className="nav-sidebar__link-icon"
-              style={{ color: 'var(--color-icon-home)' }}
-            />
-            {!collapsed && <span className="nav-sidebar__link-label">Home</span>}
           </NavLink>
         </div>
       </div>

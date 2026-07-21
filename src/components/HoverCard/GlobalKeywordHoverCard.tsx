@@ -3,7 +3,6 @@ import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import { relationshipService } from '@/services/relationshipService';
 import { EntityType } from '@/types/common';
-import { useLayoutStore } from '@/store/layoutStore';
 import './GlobalKeywordHoverCard.css';
 
 interface HoverState {
@@ -22,7 +21,6 @@ interface EntityData {
 
 export function GlobalKeywordHoverCard() {
   const { db, projectId } = useProjectDb();
-  const { openEntityModal } = useLayoutStore();
   const [hoverState, setHoverState] = useState<HoverState | null>(null);
   const [entityData, setEntityData] = useState<EntityData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -110,7 +108,9 @@ export function GlobalKeywordHoverCard() {
               const firstRow = rows[0];
               if (firstRow) {
                  const rect = keywordEl.getBoundingClientRect();
-                 openEntityModal(firstRow.entity_id, entityType, rect.left + rect.width / 2, rect.top + 20);
+                 window.dispatchEvent(new CustomEvent('open-compact-modal', {
+                   detail: { entityId: firstRow.entity_id, entityType, x: rect.left + rect.width / 2, y: rect.top + 20 }
+                 }));
                  setHoverState(null);
                  if (showTimerRef.current) window.clearTimeout(showTimerRef.current);
                  if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
@@ -131,7 +131,7 @@ export function GlobalKeywordHoverCard() {
       if (showTimerRef.current) window.clearTimeout(showTimerRef.current);
       if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
     };
-  }, [db, openEntityModal]);
+  }, [db]);
 
   // Fetch entity data when hoverState changes
   useEffect(() => {
@@ -200,7 +200,9 @@ export function GlobalKeywordHoverCard() {
           const firstRow = rows[0];
           if (firstRow) {
              const rect = hoverState.rect;
-             openEntityModal(firstRow.entity_id, hoverState.entityType, rect.left + rect.width / 2, rect.top + 20);
+             window.dispatchEvent(new CustomEvent('open-compact-modal', {
+               detail: { entityId: firstRow.entity_id, entityType: hoverState.entityType, x: rect.left + rect.width / 2, y: rect.top + 20 }
+             }));
              setHoverState(null);
           }
         });

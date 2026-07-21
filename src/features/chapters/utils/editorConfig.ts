@@ -3,6 +3,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { KeywordNode } from '../components/KeywordNode';
+import { htmlToLexicalJson } from '@/services/htmlToMarkdown';
 
 /**
  * Lexical theme mapping — maps Lexical element types to BEM CSS classes.
@@ -39,14 +40,24 @@ function onError(error: Error): void {
 
 /**
  * Create the initial Lexical editor configuration.
- * Optionally accepts a serialized editor state string to restore content.
+ * Automatically sanitizes and converts legacy/HTML content to valid Lexical JSON.
  */
 export function createEditorConfig(initialState?: string | null): InitialConfigType {
+  let safeState: string | undefined = undefined;
+  if (initialState && initialState.trim()) {
+    const trimmed = initialState.trim();
+    if (trimmed.startsWith('{')) {
+      safeState = trimmed;
+    } else {
+      safeState = htmlToLexicalJson(initialState);
+    }
+  }
+
   return {
     namespace: 'QuyllEditor',
     theme: editorTheme,
     nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, HorizontalRuleNode, KeywordNode],
     onError,
-    editorState: initialState || undefined,
+    editorState: safeState,
   };
 }

@@ -12,13 +12,30 @@ export function OrganizationForm({ defaultValues, onSubmit, onCancel, submitLabe
     resolver: zodResolver(organizationSchema),
     defaultValues: { name: '', type: '', description: '', leader: '', purpose: '', structure: '', history: '', notes: '', ...defaultValues },
   });
+
+  const currentType = watch('type');
+  const isCustomType = currentType === 'Other' || (Boolean(currentType) && !ORG_TYPES.includes(currentType as any));
+
   return (
     <form className="entity-form" onSubmit={handleSubmit(onSubmit)}>
       <div className="form-row" style={{marginBottom: '1rem'}}>
         <Checkbox label="Enable Keyword" hint="When enabled, this entity will be highlighted in chapters and timeline events." {...register('keyword_enabled')} />
       </div>
       <Input label="Name" placeholder="Organization name" error={errors.name?.message} required {...register('name')} />
-      <Dropdown label="Type" value={watch('type')} options={ORG_TYPES.map(t => ({ label: t, value: t }))} onChange={v => setValue('type', v)} />
+      <Dropdown
+        label="Type"
+        value={isCustomType ? 'Other' : currentType}
+        options={ORG_TYPES.map(t => ({ label: t, value: t }))}
+        onChange={v => setValue('type', v === 'Other' ? 'Other' : v)}
+      />
+      {isCustomType && (
+        <Input
+          label="Custom Type"
+          placeholder="Enter custom organization type (e.g. Order, Syndicate, Council)..."
+          value={currentType === 'Other' ? '' : currentType}
+          onChange={(e) => setValue('type', e.target.value || 'Other')}
+        />
+      )}
       <Input label="Leader" placeholder="Leader name" {...register('leader')} />
       <TextArea label="Description" placeholder="Describe this organization..." rows={3} {...register('description')} />
       <TextArea label="Purpose" placeholder="What is its purpose..." rows={2} {...register('purpose')} />
