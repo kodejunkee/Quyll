@@ -12,7 +12,7 @@ import { itemService } from '@/features/items/services/itemService';
 import { worldSystemService } from '@/features/world-systems/services/worldSystemService';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { REFRESH_KEYWORDS_COMMAND } from './KeywordPlugin';
-import type { EntityType } from '@/types/common';
+import { EntityType } from '@/types/common';
 import './QuickEntityCreateModal.css';
 
 interface QuickEntityCreateModalProps {
@@ -26,7 +26,7 @@ export function QuickEntityCreateModal({ open, onClose, initialName }: QuickEnti
   const { db, projectId } = useProjectDb();
   
   const [name, setName] = useState(initialName);
-  const [entityType, setEntityType] = useState<EntityType | 'world_system'>('character');
+  const [entityType, setEntityType] = useState<EntityType>(EntityType.Character);
   const [shortDescription, setShortDescription] = useState('');
   const [keywordEnabled, setKeywordEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +34,7 @@ export function QuickEntityCreateModal({ open, onClose, initialName }: QuickEnti
   useEffect(() => {
     if (open) {
       setName(initialName);
-      setEntityType('character');
+      setEntityType(EntityType.Character);
       setShortDescription('');
       setKeywordEnabled(true);
       setSubmitting(false);
@@ -54,22 +54,22 @@ export function QuickEntityCreateModal({ open, onClose, initialName }: QuickEnti
       };
 
       switch (entityType) {
-        case 'character':
+        case EntityType.Character:
           await characterService.create(db, projectId, data);
           break;
-        case 'location':
+        case EntityType.Location:
           await locationService.create(db, projectId, data);
           break;
-        case 'organization':
+        case EntityType.Organization:
           await organizationService.create(db, projectId, data);
           break;
-        case 'species':
+        case EntityType.Species:
           await speciesService.create(db, projectId, data);
           break;
-        case 'item':
+        case EntityType.Item:
           await itemService.create(db, projectId, data);
           break;
-        case 'world_system':
+        case EntityType.WorldSystem:
           await worldSystemService.create(db, projectId, data);
           break;
       }
@@ -108,14 +108,14 @@ export function QuickEntityCreateModal({ open, onClose, initialName }: QuickEnti
             <select
               className="quick-entity-form__select"
               value={entityType}
-              onChange={(e) => setEntityType(e.target.value as EntityType | 'world_system')}
+              onChange={(e) => setEntityType(e.target.value as EntityType)}
             >
-              <option value="character">Character</option>
-              <option value="location">Location</option>
-              <option value="organization">Organization</option>
-              <option value="species">Species</option>
-              <option value="item">Item</option>
-              <option value="world_system">World System</option>
+              <option value={EntityType.Character}>Character</option>
+              <option value={EntityType.Location}>Location</option>
+              <option value={EntityType.Organization}>Organization</option>
+              <option value={EntityType.Species}>Species</option>
+              <option value={EntityType.Item}>Item</option>
+              <option value={EntityType.WorldSystem}>World System</option>
             </select>
           </div>
 

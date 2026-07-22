@@ -8,6 +8,8 @@ import type Database from '@tauri-apps/plugin-sql';
 import { openProjectDatabase } from '@/database/projectDatabase';
 import { initAppDatabase, listProjects, touchProject } from '@/database';
 import { useProjectStore } from '@/store/projectStore';
+import { Project } from '@/types/database';
+import type { UUID, Timestamp } from '@/types/common';
 import { Button, LoadingSkeleton } from '@/components';
 
 interface ProjectDbContextValue {
@@ -53,15 +55,15 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
             await initAppDatabase();
             const rows = await listProjects();
             currentProjects = rows.map((r) => ({
-              id: r.id,
+              id: r.id as UUID,
               name: r.name,
               path: r.path,
               description: r.description ?? '',
               author: r.author ?? '',
               genre: r.genre ?? '',
-              last_opened_at: r.last_opened_at,
-              created_at: r.created_at,
-              updated_at: r.updated_at,
+              last_opened_at: (r.last_opened_at as Timestamp) ?? null,
+              created_at: (r.created_at as Timestamp) ?? (new Date().toISOString() as Timestamp),
+              updated_at: (r.updated_at as Timestamp) ?? (new Date().toISOString() as Timestamp),
             }));
             if (!cancelled) setProjects(currentProjects);
           } catch (listErr) {
@@ -82,18 +84,18 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
           const meta = metaRows[0];
           if (meta) {
             setCurrentProject({
-              id: meta.id || projectId,
+              id: (meta.id || projectId) as UUID,
               name: meta.title || activeProj?.name || 'Untitled Project',
               path: resolvedPath,
               description: meta.description || activeProj?.description || '',
               author: meta.author || activeProj?.author || '',
               genre: meta.genre || activeProj?.genre || '',
-              last_opened_at: new Date().toISOString(),
-              created_at: activeProj?.created_at || new Date().toISOString(),
-              updated_at: activeProj?.updated_at || new Date().toISOString(),
+              last_opened_at: new Date().toISOString() as Timestamp,
+              created_at: (activeProj?.created_at || new Date().toISOString()) as Timestamp,
+              updated_at: (activeProj?.updated_at || new Date().toISOString()) as Timestamp,
             });
           } else if (activeProj) {
-            setCurrentProject({ ...activeProj, last_opened_at: new Date().toISOString() });
+            setCurrentProject({ ...activeProj, last_opened_at: new Date().toISOString() as Timestamp });
           }
         } catch (metaErr) {
           console.error('[ProjectDbProvider] Failed to fetch project_meta:', metaErr);

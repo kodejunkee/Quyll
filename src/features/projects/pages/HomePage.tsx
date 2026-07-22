@@ -146,7 +146,7 @@ function getBookTheme(index: number, genre?: string) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { projects, setProjects, deletedProjects, removeProject } = useProjectStore();
+  const { projects, setProjects, deletedProjects } = useProjectStore();
   const [statsMap, setStatsMap] = useState<Record<string, ProjectStats>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<'active' | 'trash'>('active');

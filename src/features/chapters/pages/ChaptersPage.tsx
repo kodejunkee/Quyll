@@ -204,7 +204,7 @@ export default function ChaptersPage() {
   } | null>(null);
 
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => {
+    ({ nextLocation }) => {
       // If we are leaving the project entirely (e.g. going to / or another project)
       const leavingProject = !nextLocation.pathname.startsWith(`/project/${projectId}`);
       return saveStatus === 'unsaved' && leavingProject;
