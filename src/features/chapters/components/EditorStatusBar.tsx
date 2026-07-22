@@ -9,6 +9,7 @@ interface EditorStatusBarProps {
   characterCount: number;
   paragraphCount: number;
   readingTime: number;
+  pageCount: number;
   saveStatus: SaveStatus;
   lastSavedAt: string | null;
   onGrammarCheck?: () => void;
@@ -18,6 +19,7 @@ export function EditorStatusBar({
   wordCount,
   characterCount,
   readingTime,
+  pageCount,
   saveStatus,
   onGrammarCheck,
 }: EditorStatusBarProps) {
@@ -35,6 +37,10 @@ export function EditorStatusBar({
         <span className="editor-status-bar__stat">
           <span className="editor-status-bar__label">Read: </span>
           <strong className="editor-status-bar__value">{formatReadingTime(readingTime)}</strong>
+        </span>
+        <span className="editor-status-bar__stat">
+          <span className="editor-status-bar__label">Pages: </span>
+          <strong className="editor-status-bar__value">{pageCount}</strong>
         </span>
         <span className="editor-status-bar__cloud" title={`Save status: ${saveStatus}`}>
           {saveStatus === 'unsaved' ? (

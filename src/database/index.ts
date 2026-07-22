@@ -5,9 +5,14 @@ export {
   initAppDatabase,
   registerProject,
   listProjects,
+  listDeletedProjects,
   touchProject,
   renameProject,
   unregisterProject,
+  softDeleteProject,
+  restoreProject,
+  hardDeleteProject,
+  autoDeleteOldProjects,
   getProject,
 } from './appDatabase';
 export {

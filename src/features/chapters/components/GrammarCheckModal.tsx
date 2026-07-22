@@ -1,4 +1,4 @@
-import { Modal, Button } from '@/components';
+import { Button } from '@/components';
 import { type GrammarIssue } from '@/services/grammarService';
 import { Wand2, CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X } from 'lucide-react';
 import './GrammarCheckModal.css';
@@ -47,15 +47,20 @@ export function GrammarCheckModal({
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onClose={onClose}
-      title="Grammar Check"
-      description={`Checking ${isSelection ? 'highlighted selection' : 'entire chapter'} (Drag header to move)`}
-      size="lg"
-      draggable={true}
-    >
-      <div className="grammar-panel__content">
+    <div className="grammar-docked-container">
+      <div className="grammar-docked-panel">
+        <div className="grammar-docked__topbar">
+          <div className="grammar-docked__title">
+            <Wand2 size={16} />
+            Grammar Check
+          </div>
+          <div className="grammar-docked__topbar-actions">
+            <button type="button" className="grammar-docked__close-btn" onClick={onClose} aria-label="Close">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="grammar-panel__content grammar-panel__content--docked">
         <div className="grammar-modal__header-bar">
           <span className="grammar-modal__count-badge">
             <Wand2 size={14} />
@@ -136,6 +141,7 @@ export function GrammarCheckModal({
           </Button>
         </div>
       </div>
-    </Modal>
+      </div>
+    </div>
   );
 }

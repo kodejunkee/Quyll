@@ -5,6 +5,7 @@ import { characterSchema, CHARACTER_STATUSES, type CharacterFormData } from '../
 import { Input, TextArea, Button, Checkbox } from '@/components';
 import { Dropdown } from '@/components/Dropdown';
 import './CharacterForm.css';
+import '@/styles/redesign.css';
 
 interface CharacterFormProps {
   defaultValues?: Partial<CharacterFormData>;
@@ -90,13 +91,9 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
       <div className="character-form__grid">
         {activeTab === 'identity' && (
           <div className="character-form__section animate-fade-in">
-            <h3 className="character-form__section-title">Basic Info</h3>
-            <div className="form-row" style={{ marginBottom: 'var(--space-2)' }}>
-              <Checkbox 
-                label="Enable Keyword" 
-                hint="When enabled, this entity will be highlighted in chapters and timeline events."
-                {...register('keyword_enabled')} 
-              />
+            <div className="character-form__section-heading">
+              <h3 className="character-form__section-title">Basic identity</h3>
+              <p>How this character appears throughout your world.</p>
             </div>
             <Input label="Name" placeholder="Character name" error={errors.name?.message} required {...register('name')} />
             <Input label="Aliases" placeholder="Known aliases" error={errors.aliases?.message} {...register('aliases')} />
@@ -131,6 +128,13 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
               options={CHARACTER_STATUSES.map((s) => ({ label: s, value: s }))}
               onChange={(val) => setValue('status', val as CharacterFormData['status'])}
             />
+            <div className="character-form__keyword-setting">
+              <Checkbox
+                label="Highlight this character"
+                hint="Show this character as a linked keyword in chapters and timeline entries."
+                {...register('keyword_enabled')}
+              />
+            </div>
           </div>
         )}
 

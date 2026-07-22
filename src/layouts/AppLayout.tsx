@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useParams, useLocation } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useProjectStore } from '@/store/projectStore';
 import { ProjectDbProvider } from '@/hooks/useProjectDb';
@@ -11,8 +12,20 @@ import { EntityDetailsModal } from '@/components/EntityDetailsModal';
 import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import { useNotification } from '@/components/Notification';
 import { ProjectSettingsModal } from '@/features/settings/components';
+import { ThemeToggle, LoadingSkeleton } from '@/components';
 import { Feather, Bot, Settings } from 'lucide-react';
 import './AppLayout.css';
+import '@/styles/redesign.css';
+
+const ChaptersPage = lazy(() => import('@/features/chapters/pages/ChaptersPage'));
+
+function SuspenseWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem' }}><LoadingSkeleton variant="card" /></div>}>
+      {children}
+    </Suspense>
+  );
+}
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
@@ -74,6 +87,7 @@ export function AppLayout() {
               <span className="app-global-header__ai-label">AI Assistant</span>
               <span className="app-global-header__ai-badge">Coming Soon</span>
             </button>
+            <ThemeToggle />
             <button
               className="app-global-header__settings-btn"
               onClick={() => setIsSettingsModalOpen(true)}
@@ -89,7 +103,12 @@ export function AppLayout() {
         >
           <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
           <main className="app-layout__main">
-            <Outlet />
+            <div style={{ display: isWritingWorkspace ? 'block' : 'none', height: '100%' }}>
+              <SuspenseWrap>
+                <ChaptersPage />
+              </SuspenseWrap>
+            </div>
+            {!isWritingWorkspace && <Outlet />}
           </main>
           {!isWritingWorkspace && (
             <InspectorPanel collapsed={inspectorCollapsed} onToggle={toggleInspector} />

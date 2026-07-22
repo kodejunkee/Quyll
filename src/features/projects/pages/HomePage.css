@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
 
 .home-page {
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   background-color: var(--color-bg, #0A0910);
   background-image: var(--home-bg-image, none);
   color: var(--color-text, #F3F4F6);
-  padding: 20px 36px;
+  padding: 0 36px 20px 36px;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
@@ -24,7 +25,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-bg, #0A0910);
+  padding: 20px 0 14px 0;
 }
 
 .home-nav__left {
@@ -799,6 +805,7 @@
   gap: 8px;
   margin-top: 48px;
   padding-top: 24px;
+  padding-bottom: 15px;
   color: var(--color-text-tertiary, #6B7280);
   font-size: 0.8rem;
 }
@@ -846,4 +853,65 @@
     flex-wrap: wrap;
     gap: 20px;
   }
+}
+
+.home-trash-notice {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #9CA3AF);
+  background-color: var(--color-bg-hover, #161824);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--color-warning, #F59E0B);
+}
+
+/* Tabs */
+.home-tabs-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  background: var(--color-bg-surface, #11121A);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+  width: fit-content;
+}
+
+.home-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary, #8B949E);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home-tab:hover {
+  color: var(--color-text, #FFFFFF);
+}
+
+.home-tab.active {
+  background: var(--color-bg-elevated, #1C1E2B);
+  color: var(--color-text, #FFFFFF);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home-tab--trash {
+  color: #FCA5A5; /* Light shade of red */
+}
+
+.home-tab--trash:hover {
+  color: #FECACA;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.home-tab--trash.active {
+  color: #EF4444; /* Brighter red when active */
+  background: rgba(239, 68, 68, 0.15);
 }

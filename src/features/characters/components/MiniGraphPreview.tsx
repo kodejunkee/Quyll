@@ -79,7 +79,7 @@ function MiniGraphPreviewInner({ entityId, db, projectId }: MiniGraphPreviewProp
             { name: 'organizations', col: 'name' },
             { name: 'items', col: 'name' },
             { name: 'species', col: 'name' },
-            { name: 'magic_systems', col: 'name' },
+            { name: 'world_systems', col: 'name' },
             { name: 'lore', col: 'title' },
             { name: 'timeline_events', col: 'title' },
             { name: 'plot_points', col: 'title' },

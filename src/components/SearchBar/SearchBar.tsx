@@ -93,7 +93,7 @@ export function SearchBar({
       case 'organization': route = 'organizations'; break;
       case 'species': route = 'species'; break;
       case 'item': route = 'items'; break;
-      case 'magic_system': route = 'magic-systems'; break;
+      case 'world_system': route = 'world-systems'; break;
       case 'lore': route = 'lore'; break;
       case 'timeline_event': route = 'timeline'; break;
     }

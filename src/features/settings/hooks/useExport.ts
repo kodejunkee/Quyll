@@ -19,7 +19,7 @@ export function useExport() {
   const runExport = useCallback(async () => {
     if (!db || !currentProject) {
       notify('No active project connected or available.', 'error');
-      return;
+      return false;
     }
 
     try {
@@ -35,10 +35,12 @@ export function useExport() {
       if (success) {
         notify('Export completed successfully!', 'success');
       }
+      return success;
     } catch (error) {
       console.error('[useExport] Export failed:', error);
       const message = error instanceof Error ? error.message : 'An error occurred during export.';
       notify(`Failed to export: ${message}`, 'error');
+      return false;
     } finally {
       setIsExporting(false);
     }

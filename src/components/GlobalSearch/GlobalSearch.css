@@ -47,6 +47,14 @@
   width: 100%;
 }
 
+.global-search-bar__input:focus,
+.global-search-bar__input:focus-within,
+.global-search-bar__input:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .global-search-bar__input::placeholder {
   color: var(--color-text-tertiary);
 }

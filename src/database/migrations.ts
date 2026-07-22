@@ -55,6 +55,19 @@ export async function migrateProjectDatabase(db: Database): Promise<void> {
         // Column might already exist
       }
     }
+    if (current < 4) {
+      try {
+        await execute(db, 'ALTER TABLE magic_systems RENAME TO world_systems');
+        await execute(db, 'DROP INDEX IF EXISTS idx_magic_systems_project');
+        await execute(db, 'CREATE INDEX IF NOT EXISTS idx_world_systems_project ON world_systems(project_id)');
+        await execute(db, "UPDATE keywords SET entity_type = 'world_system' WHERE entity_type = 'magic_system'");
+        await execute(db, "UPDATE relationships SET source_type = 'world_system' WHERE source_type = 'magic_system'");
+        await execute(db, "UPDATE relationships SET target_type = 'world_system' WHERE target_type = 'magic_system'");
+        await execute(db, "UPDATE pinned_references SET entity_type = 'world_system' WHERE entity_type = 'magic_system'");
+      } catch (e) {
+        console.error('Failed to run migration to schema v4', e);
+      }
+    }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 }
@@ -63,8 +76,22 @@ export async function migrateProjectDatabase(db: Database): Promise<void> {
 export async function migrateAppDatabase(db: Database): Promise<void> {
   const current = await getSchemaVersion(db);
 
-  if (current < CURRENT_SCHEMA_VERSION) {
+  if (current === 0) {
+    // Fresh install
     await executeDDL(db, APP_TABLES);
+    await recordVersion(db, CURRENT_SCHEMA_VERSION);
+  } else if (current < CURRENT_SCHEMA_VERSION) {
+    // Always run CREATE TABLE IF NOT EXISTS in case new tables are added
+    await executeDDL(db, APP_TABLES);
+
+    if (current < 6) {
+      try {
+        await execute(db, 'ALTER TABLE projects ADD COLUMN deleted_at TEXT');
+      } catch {
+        // Column might already exist
+      }
+    }
+    
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 }

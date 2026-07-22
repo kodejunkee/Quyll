@@ -1,4 +1,5 @@
-import { writeTextFile, writeFile } from '@tauri-apps/plugin-fs';
+import { writeTextFile, writeFile, readFile } from '@tauri-apps/plugin-fs';
+import { appDataDir, join } from '@tauri-apps/api/path';
 import { save } from '@tauri-apps/plugin-dialog';
 import { select } from '@/database/databaseService';
 import { htmlToMarkdown, htmlToPlainText, lexicalJsonToHtml } from './htmlToMarkdown';
@@ -12,12 +13,20 @@ import type {
   Organization,
   Species,
   Item,
-  MagicSystem,
+  WorldSystem,
   PlotPoint,
+  Image,
+  Keyword,
+  Relationship,
+  PinnedReference,
+  Settings,
+  AiPrompt,
+  AiHistory,
+  AiPreference,
 } from '@/types/database';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak, UnderlineType } from 'docx';
 
-export type ExportFormat = 'markdown' | 'text' | 'pdf' | 'docx';
+export type ExportFormat = 'markdown' | 'text' | 'pdf' | 'docx' | 'quyll';
 export type ExportScope =
   | 'project'
   | 'chapter'
@@ -29,7 +38,7 @@ export type ExportScope =
   | 'organizations'
   | 'species'
   | 'items'
-  | 'magic-systems'
+  | 'world-systems'
   | 'plot-points';
 
 export interface ExportOptions {
@@ -61,32 +70,23 @@ export async function exportProject(
 ): Promise<boolean> {
   switch (options.format) {
     case 'markdown': {
-      const destination = await save({
-        defaultPath: `${options.projectName}.md`,
-        filters: [{ name: 'Markdown', extensions: ['md'] }],
-      });
-      if (!destination) return false;
       const content = await buildMarkdownContent(db, projectId, options);
+      const destination = await save({ defaultPath: `${options.projectName}.md`, filters: [{ name: 'Markdown', extensions: ['md'] }] });
+      if (!destination) return false;
       await writeTextFile(destination, content);
       return true;
     }
     case 'text': {
-      const destination = await save({
-        defaultPath: `${options.projectName}.txt`,
-        filters: [{ name: 'Plain Text', extensions: ['txt'] }],
-      });
-      if (!destination) return false;
       const content = await buildPlainTextContent(db, projectId, options);
+      const destination = await save({ defaultPath: `${options.projectName}.txt`, filters: [{ name: 'Plain Text', extensions: ['txt'] }] });
+      if (!destination) return false;
       await writeTextFile(destination, content);
       return true;
     }
     case 'docx': {
-      const destination = await save({
-        defaultPath: `${options.projectName}.docx`,
-        filters: [{ name: 'Word Document', extensions: ['docx'] }],
-      });
-      if (!destination) return false;
       const buffer = await buildDocxDocument(db, projectId, options);
+      const destination = await save({ defaultPath: `${options.projectName}.docx`, filters: [{ name: 'Word Document', extensions: ['docx'] }] });
+      if (!destination) return false;
       await writeFile(destination, new Uint8Array(buffer));
       return true;
     }
@@ -95,9 +95,114 @@ export async function exportProject(
       openPdfPrintDialog(htmlContent, options.projectName);
       return true;
     }
+    case 'quyll': {
+      const content = await buildQuyllExport(db, projectId, options.projectName);
+      const destination = await save({ defaultPath: `${options.projectName}.quyll`, filters: [{ name: 'Quyll Project', extensions: ['quyll'] }] });
+      if (!destination) return false;
+      await writeTextFile(destination, content);
+      return true;
+    }
     default:
       return false;
   }
+}
+
+export interface QuyllExportData {
+  projectName: string;
+  version: number;
+  chapters: Chapter[];
+  characters: Character[];
+  lore: LoreEntry[];
+  timelineEvents: TimelineEvent[];
+  locations: Location[];
+  organizations: Organization[];
+  species: Species[];
+  items: Item[];
+  worldSystems: WorldSystem[];
+  plotPoints: PlotPoint[];
+  images?: Image[];
+  imageFiles?: { path: string; base64: string }[];
+  keywords?: Keyword[];
+  relationships?: Relationship[];
+  pinnedReferences?: PinnedReference[];
+  settings?: Settings[];
+  aiPrompts?: AiPrompt[];
+  aiHistory?: AiHistory[];
+  aiPreferences?: AiPreference[];
+}
+
+export async function buildQuyllExport(
+  db: Database,
+  projectId: string,
+  projectName: string
+): Promise<string> {
+  const chapters = await select<Chapter>(db, 'SELECT * FROM chapters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const characters = await select<Character>(db, 'SELECT * FROM characters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const lore = await select<LoreEntry>(db, 'SELECT * FROM lore WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const timelineEvents = await select<TimelineEvent>(db, 'SELECT * FROM timeline_events WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const locations = await select<Location>(db, 'SELECT * FROM locations WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const organizations = await select<Organization>(db, 'SELECT * FROM organizations WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const species = await select<Species>(db, 'SELECT * FROM species WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const items = await select<Item>(db, 'SELECT * FROM items WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const worldSystems = await select<WorldSystem>(db, 'SELECT * FROM world_systems WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const plotPoints = await select<PlotPoint>(db, 'SELECT * FROM plot_points WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+
+  const images = await select<Image>(db, 'SELECT * FROM images WHERE project_id = $1', [projectId]);
+  const keywords = await select<Keyword>(db, 'SELECT * FROM keywords WHERE project_id = $1', [projectId]);
+  const relationships = await select<Relationship>(db, 'SELECT * FROM relationships WHERE project_id = $1', [projectId]);
+  const pinnedReferences = await select<PinnedReference>(db, 'SELECT * FROM pinned_references WHERE project_id = $1', [projectId]);
+  const settings = await select<Settings>(db, 'SELECT * FROM settings', []);
+  const aiPrompts = await select<AiPrompt>(db, 'SELECT * FROM ai_prompts WHERE project_id = $1', [projectId]);
+  const aiHistory = await select<AiHistory>(db, 'SELECT * FROM ai_history WHERE project_id = $1', [projectId]);
+  const aiPreferences = await select<AiPreference>(db, 'SELECT * FROM ai_preferences WHERE project_id = $1', [projectId]);
+
+  const imageFiles: { path: string; base64: string }[] = [];
+  const appData = await appDataDir();
+  const projectFolder = await join(appData, `projects/${projectId}.quyll`);
+
+  for (const image of images) {
+    try {
+      const fullPath = await join(projectFolder, image.path);
+      const buffer = await readFile(fullPath);
+      
+      let binary = '';
+      const len = buffer.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(buffer[i]!);
+      }
+      imageFiles.push({
+        path: image.path,
+        base64: btoa(binary)
+      });
+    } catch (e) {
+      console.error(`Failed to read image ${image.path}`, e);
+    }
+  }
+
+  const data: QuyllExportData = {
+    projectName,
+    version: 1,
+    chapters,
+    characters,
+    lore,
+    timelineEvents,
+    locations,
+    organizations,
+    species,
+    items,
+    worldSystems,
+    plotPoints,
+    images,
+    imageFiles,
+    keywords,
+    relationships,
+    pinnedReferences,
+    settings,
+    aiPrompts,
+    aiHistory,
+    aiPreferences,
+  };
+  return JSON.stringify(data);
 }
 
 /**
@@ -263,6 +368,8 @@ function addChapterContentToDocx(paragraphs: Paragraph[], content: string) {
             }),
           );
         }
+      } else if (tag === 'hr') {
+        paragraphs.push(new Paragraph({ children: [new PageBreak()] }));
       } else if (tag === 'ul' || tag === 'ol') {
         el.childNodes.forEach(processNodeToDocx);
       } else {
@@ -440,7 +547,7 @@ export function openPdfPrintDialog(html: string, title: string): void {
   if (doc) {
     doc.open();
     doc.write(
-      `<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:serif;line-height:1.6;margin:2in;} h1{page-break-before:always;}</style></head><body>${html}</body></html>`,
+      `<!DOCTYPE html><html><head><title>${title}</title><style>@page{margin:1in}body{font-family:serif;line-height:1.6;margin:0}h1{break-after:avoid}.chapter+.chapter,.entity+.entity{break-before:page}hr{border:0;break-after:page;page-break-after:always}</style></head><body>${html}</body></html>`,
     );
     doc.close();
 
@@ -485,8 +592,8 @@ function getScopeTitle(scope: ExportScope): string {
       return 'Species';
     case 'items':
       return 'Items';
-    case 'magic-systems':
-      return 'Magic Systems';
+    case 'world-systems':
+      return 'World Systems';
     case 'plot-points':
       return 'Plot Points';
   }
@@ -661,16 +768,16 @@ async function getEntitiesForExport(
         ],
       }));
     }
-    case 'magic-systems': {
-      const rows = await select<MagicSystem>(
+    case 'world-systems': {
+      const rows = await select<WorldSystem>(
         db,
-        'SELECT * FROM magic_systems WHERE project_id = $1 AND deleted_at IS NULL ORDER BY name ASC',
+        'SELECT * FROM world_systems WHERE project_id = $1 AND deleted_at IS NULL ORDER BY name ASC',
         [projectId],
       );
       return rows.map((r) => ({
         name: r.name,
         fields: [
-          { label: 'Energy Source', value: r.energy_source },
+          { label: 'Source / Basis', value: r.energy_source },
           { label: 'Description', value: r.description, isLong: true },
           { label: 'Rules', value: r.rules, isLong: true },
           { label: 'Limitations', value: r.limitations, isLong: true },

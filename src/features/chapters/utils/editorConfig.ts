@@ -1,7 +1,7 @@
 import type { InitialConfigType } from '@lexical/react/LexicalComposer';
+import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
-import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { KeywordNode } from '../components/KeywordNode';
 import { htmlToLexicalJson } from '@/services/htmlToMarkdown';
 

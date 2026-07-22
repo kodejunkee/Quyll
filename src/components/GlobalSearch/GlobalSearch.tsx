@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { searchService, SearchResult } from '@/services/searchService';
-import { Search, Loader2, BookOpen, MapPin, Users, Hash, Shield, Box, Sparkles, Book, Clock, Map } from 'lucide-react';
+import { Search, Loader2, BookOpen, MapPin, Users, Hash, Shield, Box, Globe, Book, Clock, Map } from 'lucide-react';
 import './GlobalSearch.css';
 
 export function GlobalSearch() {
@@ -88,7 +88,7 @@ export function GlobalSearch() {
       case 'organization': route = `organizations/${result.id}`; break;
       case 'species': route = `species/${result.id}`; break;
       case 'item': route = `items/${result.id}`; break;
-      case 'magic_system': route = `magic-systems/${result.id}`; break;
+      case 'world_system': route = `world-systems/${result.id}`; break;
       case 'lore': route = `lore/${result.id}`; break;
       case 'timeline_event': route = `timeline/${result.id}`; break;
       case 'plot_point': route = `plot-planner/${result.id}`; break;
@@ -110,7 +110,7 @@ export function GlobalSearch() {
       case 'organization': return <Shield size={16} className="text-purple-500" />;
       case 'species': return <Hash size={16} className="text-teal-500" />;
       case 'item': return <Box size={16} className="text-orange-500" />;
-      case 'magic_system': return <Sparkles size={16} className="text-yellow-500" />;
+      case 'world_system': return <Globe size={16} className="text-yellow-500" />;
       case 'lore': return <Book size={16} className="text-amber-700" />;
       case 'timeline_event': return <Clock size={16} className="text-red-500" />;
       case 'plot_point': return <Map size={16} className="text-pink-500" />;

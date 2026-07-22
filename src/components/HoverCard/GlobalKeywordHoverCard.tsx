@@ -163,7 +163,7 @@ export function GlobalKeywordHoverCard() {
           case 'organization': tableName = 'organizations'; descCol = 'type'; break;
           case 'species': tableName = 'species'; descCol = 'lifespan'; break;
           case 'item': tableName = 'items'; descCol = 'type'; break;
-          case 'magic_system': tableName = 'magic_systems'; descCol = 'origin'; break;
+          case 'world_system': tableName = 'world_systems'; descCol = 'description'; break;
           case 'lore': tableName = 'lore'; descCol = 'category'; break;
           case 'timeline_event': tableName = 'timeline_events'; nameCol = 'title'; descCol = 'date'; break;
         }

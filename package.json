@@ -10,6 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "@hookform/resolvers": "^5.4.0",
     "@lexical/history": "^0.47.0",
     "@lexical/html": "^0.47.0",

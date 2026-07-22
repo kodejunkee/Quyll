@@ -103,7 +103,7 @@ export function TrashPage() {
       
       <div className="trash-page__content">
         <p className="trash-page__notice">
-          Items in the trash are automatically deleted after 90 days.
+          Items in the trash are automatically deleted after 60 days.
         </p>
 
         {loading ? (

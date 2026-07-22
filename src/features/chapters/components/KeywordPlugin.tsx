@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, TextNode, type LexicalEditor } from 'lexical';
+import { $getRoot, TextNode, type LexicalEditor, createCommand, type LexicalCommand, COMMAND_PRIORITY_NORMAL } from 'lexical';
 import { $createKeywordNode, $isKeywordNode, KeywordNode } from './KeywordNode';
 import { keywordService } from '@/services/keywordService';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import type { Keyword } from '@/types/database';
+
+export const REFRESH_KEYWORDS_COMMAND: LexicalCommand<void> = createCommand('REFRESH_KEYWORDS_COMMAND');
 
 export function KeywordPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -31,11 +33,27 @@ export function KeywordPlugin() {
     };
   }, [db, projectId, editor]);
 
+  // Listen for manual keyword refresh command
+  useEffect(() => {
+    return editor.registerCommand(
+      REFRESH_KEYWORDS_COMMAND,
+      () => {
+        if (!db || !projectId) return false;
+        keywordService.list(db, projectId).then((kws) => {
+          keywordsRef.current = kws.sort((a, b) => b.display_name.length - a.display_name.length);
+          scheduleKeywordParse(editor, keywordsRef.current);
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_NORMAL
+    );
+  }, [editor, db, projectId]);
+
   // 2. Listen for editor changes, debounce parsing
   useEffect(() => {
     return editor.registerUpdateListener(({ tags }) => {
       // Avoid looping if the update was triggered by our own parsing
-      if (tags.has('keyword-parse')) return;
+      if (tags.has('history-merge')) return;
 
       if (timeoutRef.current !== null) {
         window.clearTimeout(timeoutRef.current);
@@ -129,6 +147,6 @@ function scheduleKeywordParse(editor: LexicalEditor, keywords: Keyword[]) {
         }
       }
     },
-    { tag: 'keyword-parse' }
+    { tag: 'history-merge' }
   );
 }

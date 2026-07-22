@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Users, MapPin, Building2, Dna, Package, Sparkles, ScrollText, Clock } from 'lucide-react';
+import { Users, MapPin, Building2, Dna, Package, Globe, ScrollText, Clock } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { relationshipService } from '@/services/relationshipService';
 import type { PinnedReference } from '@/types/database';
@@ -21,7 +21,7 @@ const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
   organization: { icon: Building2, colorKey: 'organization' },
   species: { icon: Dna, colorKey: 'species' },
   item: { icon: Package, colorKey: 'item' },
-  magic_system: { icon: Sparkles, colorKey: 'magic_system' },
+  world_system: { icon: Globe, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
   timeline_event: { icon: Clock, colorKey: 'timeline_event' },
 };
@@ -51,7 +51,7 @@ export function ReferenceBubbles() {
         case 'organization': tableName = 'organizations'; break;
         case 'species': tableName = 'species'; break;
         case 'item': tableName = 'items'; break;
-        case 'magic_system': tableName = 'magic_systems'; break;
+        case 'world_system': tableName = 'world_systems'; break;
         case 'lore': tableName = 'lore'; break;
         case 'timeline_event': tableName = 'timeline_events'; nameCol = 'title'; break;
       }
@@ -193,6 +193,7 @@ export function ReferenceBubbles() {
             onPointerDown={(e) => handlePointerDown(e, bubble)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            title="Click and drag to move"
           >
             <div className="reference-bubble__content">
               <span className="reference-bubble__avatar">

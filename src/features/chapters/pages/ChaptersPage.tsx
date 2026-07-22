@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, matchPath, useBlocker } from 'react-router-dom';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -12,7 +12,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import type { EditorState, LexicalEditor } from 'lexical';
 import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
 import { PenLine, Download, RotateCcw } from 'lucide-react';
-import { EmptyState } from '@/components';
+import { EmptyState, Modal, Button } from '@/components';
 import { useSettings } from '@/features/settings';
 import { ExportDialog } from '@/features/settings/components';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -41,6 +41,7 @@ import type { Chapter } from '@/types/database';
 import type { Timestamp } from '@/types/common';
 import type { ChapterFormData } from '../types/chapter';
 import './ChaptersPage.css';
+import '@/styles/redesign.css';
 
 /**
  * Internal plugin that captures the editor instance for external access.
@@ -51,6 +52,33 @@ function EditorRefPlugin({ editorRef }: { editorRef: React.MutableRefObject<Lexi
     editorRef.current = editor;
     return () => { editorRef.current = null; };
   }, [editor, editorRef]);
+  return null;
+}
+
+/** Keeps explicit breaks aligned to the next document page and reports live pagination. */
+function PageLayoutPlugin({ onPageCountChange }: { onPageCountChange: (count: number) => void }) {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    let frame = 0;
+    const layout = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const root = editor.getRootElement();
+        if (!root) return;
+        const styles = getComputedStyle(root);
+        const pageHeight = Number.parseFloat(styles.getPropertyValue('--editor-page-height')) || 1056;
+        const pageGap = Number.parseFloat(styles.getPropertyValue('--editor-page-gap')) || 28;
+        
+        onPageCountChange(Math.max(1, Math.ceil(root.scrollHeight / (pageHeight + pageGap))));
+      });
+    };
+    const unregister = editor.registerUpdateListener(layout);
+    const observer = new ResizeObserver(layout);
+    const root = editor.getRootElement();
+    if (root) observer.observe(root);
+    layout();
+    return () => { unregister(); observer.disconnect(); cancelAnimationFrame(frame); };
+  }, [editor, onPageCountChange]);
   return null;
 }
 
@@ -84,7 +112,10 @@ function SaveShortcutPlugin({ onSave }: { onSave: () => void }) {
  * └──────────────────────────────────────────────────┘
  */
 export default function ChaptersPage() {
-  const { projectId, chapterId: urlChapterId } = useParams<{ projectId: string; chapterId?: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
+  const location = useLocation();
+  const match = matchPath('/project/:projectId/chapters/:chapterId', location.pathname);
+  const urlChapterId = match?.params.chapterId;
   const navigate = useNavigate();
 
   const {
@@ -113,6 +144,7 @@ export default function ChaptersPage() {
   const [charCount, setCharCount] = useState(0);
   const [paraCount, setParaCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
 
   // Editor reference for serialization
   const editorRef = useRef<LexicalEditor | null>(null);
@@ -165,6 +197,88 @@ export default function ChaptersPage() {
     onSave: handleSave,
   });
 
+  const [unsavedAction, setUnsavedAction] = useState<{
+    type: 'navigate' | 'closeApp';
+    proceed: () => void;
+    cancel: () => void;
+  } | null>(null);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // If we are leaving the project entirely (e.g. going to / or another project)
+      const leavingProject = !nextLocation.pathname.startsWith(`/project/${projectId}`);
+      return saveStatus === 'unsaved' && leavingProject;
+    }
+  );
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setUnsavedAction({
+        type: 'navigate',
+        proceed: () => blocker.proceed?.(),
+        cancel: () => blocker.reset?.()
+      });
+    }
+  }, [blocker]);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    
+    async function setupTauri() {
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const win = getCurrentWindow();
+        unlisten = await win.onCloseRequested((event) => {
+          if (saveStatus === 'unsaved') {
+            event.preventDefault();
+            setUnsavedAction({
+              type: 'closeApp',
+              proceed: () => {
+                void win.destroy();
+              },
+              cancel: () => {
+                setUnsavedAction(null);
+              }
+            });
+          }
+        });
+      } catch (e) {
+        // Not running in Tauri
+      }
+    }
+    
+    void setupTauri();
+    
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [saveStatus]);
+
+  const handleUnsavedSave = async () => {
+    await saveNow();
+    if (unsavedAction) {
+      unsavedAction.proceed();
+      setUnsavedAction(null);
+    }
+  };
+
+  const handleUnsavedDontSave = () => {
+    if (activeChapterId) {
+       clearDraft(activeChapterId);
+    }
+    if (unsavedAction) {
+      unsavedAction.proceed();
+      setUnsavedAction(null);
+    }
+  };
+
+  const handleUnsavedCancel = () => {
+    if (unsavedAction) {
+      unsavedAction.cancel();
+      setUnsavedAction(null);
+    }
+  };
+
   /** Load a chapter into the editor. */
   const loadChapter = useCallback(
     async (id: string) => {
@@ -216,11 +330,11 @@ export default function ChaptersPage() {
 
   // Load chapter from URL on mount
   useEffect(() => {
-    if (urlChapterId && urlChapterId !== activeChapterId) {
+    if (urlChapterId && (urlChapterId !== activeChapterId || !activeChapter)) {
       setActiveChapterId(urlChapterId);
       void loadChapter(urlChapterId);
     }
-  }, [urlChapterId]);
+  }, [urlChapterId, activeChapterId, activeChapter, loadChapter]);
 
   // Auto-select first chapter if none selected
   useEffect(() => {
@@ -472,6 +586,7 @@ export default function ChaptersPage() {
                 <HistoryPlugin />
                 <ListPlugin />
                 <HorizontalRulePlugin />
+                <PageLayoutPlugin onPageCountChange={setPageCount} />
                 <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
                 <EditorRefPlugin editorRef={editorRef} />
                 <FindAndReplacePlugin />
@@ -519,6 +634,7 @@ export default function ChaptersPage() {
         characterCount={charCount}
         paragraphCount={paraCount}
         readingTime={readingTime}
+        pageCount={pageCount}
         saveStatus={activeChapter ? saveStatus : 'saved'}
         lastSavedAt={lastSavedAt}
         onGrammarCheck={activeChapter ? handleOpenGrammarCheck : undefined}
@@ -547,6 +663,25 @@ export default function ChaptersPage() {
         onLocateIssue={handleLocateGrammarIssue}
         onDismissIssue={handleDismissGrammarIssue}
       />
+
+      {/* Unsaved Changes Modal */}
+      <Modal
+        open={!!unsavedAction}
+        onClose={handleUnsavedCancel}
+        title="Unsaved Changes"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <Button variant="ghost" onClick={handleUnsavedCancel}>Cancel</Button>
+            <Button variant="danger" onClick={handleUnsavedDontSave}>Don't Save</Button>
+            <Button variant="primary" onClick={handleUnsavedSave}>Save</Button>
+          </div>
+        }
+      >
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+          You have unsaved changes in this chapter. Do you want to save them before leaving?
+        </p>
+      </Modal>
     </div>
   );
 }

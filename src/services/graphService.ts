@@ -39,7 +39,7 @@ export const graphService = {
       UNION ALL
       SELECT id, 'item' as type, name FROM items WHERE project_id = $1 AND deleted_at IS NULL
       UNION ALL
-      SELECT id, 'magic_system' as type, name FROM magic_systems WHERE project_id = $1 AND deleted_at IS NULL
+      SELECT id, 'world_system' as type, name FROM world_systems WHERE project_id = $1 AND deleted_at IS NULL
       UNION ALL
       SELECT id, 'lore' as type, title as name FROM lore WHERE project_id = $1 AND deleted_at IS NULL
       UNION ALL

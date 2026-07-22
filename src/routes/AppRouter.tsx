@@ -7,7 +7,6 @@ import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
-const ChaptersPage = lazy(() => import('@/features/chapters/pages/ChaptersPage'));
 const KnowledgeGraphPage = lazy(() => import('@/features/knowledge-graph/pages/KnowledgeGraphPage').then(m => ({ default: m.KnowledgeGraphPage })));
 const CharactersPage = lazy(() => import('@/features/characters/pages/CharactersPage'));
 const CharacterDetailPage = lazy(() => import('@/features/characters/pages/CharacterDetailPage'));
@@ -19,8 +18,8 @@ const SpeciesPage = lazy(() => import('@/features/species/pages/SpeciesPage'));
 const SpeciesDetailPage = lazy(() => import('@/features/species/pages/SpeciesDetailPage'));
 const ItemsPage = lazy(() => import('@/features/items/pages/ItemsPage'));
 const ItemDetailPage = lazy(() => import('@/features/items/pages/ItemDetailPage'));
-const MagicSystemsPage = lazy(() => import('@/features/magic-systems/pages/MagicSystemsPage'));
-const MagicSystemDetailPage = lazy(() => import('@/features/magic-systems/pages/MagicSystemDetailPage'));
+const WorldSystemsPage = lazy(() => import('@/features/world-systems/pages/WorldSystemsPage'));
+const WorldSystemDetailPage = lazy(() => import('@/features/world-systems/pages/WorldSystemDetailPage'));
 const LorePage = lazy(() => import('@/features/lore/pages/LorePage'));
 const LoreDetailPage = lazy(() => import('@/features/lore/pages/LoreDetailPage'));
 const TimelinePage = lazy(() => import('@/features/timeline/pages/TimelinePage'));
@@ -58,8 +57,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <SuspenseWrap><DashboardPage /></SuspenseWrap> },
-      { path: 'chapters', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
-      { path: 'chapters/:chapterId', element: <SuspenseWrap><ChaptersPage /></SuspenseWrap> },
+      { path: 'chapters', element: null },
+      { path: 'chapters/:chapterId', element: null },
 
       { path: 'graph', element: <SuspenseWrap><KnowledgeGraphPage /></SuspenseWrap> },
 
@@ -84,8 +83,8 @@ const router = createBrowserRouter([
       { path: 'items/:entityId', element: <SuspenseWrap><ItemDetailPage /></SuspenseWrap> },
 
       // Magic Systems
-      { path: 'magic-systems', element: <SuspenseWrap><MagicSystemsPage /></SuspenseWrap> },
-      { path: 'magic-systems/:entityId', element: <SuspenseWrap><MagicSystemDetailPage /></SuspenseWrap> },
+      { path: 'world-systems', element: <SuspenseWrap><WorldSystemsPage /></SuspenseWrap> },
+      { path: 'world-systems/:entityId', element: <SuspenseWrap><WorldSystemDetailPage /></SuspenseWrap> },
 
       // Lore
       { path: 'lore', element: <SuspenseWrap><LorePage /></SuspenseWrap> },

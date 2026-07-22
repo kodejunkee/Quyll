@@ -22,16 +22,21 @@ import {
   Sparkles,
   ArrowUpDown,
   Check,
+  Download,
 } from 'lucide-react';
-import { Button, Modal, Input, TextArea, Dialog, Dropdown } from '@/components';
+import { Button, Modal, Input, TextArea, Dialog, Dropdown, ThemeToggle } from '@/components';
 import { GlobalSettingsModal } from '@/features/settings';
 import { useProjectStore } from '@/store/projectStore';
 import {
   initAppDatabase,
   registerProject,
   listProjects,
+  listDeletedProjects,
   renameProject as dbRename,
-  unregisterProject,
+  softDeleteProject,
+  restoreProject,
+  hardDeleteProject,
+  autoDeleteOldProjects,
   initializeProjectDatabase,
   openProjectDatabase,
   touchProject,
@@ -39,7 +44,10 @@ import {
 import { select } from '@/database/databaseService';
 import { formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import { generateId } from '@/utils/uuid';
+import { pickAndImportQuyllProject } from '@/services/importService';
+import { Clock as ClockIcon } from 'lucide-react';
 import './HomePage.css';
+import '@/styles/redesign.css';
 
 interface ProjectStats {
   chapterCount: number;
@@ -138,10 +146,17 @@ function getBookTheme(index: number, genre?: string) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { projects, setProjects, removeProject } = useProjectStore();
+  const { projects, setProjects, deletedProjects, removeProject } = useProjectStore();
   const [statsMap, setStatsMap] = useState<Record<string, ProjectStats>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewTab, setViewTab] = useState<'active' | 'trash'>('active');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    return (localStorage.getItem('quyll_home_view_mode') as 'grid' | 'list') || 'grid';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('quyll_home_view_mode', viewMode);
+  }, [viewMode]);
   const [sortField, setSortField] = useState<'opened' | 'date' | 'name'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
@@ -185,6 +200,7 @@ export default function HomePage() {
   const loadProjects = useCallback(async () => {
     try {
       await initAppDatabase();
+      await autoDeleteOldProjects();
       const rows = await listProjects();
       const mapped = rows.map((r) => ({
         id: r.id,
@@ -194,10 +210,27 @@ export default function HomePage() {
         author: r.author ?? '',
         genre: r.genre ?? '',
         last_opened_at: r.last_opened_at,
+        deleted_at: r.deleted_at,
         created_at: r.created_at,
         updated_at: r.updated_at,
       }));
       setProjects(mapped);
+
+      const deletedRows = await listDeletedProjects();
+      const mappedDeleted = deletedRows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        path: r.path,
+        description: r.description ?? '',
+        author: r.author ?? '',
+        genre: r.genre ?? '',
+        last_opened_at: r.last_opened_at,
+        deleted_at: r.deleted_at,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+      }));
+      useProjectStore.getState().setDeletedProjects(mappedDeleted);
+
       void fetchProjectStats(mapped);
     } catch (err) {
       console.error('Failed to load projects:', err);
@@ -224,7 +257,7 @@ export default function HomePage() {
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (openMenuId && !(event.target as Element).closest('.home-project-card')) {
+      if (openMenuId && !(event.target as Element).closest('.home-project-card') && !(event.target as Element).closest('.home-project-list-row')) {
         setOpenMenuId(null);
       }
     }
@@ -239,7 +272,17 @@ export default function HomePage() {
     setNewGenre('');
     setIsOtherGenre(false);
     setCreateOpen(true);
+    const titleInput = document.getElementById('new-project-title-input');
+    if (titleInput) titleInput.focus();
   }
+
+  const handleImportProject = async () => {
+    const importedProjectId = await pickAndImportQuyllProject();
+    if (importedProjectId) {
+      // Reload projects to show the new one
+      await loadProjects();
+    }
+  };
 
   async function handleCreate() {
     if (!newTitle.trim()) return;
@@ -290,19 +333,38 @@ export default function HomePage() {
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      await unregisterProject(deleteTarget.id);
-      removeProject(deleteTarget.id);
+      if (deleteTarget.id === 'empty_trash') {
+        for (const project of deletedProjects) {
+          await hardDeleteProject(project.id);
+        }
+      } else if (viewTab === 'active') {
+        await softDeleteProject(deleteTarget.id);
+      } else {
+        await hardDeleteProject(deleteTarget.id);
+      }
+      await loadProjects();
       setDeleteTarget(null);
     } catch (err) {
       console.error('Failed to delete project:', err);
     }
   }
 
+  async function handleRestore(projectId: string) {
+    try {
+      await restoreProject(projectId);
+      await loadProjects();
+    } catch (err) {
+      console.error('Failed to restore project:', err);
+    }
+  }
+
   function openProject(id: string) {
+    if (viewTab === 'trash') return;
     navigate(`/project/${id}/dashboard`);
   }
 
-  const filteredProjects = projects.filter(
+  const activeList = viewTab === 'active' ? projects : deletedProjects;
+  const filteredProjects = activeList.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.genre && p.genre.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -361,6 +423,7 @@ export default function HomePage() {
                 <kbd className="home-nav__kbd">Ctrl + K</kbd>
               </div>
 
+              <ThemeToggle />
               <button
                 className="home-nav__icon-btn"
                 onClick={() => setSettingsOpen(true)}
@@ -371,15 +434,46 @@ export default function HomePage() {
               </button>
             </div>
 
-            <button className="home-nav__new-btn" onClick={openCreateDialog} type="button">
-              <Plus size={16} />
-              <span>New Project</span>
-            </button>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <button 
+                className="home-nav__new-btn" 
+                onClick={handleImportProject} 
+                type="button" 
+                style={{ background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
+              >
+                <Download size={16} />
+                <span>Import Project</span>
+              </button>
+              <button className="home-nav__new-btn" onClick={openCreateDialog} type="button">
+                <Plus size={16} />
+                <span>New Project</span>
+              </button>
+            </div>
           </div>
         </header>
 
+        {/* Tabs */}
+        <div className="home-tabs-container">
+          <button 
+            className={`home-tab ${viewTab === 'active' ? 'active' : ''}`}
+            onClick={() => setViewTab('active')}
+            type="button"
+          >
+            <FolderOpen size={16} />
+            <span>Projects</span>
+          </button>
+          <button 
+            className={`home-tab home-tab--trash ${viewTab === 'trash' ? 'active' : ''}`}
+            onClick={() => setViewTab('trash')}
+            type="button"
+          >
+            <Trash2 size={16} />
+            <span>Trash</span>
+          </button>
+        </div>
+
         {/* Hero Section: Continue Writing Card */}
-        {heroProject && !searchQuery && (
+        {heroProject && !searchQuery && viewTab === 'active' && (
           <section className="home-hero">
             <div className="home-hero__card">
               <div className="home-hero__label">
@@ -452,50 +546,62 @@ export default function HomePage() {
         {/* Section: Recent Projects */}
         <section className="home-section">
           <div className="home-section__header">
-            <div className="home-section__title-group">
-              <FolderOpen size={16} className="home-section__title-icon" />
-              <h3 className="home-section__title">Projects</h3>
-            </div>
-
+            <h3 className="home-section__title">
+              {viewTab === 'trash' ? 'Deleted Projects' : 'All Projects'}
+            </h3>
             <div className="home-section__controls">
-              <div className="home-section__sort-wrap">
-                <button
-                  className={`home-section__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
-                  onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                  title="Sort projects"
-                  type="button"
-                >
-                  <ArrowUpDown size={14} />
-                  <span>Sort</span>
-                </button>
-                <div className={`home-section__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
-                  {[
-                    { label: 'Last Edited (Newest)', field: 'opened' as const, order: 'desc' as const },
-                    { label: 'Last Edited (Oldest)', field: 'opened' as const, order: 'asc' as const },
-                    { label: 'Date Created (Newest)', field: 'date' as const, order: 'desc' as const },
-                    { label: 'Date Created (Oldest)', field: 'date' as const, order: 'asc' as const },
-                    { label: 'Name (A - Z)', field: 'name' as const, order: 'asc' as const },
-                    { label: 'Name (Z - A)', field: 'name' as const, order: 'desc' as const },
-                  ].map((opt) => {
-                    const active = sortField === opt.field && sortOrder === opt.order;
-                    return (
-                      <button
-                        key={`${opt.field}-${opt.order}`}
-                        className={`home-section__sort-item ${active ? 'active' : ''}`}
-                        onClick={() => {
-                          setSortField(opt.field);
-                          setSortOrder(opt.order);
-                          setIsSortMenuOpen(false);
-                        }}
-                        type="button"
-                      >
-                        <span>{opt.label}</span>
-                        {active && <Check size={14} />}
-                      </button>
-                    );
-                  })}
+              {viewTab === 'active' ? (
+                <div className="home-section__sort-wrap">
+                  <button
+                    className={`home-section__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
+                    onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                    title="Sort projects"
+                    type="button"
+                  >
+                    <ArrowUpDown size={14} />
+                    <span>Sort</span>
+                  </button>
+                  <div className={`home-section__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
+                    {[
+                      { label: 'Last Edited (Newest)', field: 'opened' as const, order: 'desc' as const },
+                      { label: 'Last Edited (Oldest)', field: 'opened' as const, order: 'asc' as const },
+                      { label: 'Date Created (Newest)', field: 'date' as const, order: 'desc' as const },
+                      { label: 'Date Created (Oldest)', field: 'date' as const, order: 'asc' as const },
+                      { label: 'Name (A - Z)', field: 'name' as const, order: 'asc' as const },
+                      { label: 'Name (Z - A)', field: 'name' as const, order: 'desc' as const },
+                    ].map((opt) => {
+                      const active = sortField === opt.field && sortOrder === opt.order;
+                      return (
+                        <button
+                          key={`${opt.field}-${opt.order}`}
+                          className={`home-section__sort-item ${active ? 'active' : ''}`}
+                          onClick={() => {
+                            setSortField(opt.field);
+                            setSortOrder(opt.order);
+                            setIsSortMenuOpen(false);
+                          }}
+                          type="button"
+                        >
+                          <span>{opt.label}</span>
+                          {active && <Check size={14} />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <button
+                  className="home-section__sort-btn home-tab--trash"
+                  onClick={() => setDeleteTarget({ id: 'empty_trash', name: 'All Trash' })}
+                  title="Empty Trash"
+                  type="button"
+                  disabled={deletedProjects.length === 0}
+                  style={{ opacity: deletedProjects.length === 0 ? 0.5 : 1, borderColor: 'transparent' }}
+                >
+                  <Trash2 size={14} />
+                  <span>Empty Trash</span>
+                </button>
+              )}
 
               <div className="home-section__view-toggles">
                 <button
@@ -518,21 +624,31 @@ export default function HomePage() {
             </div>
           </div>
 
+          {viewTab === 'trash' && (
+            <div className="home-trash-view">
+              <p className="home-trash-notice">
+                Projects in the trash are automatically deleted after 60 days.
+              </p>
+            </div>
+          )}
+
           {sortedProjects.length === 0 ? (
             <div className="home-empty">
               <FolderOpen size={48} className="home-empty__icon" />
               <h4 className="home-empty__title">
-                {searchQuery ? 'No matching projects found' : 'No projects created yet'}
+                {viewTab === 'trash' ? 'Trash is empty' : (searchQuery ? 'No matching projects found' : 'Create your first world')}
               </h4>
               <p className="home-empty__desc">
-                {searchQuery
-                  ? `We couldn't find any projects matching "${searchQuery}".`
-                  : 'Start your writing journey by creating your first project.'}
+                {viewTab === 'trash' 
+                  ? 'There are no deleted projects.'
+                  : (searchQuery
+                    ? `We couldn't find any projects matching "${searchQuery}".`
+                    : 'Build your story, chapters, characters and world in one connected workspace.')}
               </p>
-              {!searchQuery && (
+              {!searchQuery && viewTab === 'active' && (
                 <Button variant="primary" onClick={openCreateDialog}>
                   <Plus size={16} />
-                  Create Project
+                  Create project
                 </Button>
               )}
             </div>
@@ -577,28 +693,56 @@ export default function HomePage() {
                       </button>
 
                       <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(null);
-                            setRenameTarget({ id: project.id, name: project.name });
-                            setRenameName(project.name);
-                          }}
-                          type="button"
-                        >
-                          <Edit2 size={14} /> Rename
-                        </button>
-                        <button
-                          className="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(null);
-                            setDeleteTarget({ id: project.id, name: project.name });
-                          }}
-                          type="button"
-                        >
-                          <Trash2 size={14} /> Delete
-                        </button>
+                        {viewTab === 'active' ? (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setRenameTarget({ id: project.id, name: project.name });
+                                setRenameName(project.name);
+                              }}
+                              type="button"
+                            >
+                              <Edit2 size={14} /> Rename
+                            </button>
+                            <button
+                              className="danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setDeleteTarget({ id: project.id, name: project.name });
+                              }}
+                              type="button"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                handleRestore(project.id);
+                              }}
+                              type="button"
+                            >
+                              <ClockIcon size={14} /> Restore
+                            </button>
+                            <button
+                              className="danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setDeleteTarget({ id: project.id, name: project.name });
+                              }}
+                              type="button"
+                            >
+                              <Trash2 size={14} /> Permanently Delete
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -689,16 +833,71 @@ export default function HomePage() {
                       <span className="home-project-list-row__time">
                         {project.last_opened_at ? formatTimeAgo(project.last_opened_at) : 'Not opened yet'}
                       </span>
-                      <button
-                        className="home-project-card__more-btn list-more"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === project.id ? null : project.id);
-                        }}
-                        type="button"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <button
+                          className="home-project-card__more-btn list-more"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === project.id ? null : project.id);
+                          }}
+                          type="button"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        
+                        <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`} style={{ top: '32px', right: 0 }}>
+                          {viewTab === 'active' ? (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setRenameTarget({ id: project.id, name: project.name });
+                                  setRenameName(project.name);
+                                }}
+                                type="button"
+                              >
+                                <Edit2 size={14} /> Rename
+                              </button>
+                              <button
+                                className="danger"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setDeleteTarget({ id: project.id, name: project.name });
+                                }}
+                                type="button"
+                              >
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  handleRestore(project.id);
+                                }}
+                                type="button"
+                              >
+                                <ClockIcon size={14} /> Restore
+                              </button>
+                              <button
+                                className="danger"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setDeleteTarget({ id: project.id, name: project.name });
+                                }}
+                                type="button"
+                              >
+                                <Trash2 size={14} /> Permanently Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -708,10 +907,12 @@ export default function HomePage() {
         </section>
 
         {/* Bottom Tip Bar */}
-        <footer className="home-footer-tip">
-          <Lightbulb size={14} className="home-footer-tip__icon" />
-          <span>Tip: Press Ctrl + K anywhere to quickly search your projects, characters, and more.</span>
-        </footer>
+        {viewTab !== 'trash' && (
+          <footer className="home-footer-tip">
+            <Lightbulb size={14} className="home-footer-tip__icon" />
+            <span>Tip: Press Ctrl + K anywhere to quickly search your projects, characters, and more.</span>
+          </footer>
+        )}
       </div>
 
       {/* Create Project Modal */}
@@ -808,9 +1009,15 @@ export default function HomePage() {
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Delete Project"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteTarget?.id === 'empty_trash' ? "Empty Trash" : (viewTab === 'trash' ? "Permanently Delete Project" : "Move to Trash")}
+        description={
+          deleteTarget?.id === 'empty_trash' 
+            ? "Are you sure you want to permanently delete all projects in the trash? This cannot be undone."
+            : (viewTab === 'trash'
+              ? `Are you sure you want to permanently delete "${deleteTarget?.name}"? This cannot be undone.`
+              : `Are you sure you want to move "${deleteTarget?.name}" to the Trash? It can be restored within 60 days.`)
+        }
+        confirmLabel={deleteTarget?.id === 'empty_trash' ? "Empty Trash" : (viewTab === 'trash' ? "Delete Permanently" : "Move to Trash")}
         cancelLabel="Cancel"
         onConfirm={handleDelete}
         variant="danger"
@@ -821,4 +1028,3 @@ export default function HomePage() {
     </div>
   );
 }
-

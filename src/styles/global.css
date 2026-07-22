@@ -38,9 +38,16 @@ body {
 }
 
 /* ── Selection ── */
-::selection {
-  background-color: var(--color-primary-subtle);
-  color: var(--color-text);
+*::selection {
+  background:#1a73e8 !important;
+  color:#fff !important;
+  text-shadow:none !important;
+}
+
+*::-moz-selection {
+  background:#1a73e8 !important;
+  color:#fff !important;
+  text-shadow:none !important;
 }
 
 /* ── Utilities ── */

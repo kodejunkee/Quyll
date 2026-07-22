@@ -1,4 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import {
   LayoutDashboard,
   BookOpen,
@@ -7,7 +8,7 @@ import {
   Building2,
   Dna,
   Package,
-  Sparkles,
+  Globe,
   ScrollText,
   Clock,
   GitBranch,
@@ -40,13 +41,17 @@ const NAV_SECTIONS = [
       { path: 'organizations', label: 'Organizations', icon: Building2, colorKey: 'organization' },
       { path: 'species', label: 'Species & Races', icon: Dna, colorKey: 'species' },
       { path: 'items', label: 'Items & Artefacts', icon: Package, colorKey: 'item' },
-      { path: 'magic-systems', label: 'Magic Systems', icon: Sparkles, colorKey: 'magic_system' },
+      { path: 'world-systems', label: 'World Systems', icon: Globe, colorKey: 'world_system' },
       { path: 'lore', label: 'Lore', icon: ScrollText, colorKey: 'lore' },
       { path: 'timeline', label: 'Timeline', icon: Clock, colorKey: 'timeline_event' },
       { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner' },
     ],
   },
 ] as const;
+
+function accentStyle(colorKey: string): CSSProperties {
+  return { '--nav-accent': `var(--color-icon-${colorKey})` } as CSSProperties;
+}
 
 export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProps) {
   const { projectId } = useParams<{ projectId: string }>();
@@ -70,24 +75,6 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
           <div key={section.title} className="nav-sidebar__section">
             {!collapsed && <div className="nav-sidebar__section-title">{section.title}</div>}
             
-            {section.title === 'NAVIGATION' && (
-              <NavLink
-                to="/"
-                className={({ isActive }) =>
-                  `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-                }
-                title={collapsed ? 'Home' : undefined}
-                end
-              >
-                <Home
-                  size={18}
-                  className="nav-sidebar__link-icon"
-                  style={{ color: 'var(--color-icon-home)' }}
-                />
-                {!collapsed && <span className="nav-sidebar__link-label">Home</span>}
-              </NavLink>
-            )}
-
             {section.items.map(({ path, label, icon: Icon, colorKey }) => (
               <NavLink
                 key={path}
@@ -96,6 +83,7 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
                   `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
                 }
                 title={collapsed ? label : undefined}
+                style={accentStyle(colorKey)}
               >
                 <Icon
                   size={18}
@@ -116,6 +104,7 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
               `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
             }
             title={collapsed ? 'Knowledge Graph' : undefined}
+            style={accentStyle('graph')}
           >
             <Share2
               size={18}
@@ -130,6 +119,7 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
               `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
             }
             title={collapsed ? 'Trash Bin' : undefined}
+            style={accentStyle('trash')}
           >
             <Trash2
               size={18}
@@ -139,6 +129,17 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
             {!collapsed && <span className="nav-sidebar__link-label">Trash Bin</span>}
           </NavLink>
         </div>
+      </div>
+      <div className="nav-sidebar__footer">
+        <NavLink
+          to="/"
+          className="nav-sidebar__link"
+          title={collapsed ? 'Back to projects' : undefined}
+          style={accentStyle('home')}
+        >
+          <Home size={18} className="nav-sidebar__link-icon" />
+          {!collapsed && <span className="nav-sidebar__link-label">Back to projects</span>}
+        </NavLink>
       </div>
     </nav>
   );

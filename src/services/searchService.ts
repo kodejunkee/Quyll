@@ -50,8 +50,8 @@ export const searchService = {
       WHERE project_id = $1 AND deleted_at IS NULL AND (name LIKE $2 OR description LIKE $3)
       
       UNION ALL
-      SELECT id, 'magic_system' as type, name, description
-      FROM magic_systems
+      SELECT id, 'world_system' as type, name, description
+      FROM world_systems
       WHERE project_id = $1 AND deleted_at IS NULL AND (name LIKE $2 OR description LIKE $3)
       
       UNION ALL

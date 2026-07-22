@@ -9,7 +9,7 @@
   --color-accent: hsl(202, 85%, 48%);       /* Steel Blue */
 
   /* ── Typography ── */
-  --font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
   --color-primary-text: white; /* Contrast text for primary buttons */
   --font-size-xs: 0.75rem;
@@ -74,7 +74,7 @@
   --color-icon-organization: hsl(32, 90%, 52%);         /* Warm Orange */
   --color-icon-species: hsl(285, 68%, 58%);             /* Royal Purple */
   --color-icon-item: hsl(80, 62%, 46%);                 /* Olive Lime */
-  --color-icon-magic_system: hsl(195, 85%, 48%);        /* Ocean Cyan */
+  --color-icon-world_system: hsl(195, 85%, 48%);        /* Ocean Cyan */
   --color-icon-lore: hsl(52, 82%, 46%);                 /* Rich Gold */
   --color-icon-timeline_event: hsl(250, 68%, 62%);      /* Deep Indigo */
   --color-icon-plot_planner: hsl(330, 72%, 55%);        /* Rose Pink */

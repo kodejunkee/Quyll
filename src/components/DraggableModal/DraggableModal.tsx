@@ -11,6 +11,7 @@ interface DraggableModalProps {
   initialY?: number;
   width?: string;
   maxHeight?: string;
+  closeOnClickOutside?: boolean;
 }
 
 export function DraggableModal({
@@ -22,6 +23,7 @@ export function DraggableModal({
   initialY,
   width,
   maxHeight,
+  closeOnClickOutside = false,
 }: DraggableModalProps) {
   const [position, setPosition] = useState({ 
     x: initialX ?? Math.max(20, window.innerWidth / 2 - (width ? parseInt(width, 10) / 2 : 200)), 
@@ -70,8 +72,21 @@ export function DraggableModal({
     dragRef.current = null;
   };
 
-  // Removed click-outside-to-minimize to allow typing in editor while modal is open
+  useEffect(() => {
+    if (!closeOnClickOutside) return;
 
+    const handleClickOutside = (e: MouseEvent) => {
+      // Don't close if clicking a ReferenceBubble, to allow opening the modal
+      if ((e.target as HTMLElement).closest('.reference-bubble')) return;
+      
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose, closeOnClickOutside]);
   return (
     <div 
       className="draggable-modal" 

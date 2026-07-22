@@ -1,0 +1,63 @@
+.quick-entity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.quick-entity-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quick-entity-form__select {
+  width: 100%;
+  background: var(--color-bg-input, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--color-text-primary, #F9FAFB);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+}
+
+.quick-entity-form__select:focus {
+  outline: none;
+  border-color: var(--color-primary, #6366F1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.quick-entity-form__select option {
+  background-color: var(--color-bg-surface, #11121A);
+  color: var(--color-text-primary, #F9FAFB);
+}
+
+.quick-entity-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #9CA3AF);
+  cursor: pointer;
+  user-select: none;
+}
+
+.quick-entity-form__checkbox input[type="checkbox"] {
+  accent-color: var(--color-primary, #6366F1);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.quick-entity-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}

@@ -75,7 +75,13 @@ export default function CharactersPage() {
         </div>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Character" size="lg">
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create Character"
+        description="Add the essential details now. You can enrich this character as your story develops."
+        size="lg"
+      >
         <CharacterForm onSubmit={handleCreate} onCancel={() => setCreateOpen(false)} submitLabel="Create" />
       </Modal>
     </div>

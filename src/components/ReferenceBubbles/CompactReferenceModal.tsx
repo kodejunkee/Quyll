@@ -5,7 +5,7 @@ import {
   Building2, 
   Dna, 
   Package, 
-  Sparkles, 
+  Globe, 
   ScrollText, 
   Clock, 
   Maximize2 
@@ -35,7 +35,7 @@ const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
   organization: { icon: Building2, colorKey: 'organization' },
   species: { icon: Dna, colorKey: 'species' },
   item: { icon: Package, colorKey: 'item' },
-  magic_system: { icon: Sparkles, colorKey: 'magic_system' },
+  world_system: { icon: Globe, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
   timeline_event: { icon: Clock, colorKey: 'timeline_event' },
 };
@@ -70,7 +70,7 @@ export function CompactReferenceModal({
           case 'organization': tableName = 'organizations'; break;
           case 'species': tableName = 'species'; break;
           case 'item': tableName = 'items'; break;
-          case 'magic_system': tableName = 'magic_systems'; break;
+          case 'world_system': tableName = 'world_systems'; break;
           case 'lore': tableName = 'lore'; break;
           case 'timeline_event': tableName = 'timeline_events'; break;
         }
@@ -113,7 +113,7 @@ export function CompactReferenceModal({
               case 'organization': otherTable = 'organizations'; break;
               case 'species': otherTable = 'species'; break;
               case 'item': otherTable = 'items'; break;
-              case 'magic_system': otherTable = 'magic_systems'; break;
+              case 'world_system': otherTable = 'world_systems'; break;
               case 'lore': otherTable = 'lore'; break;
               case 'timeline_event': otherTable = 'timeline_events'; break;
               case 'plot_point': otherTable = 'plot_points'; break;

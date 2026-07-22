@@ -68,7 +68,7 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
         case 'organization': table = 'organizations'; break;
         case 'species': table = 'species'; break;
         case 'item': table = 'items'; break;
-        case 'magic_system': table = 'magic_systems'; break;
+        case 'world_system': table = 'world_systems'; break;
         case 'lore': table = 'lore'; break;
         case 'timeline_event': table = 'timeline_events'; break;
         case 'plot_point': table = 'plot_points'; break;
@@ -183,7 +183,7 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
                   <option value="organization">Organizations</option>
                   <option value="species">Species</option>
                   <option value="item">Items</option>
-                  <option value="magic_system">Magic Systems</option>
+                  <option value="world_system">World Systems</option>
                   <option value="lore">Lore</option>
                   <option value="timeline_event">Timeline Events</option>
                   <option value="plot_point">Plot Points</option>

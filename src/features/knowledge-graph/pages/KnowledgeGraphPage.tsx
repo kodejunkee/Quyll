@@ -31,7 +31,7 @@ const TYPE_COLORS: Record<string, string> = {
   item: '#5ea82a',           // Olive Lime (80°)
   lore: '#c4a514',           // Rich Gold (52°)
   timeline_event: '#6b4fd4', // Deep Indigo (250°)
-  magic_system: '#12a3cf',   // Ocean Cyan (195°)
+  world_system: '#12a3cf',   // Ocean Cyan (195°)
   plot_point: '#d43888',     // Rose Pink (330°)
   species: '#b050d4',        // Royal Purple (285°)
 };

@@ -149,8 +149,8 @@ export interface Item {
   readonly updated_at: Timestamp;
 }
 
-/** A magic system or power framework. */
-export interface MagicSystem {
+/** A world system or rules framework. */
+export interface WorldSystem {
   readonly id: UUID;
   readonly project_id: UUID;
   readonly name: string;

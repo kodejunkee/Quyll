@@ -32,7 +32,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
           case 'organization': tableName = 'organizations'; break;
           case 'species': tableName = 'species'; break;
           case 'item': tableName = 'items'; break;
-          case 'magic_system': tableName = 'magic_systems'; break;
+          case 'world_system': tableName = 'world_systems'; break;
           case 'lore': tableName = 'lore'; break;
           case 'timeline_event': tableName = 'timeline_events'; break;
         }
@@ -117,6 +117,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
         initialY={modalData.initialY}
         width={isCharacter ? '760px' : '480px'}
         maxHeight={isCharacter ? '86vh' : '80vh'}
+        closeOnClickOutside={true}
       >
         {isCharacter ? (
           <CharacterDetailCard characterId={modalData.entityId} onClose={handleClose} />

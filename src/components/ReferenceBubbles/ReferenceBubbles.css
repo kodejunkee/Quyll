@@ -22,7 +22,7 @@
   align-items: center;
   gap: 8px;
   pointer-events: auto;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
 }

@@ -2,7 +2,8 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getSelection, $isRangeSelection, CUT_COMMAND, COPY_COMMAND } from 'lexical';
-import { Scissors, Copy, ClipboardPaste, BookOpen, ChevronRight, SpellCheck, Check } from 'lucide-react';
+import { Scissors, Copy, ClipboardPaste, BookOpen, ChevronRight, SpellCheck, Check, Wand2 } from 'lucide-react';
+import { QuickEntityCreateModal } from './QuickEntityCreateModal';
 import { getSynonyms, getSpellingSuggestions, isWordInDictionary, addToCustomDictionary } from '@/services/thesaurusService';
 import './LexicalContextMenu.css';
 
@@ -20,6 +21,8 @@ export function LexicalContextMenu() {
   const [synonymsList, setSynonymsList] = useState<string[]>([]);
   const [spellingList, setSpellingList] = useState<string[]>([]);
   const [isMisspelled, setIsMisspelled] = useState<boolean>(false);
+  const [selectedText, setSelectedText] = useState<string>('');
+  const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [submenuOpen, setSubmenuOpen] = useState<boolean>(false);
   const [submenuStyle, setSubmenuStyle] = useState<React.CSSProperties>({});
   const menuRef = useRef<HTMLDivElement>(null);
@@ -115,6 +118,7 @@ export function LexicalContextMenu() {
       e.preventDefault();
 
       let wordDetected = '';
+      let rawSelectedText = '';
 
       editor.update(() => {
         let selection = $getSelection();
@@ -122,6 +126,7 @@ export function LexicalContextMenu() {
 
         if ($isRangeSelection(selection) && !selection.isCollapsed()) {
           text = selection.getTextContent().trim();
+          rawSelectedText = text;
         }
 
         if (!text || text.includes(' ') || text.includes('\n')) {
@@ -165,6 +170,7 @@ export function LexicalContextMenu() {
 
       const cleanCandidate = wordDetected.trim();
       setTargetWord(cleanCandidate);
+      setSelectedText(rawSelectedText);
 
       let misspelled = false;
       let suggestionsList: string[] = [];
@@ -223,6 +229,11 @@ export function LexicalContextMenu() {
     closeMenu();
   };
 
+  const handleCreateEntity = () => {
+    setCreateModalOpen(true);
+    closeMenu(); // Close the right-click menu, but keep modal open
+  };
+
   const handleCopy = () => {
     editor.update(() => {
       const selection = $getSelection();
@@ -265,11 +276,13 @@ export function LexicalContextMenu() {
   };
 
 
-  if (!menuPos) return null;
+  if (!menuPos && !createModalOpen) return null;
 
   const hasSynonyms = synonymsList.length > 0;
 
   return (
+    <>
+    {menuPos && (
     <div
       ref={menuRef}
       className="lexical-context-menu"
@@ -371,6 +384,19 @@ export function LexicalContextMenu() {
         <ChevronRight className="lexical-context-menu__icon" />
       </div>
 
+      <div className="lexical-context-menu__divider" />
+
+      <button
+        className="lexical-context-menu__item"
+        onMouseEnter={() => setSubmenuOpen(false)}
+        onClick={handleCreateEntity}
+      >
+        <div className="lexical-context-menu__item-left">
+          <Wand2 className="lexical-context-menu__icon" style={{ color: 'var(--color-primary, #F59E0B)' }} />
+          <span>Create Entity...</span>
+        </div>
+      </button>
+
       {submenuOpen && createPortal(
         <div
           ref={submenuRef}
@@ -400,5 +426,15 @@ export function LexicalContextMenu() {
         document.body
       )}
     </div>
+    )}
+
+      {createModalOpen && (
+        <QuickEntityCreateModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          initialName={selectedText}
+        />
+      )}
+    </>
   );
 }

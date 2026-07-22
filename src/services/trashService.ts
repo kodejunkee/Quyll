@@ -6,7 +6,7 @@ import { locationService } from '@/features/locations/services/locationService';
 import { organizationService } from '@/features/organizations/services/organizationService';
 import { speciesService } from '@/features/species/services/speciesService';
 import { itemService } from '@/features/items/services/itemService';
-import { magicSystemService } from '@/features/magic-systems/services/magicSystemService';
+import { worldSystemService } from '@/features/world-systems/services/worldSystemService';
 import { loreService } from '@/features/lore/services/loreService';
 import { timelineEventService } from '@/features/timeline/services/timelineEventService';
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
@@ -34,7 +34,7 @@ export const trashService = {
       UNION ALL
       SELECT id, name, 'item' as type, deleted_at FROM items WHERE project_id = $1 AND deleted_at IS NOT NULL
       UNION ALL
-      SELECT id, name, 'magic_system' as type, deleted_at FROM magic_systems WHERE project_id = $1 AND deleted_at IS NOT NULL
+      SELECT id, name, 'world_system' as type, deleted_at FROM world_systems WHERE project_id = $1 AND deleted_at IS NOT NULL
       UNION ALL
       SELECT id, title as name, 'lore' as type, deleted_at FROM lore WHERE project_id = $1 AND deleted_at IS NOT NULL
       UNION ALL
@@ -55,7 +55,7 @@ export const trashService = {
       case 'organization': return organizationService.restore(db, id);
       case 'species': return speciesService.restore(db, id);
       case 'item': return itemService.restore(db, id);
-      case 'magic_system': return magicSystemService.restore(db, id);
+      case 'world_system': return worldSystemService.restore(db, id);
       case 'lore': return loreService.restore(db, id);
       case 'timeline_event': return timelineEventService.restore(db, id);
       case 'plot_point': return plotPointService.restore(db, id);
@@ -87,7 +87,7 @@ export const trashService = {
       case 'organization': return organizationService.hardDelete(db, id);
       case 'species': return speciesService.hardDelete(db, id);
       case 'item': return itemService.hardDelete(db, id);
-      case 'magic_system': return magicSystemService.hardDelete(db, id);
+      case 'world_system': return worldSystemService.hardDelete(db, id);
       case 'lore': return loreService.hardDelete(db, id);
       case 'timeline_event': return timelineEventService.hardDelete(db, id);
       case 'plot_point': return plotPointService.hardDelete(db, id);
@@ -104,29 +104,29 @@ export const trashService = {
     }
   },
 
-  /** Auto-delete items older than 90 days. */
+  /** Auto-delete items older than 60 days. */
   async autoDeleteOldTrash(db: Database): Promise<void> {
-    // We can query all items older than 90 days across all projects
+    // We can query all items older than 60 days across all projects
     const query = `
-      SELECT id, 'chapter' as type FROM chapters WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'chapter' as type FROM chapters WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'character' as type FROM characters WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'character' as type FROM characters WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'location' as type FROM locations WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'location' as type FROM locations WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'organization' as type FROM organizations WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'organization' as type FROM organizations WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'species' as type FROM species WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'species' as type FROM species WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'item' as type FROM items WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'item' as type FROM items WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'magic_system' as type FROM magic_systems WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'world_system' as type FROM world_systems WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'lore' as type FROM lore WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'lore' as type FROM lore WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'timeline_event' as type FROM timeline_events WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'timeline_event' as type FROM timeline_events WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'plot_point' as type FROM plot_points WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-90 days')
+      SELECT id, 'plot_point' as type FROM plot_points WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
     `;
     const oldItems = await select<{id: string, type: string}>(db, query);
     for (const item of oldItems) {

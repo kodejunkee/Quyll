@@ -145,8 +145,8 @@ CREATE TABLE IF NOT EXISTS items (
 );
 CREATE INDEX IF NOT EXISTS idx_items_project ON items(project_id);
 
--- Magic Systems
-CREATE TABLE IF NOT EXISTS magic_systems (
+-- World Systems
+CREATE TABLE IF NOT EXISTS world_systems (
   id               TEXT PRIMARY KEY,
   project_id       TEXT NOT NULL,
   name             TEXT NOT NULL DEFAULT '',
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS magic_systems (
   created_at       TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_magic_systems_project ON magic_systems(project_id);
+CREATE INDEX IF NOT EXISTS idx_world_systems_project ON world_systems(project_id);
 
 -- Lore
 CREATE TABLE IF NOT EXISTS lore (
@@ -319,6 +319,7 @@ CREATE TABLE IF NOT EXISTS projects (
   author         TEXT NOT NULL DEFAULT '',
   genre          TEXT NOT NULL DEFAULT '',
   last_opened_at TEXT,
+  deleted_at     TEXT,
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -334,4 +335,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 6;

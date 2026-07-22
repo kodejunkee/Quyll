@@ -4,7 +4,7 @@ import { useExport } from '../hooks/useExport';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import type { Chapter } from '@/types/database';
-import { FileText, FileType, Printer, FileOutput, Loader2 } from 'lucide-react';
+import { FileText, FileType, Printer, FileOutput, Loader2, Package } from 'lucide-react';
 import type { ExportFormat, ExportScope } from '@/services/exportService';
 import './ExportDialog.css';
 
@@ -45,6 +45,12 @@ const FORMATS: FormatConfig[] = [
     description: 'Compatible with Microsoft Word and LibreOffice',
     icon: <FileOutput size={20} />,
   },
+  {
+    id: 'quyll',
+    label: 'Quyll Project (.quyll)',
+    description: 'Full project backup including all chapters and world-building data',
+    icon: <Package size={20} />,
+  },
 ];
 
 const SCOPE_OPTIONS: DropdownOption[] = [
@@ -58,7 +64,7 @@ const SCOPE_OPTIONS: DropdownOption[] = [
   { value: 'organizations', label: 'Organizations' },
   { value: 'species', label: 'Species' },
   { value: 'items', label: 'Items' },
-  { value: 'magic-systems', label: 'Magic Systems' },
+  { value: 'world-systems', label: 'World Systems' },
   { value: 'plot-points', label: 'Plot Points' },
 ];
 
@@ -143,8 +149,8 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
   }));
 
   const handleExport = async () => {
-    await runExport();
-    onClose();
+    const success = await runExport();
+    if (success) onClose();
   };
 
   return (
@@ -194,18 +200,20 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
         </div>
 
         {/* Scope Section */}
-        <div className="export-dialog__section">
-          <span className="export-dialog__section-label">Content Scope</span>
-          <Dropdown
-            options={SCOPE_OPTIONS}
-            value={scope}
-            onChange={(val) => setScope(val as ExportScope)}
-            placeholder="Select content scope..."
-          />
-        </div>
+        {format !== 'quyll' && (
+          <div className="export-dialog__section">
+            <span className="export-dialog__section-label">Content Scope</span>
+            <Dropdown
+              options={SCOPE_OPTIONS}
+              value={scope}
+              onChange={(val) => setScope(val as ExportScope)}
+              placeholder="Select content scope..."
+            />
+          </div>
+        )}
 
         {/* Conditional Chapter Dropdown */}
-        {scope === 'chapter' && (
+        {format !== 'quyll' && scope === 'chapter' && (
           <div className="export-dialog__section">
             <span className="export-dialog__section-label">Select Chapter</span>
             {isLoadingChapters ? (
@@ -225,7 +233,7 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
         )}
 
         {/* Conditional Checkbox List for Selected Chapters */}
-        {scope === 'selected-chapters' && (
+        {format !== 'quyll' && scope === 'selected-chapters' && (
           <div className="export-dialog__section">
             <div
               style={{
@@ -279,8 +287,8 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
             loading={isExporting}
             disabled={
               isExporting ||
-              (scope === 'chapter' && !selectedChapterId) ||
-              (scope === 'selected-chapters' && selectedChapterIds.length === 0)
+              (format !== 'quyll' && scope === 'chapter' && !selectedChapterId) ||
+              (format !== 'quyll' && scope === 'selected-chapters' && selectedChapterIds.length === 0)
             }
             icon={isExporting ? <Loader2 className="spinner" size={16} /> : undefined}
           >

@@ -97,7 +97,7 @@ export function CharacterDetailCard({
               case 'organization': table = 'organizations'; break;
               case 'species': table = 'species'; break;
               case 'item': table = 'items'; break;
-              case 'magic_system': table = 'magic_systems'; break;
+              case 'world_system': table = 'world_systems'; break;
               case 'lore': table = 'lore'; break;
               case 'timeline_event': table = 'timeline_events'; break;
               case 'plot_point': table = 'plot_points'; break;
