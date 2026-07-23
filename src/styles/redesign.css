@@ -170,7 +170,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .dashboard-page__onboarding button:hover { background:var(--color-bg-elevated); color:var(--color-text); }
 
 /* Modal and character workflow */
-.modal { margin:auto; max-height:min(860px,calc(100vh - 40px)); border-radius:12px; border-color:#353b46; box-shadow:var(--shadow-xl); animation:fadeIn var(--transition-fast); overflow:hidden; }
+.modal { margin:auto; max-height:min(860px,calc(100vh - 40px)); border-radius:12px; border-color:#353b46; box-shadow:var(--shadow-xl); animation:fadeIn var(--transition-fast); }
 .modal::backdrop { background:rgba(3,4,6,.8); backdrop-filter:blur(3px); }
 .modal__content { max-height:min(860px,calc(100vh - 40px)); border-radius:12px; }
 .modal__header { padding:22px 24px 18px; border-bottom:1px solid var(--color-border-subtle); }

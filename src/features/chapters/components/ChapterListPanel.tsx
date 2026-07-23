@@ -7,6 +7,9 @@ import { useSearch } from '@/hooks';
 import { useLayoutStore } from '@/store/layoutStore';
 import type { Chapter } from '@/types/database';
 import type { ChapterFormData } from '../types/chapter';
+import { type GrammarIssue } from '@/services/grammarService';
+import { GrammarCheckerPanel } from './GrammarCheckerPanel';
+import { SpellCheck } from 'lucide-react';
 import './ChapterListPanel.css';
 
 interface ChapterListPanelProps {
@@ -21,6 +24,13 @@ interface ChapterListPanelProps {
   nextChapterNumber: number;
   createOpen: boolean;
   onCreateOpenChange: (open: boolean) => void;
+  grammarOpen: boolean;
+  onGrammarToggle: () => void;
+  grammarIssues: GrammarIssue[];
+  isGrammarSelection: boolean;
+  onApplyGrammarSuggestion: (issue: GrammarIssue) => void;
+  onLocateGrammarIssue: (issue: GrammarIssue) => void;
+  onDismissGrammarIssue: (issueId: string) => void;
 }
 
 export function ChapterListPanel({
@@ -35,6 +45,13 @@ export function ChapterListPanel({
   nextChapterNumber,
   createOpen,
   onCreateOpenChange,
+  grammarOpen,
+  onGrammarToggle,
+  grammarIssues,
+  isGrammarSelection,
+  onApplyGrammarSuggestion,
+  onLocateGrammarIssue,
+  onDismissGrammarIssue,
 }: ChapterListPanelProps) {
   const [renameTarget, setRenameTarget] = useState<Chapter | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Chapter | null>(null);
@@ -119,6 +136,20 @@ export function ChapterListPanel({
               );
             })}
           </div>
+          <div className="chapter-list-panel__rail-bottom">
+            <button
+              className={`chapter-list-panel__rail-btn ${grammarOpen ? 'chapter-list-panel__rail-btn--active' : ''}`}
+              onClick={onGrammarToggle}
+              title="Grammar Checker"
+            >
+              <SpellCheck size={16} />
+              {grammarIssues.length > 0 && (
+                <span className="chapter-list-panel__rail-badge" style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(239, 68, 68, 0.8)', color: 'white', borderRadius: '50%', fontSize: '0.6rem', width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {grammarIssues.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -158,6 +189,16 @@ export function ChapterListPanel({
               ))
             )}
           </div>
+
+          <GrammarCheckerPanel
+            isOpen={grammarOpen}
+            onToggle={onGrammarToggle}
+            issues={grammarIssues}
+            isSelection={isGrammarSelection}
+            onApplySuggestion={onApplyGrammarSuggestion}
+            onLocateIssue={onLocateGrammarIssue}
+            onDismissIssue={onDismissGrammarIssue}
+          />
         </>
       )}
 

@@ -2,7 +2,7 @@
 
 .home-page {
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: scroll;
   background-color: var(--color-bg, #0A0910);
   background-image: var(--home-bg-image, none);
   color: var(--color-text, #F3F4F6);
@@ -25,12 +25,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin: 0 0 24px 0 !important;
   position: sticky;
   top: 0;
   z-index: 100;
   background-color: var(--color-bg, #0A0910);
-  padding: 20px 0 14px 0;
+  padding: 20px 0 14px 0 !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  box-sizing: border-box !important;
+  align-self: flex-start;
+  width: 100%;
 }
 
 .home-nav__left {

@@ -137,8 +137,8 @@ export function EditorToolbar() {
         setPageSetupOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside, true);
+    return () => document.removeEventListener('mousedown', handleClickOutside, true);
   }, [highlightOpen, spacingOpen, pageSetupOpen]);
 
   const applyHighlight = useCallback((color: string) => {

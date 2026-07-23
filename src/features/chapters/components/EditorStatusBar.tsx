@@ -1,4 +1,4 @@
-import { Cloud, CloudOff, Wand2 } from 'lucide-react';
+import { Cloud, CloudOff, SpellCheck } from 'lucide-react';
 import { formatNumber, formatReadingTime } from '../utils/writingStats';
 import './EditorStatusBar.css';
 
@@ -60,7 +60,7 @@ export function EditorStatusBar({
           onClick={onGrammarCheck}
           title="Check grammar and writing style"
         >
-          <Wand2 size={13} className="editor-status-bar__grammar-icon" />
+          <SpellCheck size={13} className="editor-status-bar__grammar-icon" />
           <span>Grammar Check</span>
         </button>
       )}

@@ -62,17 +62,30 @@ export function Dropdown({
     const spaceAbove = rect.top;
     const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
 
+    const portalDialog = triggerRef.current.closest('dialog');
+    
+    let offsetTop = 0;
+    let offsetLeft = 0;
+    let offsetBottom = 0;
+
+    if (portalDialog) {
+      const dialogRect = portalDialog.getBoundingClientRect();
+      offsetTop = dialogRect.top;
+      offsetLeft = dialogRect.left;
+      offsetBottom = window.innerHeight - dialogRect.bottom;
+    }
+
     if (openUp) {
       setCoords({
-        bottom: window.innerHeight - rect.top + 4,
-        left: rect.left,
+        bottom: window.innerHeight - rect.top + 4 - offsetBottom,
+        left: rect.left - offsetLeft,
         width: rect.width,
         maxHeight: Math.min(260, spaceAbove - 16),
       });
     } else {
       setCoords({
-        top: rect.bottom + 4,
-        left: rect.left,
+        top: rect.bottom + 4 - offsetTop,
+        left: rect.left - offsetLeft,
         width: rect.width,
         maxHeight: Math.min(260, spaceBelow - 16),
       });

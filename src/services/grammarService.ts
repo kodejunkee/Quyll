@@ -12,178 +12,72 @@ export interface GrammarIssue {
   endOffset: number;
 }
 
-interface GrammarRule {
-  pattern: RegExp;
-  type: GrammarIssueType;
-  severity: GrammarSeverity;
-  message: (match: RegExpExecArray) => string;
-  suggestion?: (match: RegExpExecArray) => string | undefined;
-}
+import { LocalLinter } from 'harper.js';
+import { binaryInlined } from 'harper.js/binaryInlined';
 
-// Common grammar mistakes and homophones
-const GRAMMAR_RULES: GrammarRule[] = [
-  {
-    pattern: /\b(should|could|would|must|might)\s+of\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: (m) => `Incorrect grammar "${m[0] || ''}". Use "${(m[1] || '').toLowerCase()} have".`,
-    suggestion: (m) => `${matchCase(m[1], m[1] || '')} have`,
-  },
-  {
-    pattern: /\byour\s+welcome\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Did you mean "you're welcome"?`,
-    suggestion: () => `you're welcome`,
-  },
-  {
-    pattern: /\btheir\s+(is|are|was|were|has|have|had|been|will|would|can|could|should)\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: (m) => `Did you mean "there ${(m[1] || '').toLowerCase()}"?`,
-    suggestion: (m) => `there ${(m[1] || '').toLowerCase()}`,
-  },
-  {
-    pattern: /\b(there|they're)\s+(car|house|book|story|character|eyes|hands|face|sword|wand|bag|voice|words|life|time|name|father|mother|brother|sister|friend|home|room)\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: (m) => `Did you mean "their ${(m[2] || '').toLowerCase()}" (possessive)?`,
-    suggestion: (m) => `their ${m[2] || ''}`,
-  },
-  {
-    pattern: /\bits\s+a\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Did you mean "it's a" (it is a)?`,
-    suggestion: () => `it's a`,
-  },
-  {
-    pattern: /\b(to)\s+(much|many|fast|slow|big|small|late|early|hard|easy|good|bad|high|low|far|close)\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: (m) => `Did you mean "too ${(m[2] || '').toLowerCase()}" (meaning excessively)?`,
-    suggestion: (m) => `too ${m[2] || ''}`,
-  },
-  {
-    pattern: /\bsuppose\s+to\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Grammatical error: use "supposed to".`,
-    suggestion: () => `supposed to`,
-  },
-  {
-    pattern: /\buse\s+to\s+be\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Grammatical error: use "used to be".`,
-    suggestion: () => `used to be`,
-  },
-  {
-    pattern: /\balot\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `"alot" is not a word. Use "a lot".`,
-    suggestion: () => `a lot`,
-  },
-  {
-    pattern: /\bin\s+tact\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Did you mean "intact"?`,
-    suggestion: () => `intact`,
-  },
-  {
-    pattern: /\bfor\s+all\s+intensive\s+purposes\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Common mistake: the phrase is "for all intents and purposes".`,
-    suggestion: () => `for all intents and purposes`,
-  },
-  {
-    pattern: /\bone\s+in\s+the\s+same\b/gi,
-    type: 'grammar',
-    severity: 'error',
-    message: () => `Common mistake: the phrase is "one and the same".`,
-    suggestion: () => `one and the same`,
-  },
-  {
-    pattern: /\birregardless\b/gi,
-    type: 'grammar',
-    severity: 'warning',
-    message: () => `"irregardless" is nonstandard. Use "regardless".`,
-    suggestion: () => `regardless`,
-  },
-];
+let harperLinter: LocalLinter | null = null;
+let initializing = false;
 
-// Duplicate words (e.g. "the the", "and and", "to to")
-const DUPLICATE_RULE: GrammarRule = {
-  pattern: /\b([a-z]+)\s+\1\b/gi,
-  type: 'duplicate',
-  severity: 'error',
-  message: (m) => `Duplicate word "${m[1] || ''}".`,
-  suggestion: (m) => m[1] || '',
-};
-
-function matchCase(source?: string, target?: string): string {
-  if (!target) return '';
-  if (!source) return target;
-
-  if (source.toUpperCase() === source && source.toLowerCase() !== source) {
-    return target.toUpperCase();
+async function getLinter(): Promise<LocalLinter> {
+  if (harperLinter) return harperLinter;
+  if (initializing) {
+    // wait for it
+    while (!harperLinter) {
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return harperLinter;
   }
-  if (source[0] && source[0].toUpperCase() === source[0] && source[0].toLowerCase() !== source[0]) {
-    return target.charAt(0).toUpperCase() + target.slice(1);
-  }
-  return target;
+  initializing = true;
+  harperLinter = new LocalLinter({ binary: binaryInlined });
+  initializing = false;
+  return harperLinter;
 }
 
 /**
- * Checks text for grammar mistakes and duplicate words.
+ * Checks text for grammar mistakes and duplicate words using harper.js.
  * Every issue returned has an actionable suggestion/correction.
  */
-export function checkGrammar(text: string): GrammarIssue[] {
+export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
   if (!text || !text.trim()) return [];
 
   const issues: GrammarIssue[] = [];
   let idCounter = 1;
 
-  const allRules: GrammarRule[] = [
-    ...GRAMMAR_RULES,
-    DUPLICATE_RULE,
-  ];
+  try {
+    const linter = await getLinter();
+    const lints = await linter.lint(text);
 
-  for (const rule of allRules) {
-    rule.pattern.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = rule.pattern.exec(text)) !== null) {
-      const matchText = match[0] || '';
-      const startOffset = match.index;
-      const endOffset = startOffset + matchText.length;
-
-      // Avoid overlapping duplicates
-      const isOverlapping = issues.some(i => 
-        (startOffset >= i.startOffset && startOffset < i.endOffset) ||
-        (endOffset > i.startOffset && endOffset <= i.endOffset)
-      );
-
-      if (!isOverlapping) {
-        let sug = rule.suggestion ? rule.suggestion(match) : undefined;
-        if (sug && matchText && matchText[0] && matchText[0].toUpperCase() === matchText[0] && matchText[0].toLowerCase() !== matchText[0]) {
-          sug = matchCase(matchText, sug);
-        }
-
-        issues.push({
-          id: `grammar-${idCounter++}-${startOffset}`,
-          type: rule.type,
-          severity: rule.severity,
-          message: rule.message(match),
-          suggestion: sug,
-          matchText,
-          startOffset,
-          endOffset,
-        });
+    for (const lint of lints) {
+      const msg = lint.message();
+      const span = lint.span();
+      const sugs = lint.suggestions();
+      const kind = lint.lint_kind();
+      
+      const startOffset = span.start;
+      const endOffset = span.end;
+      const matchText = text.substring(startOffset, endOffset);
+      const suggestion = sugs && sugs.length > 0 ? sugs[0]?.get_replacement_text() : undefined;
+      
+      // Determine severity based on kind, everything is a warning by default for UI simplicity
+      let severity: GrammarSeverity = 'warning';
+      if (kind === 'Error' || kind === 'Spelling') {
+        severity = 'error';
       }
+
+      issues.push({
+        id: `grammar-${idCounter++}-${startOffset}`,
+        type: 'grammar',
+        severity,
+        message: msg,
+        suggestion,
+        matchText,
+        startOffset,
+        endOffset,
+      });
     }
+
+  } catch (err) {
+    console.error('Error running Harper grammar check:', err);
   }
 
   // Sort by start offset ascending

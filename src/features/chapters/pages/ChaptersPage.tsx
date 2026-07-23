@@ -27,7 +27,6 @@ import { FindAndReplacePlugin } from '../components/FindAndReplacePlugin';
 import { KeywordPlugin } from '../components/KeywordPlugin';
 import { AutoFormatPlugin } from '../components/AutoFormatPlugin';
 import { LexicalContextMenu } from '../components/LexicalContextMenu';
-import { GrammarCheckModal } from '../components/GrammarCheckModal';
 import { checkGrammar, type GrammarIssue } from '@/services/grammarService';
 import { createEditorConfig } from '../utils/editorConfig';
 import {
@@ -470,10 +469,18 @@ export default function ChaptersPage() {
       }
     });
 
-    const found = checkGrammar(textToCheck);
-    setGrammarIssues(found);
-    setIsGrammarSelection(isSelectionCheck);
-    setGrammarModalOpen(true);
+    checkGrammar(textToCheck).then(found => {
+      setGrammarIssues(found);
+      setIsGrammarSelection(isSelectionCheck);
+      
+      // Make sure chapter list is not collapsed if we want to show grammar checker in the panel
+      const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
+      if (chapterListCollapsed) {
+        setChapterListCollapsed(false);
+      }
+      
+      setGrammarModalOpen(true);
+    }).catch(console.error);
   }, []);
 
   const handleApplyGrammarSuggestion = useCallback((issue: GrammarIssue) => {
@@ -626,6 +633,21 @@ export default function ChaptersPage() {
         nextChapterNumber={nextNum}
         createOpen={createOpen}
         onCreateOpenChange={setCreateOpen}
+        grammarOpen={grammarModalOpen}
+        onGrammarToggle={() => {
+          const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
+          if (chapterListCollapsed) {
+             setChapterListCollapsed(false);
+             setGrammarModalOpen(true);
+          } else {
+             setGrammarModalOpen(!grammarModalOpen);
+          }
+        }}
+        grammarIssues={grammarIssues}
+        isGrammarSelection={isGrammarSelection}
+        onApplyGrammarSuggestion={handleApplyGrammarSuggestion}
+        onLocateGrammarIssue={handleLocateGrammarIssue}
+        onDismissGrammarIssue={handleDismissGrammarIssue}
       />
 
       {/* Bottom status bar — spans full width */}
@@ -651,17 +673,6 @@ export default function ChaptersPage() {
       <ExportDialog
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
-      />
-
-      {/* Grammar check modal */}
-      <GrammarCheckModal
-        isOpen={grammarModalOpen}
-        onClose={() => setGrammarModalOpen(false)}
-        issues={grammarIssues}
-        isSelection={isGrammarSelection}
-        onApplySuggestion={handleApplyGrammarSuggestion}
-        onLocateIssue={handleLocateGrammarIssue}
-        onDismissIssue={handleDismissGrammarIssue}
       />
 
       {/* Unsaved Changes Modal */}

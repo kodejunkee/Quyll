@@ -80,7 +80,7 @@
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xl), var(--shadow-glow);
+  box-shadow: var(--shadow-xl);
   list-style: none;
   overflow-y: auto;
   animation: fadeIn var(--transition-fast);
