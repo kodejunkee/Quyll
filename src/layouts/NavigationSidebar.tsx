@@ -42,8 +42,14 @@ const NAV_SECTIONS = [
       { path: 'items', label: 'Items & Artefacts', icon: Package, colorKey: 'item' },
       { path: 'world-systems', label: 'World Systems', icon: Globe, colorKey: 'world_system' },
       { path: 'lore', label: 'Lore', icon: ScrollText, colorKey: 'lore' },
+    ],
+  },
+  {
+    title: 'TOOLS',
+    items: [
       { path: 'timeline', label: 'Timeline', icon: Clock, colorKey: 'timeline_event' },
       { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner' },
+      { path: 'trash', label: 'Trash Bin', icon: Trash2, colorKey: 'trash' },
     ],
   },
 ] as const;
@@ -109,25 +115,7 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
           </div>
         ))}
 
-        <div className="nav-sidebar__section">
-          {!collapsed && <div className="nav-sidebar__section-title">TOOLS</div>}
-
-          <NavLink
-            to={`/project/${projectId}/trash`}
-            className={({ isActive }) =>
-              `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-            }
-            title={collapsed ? 'Trash Bin' : undefined}
-            style={accentStyle('trash')}
-          >
-            <Trash2
-              size={18}
-              className="nav-sidebar__link-icon"
-              style={{ color: 'var(--color-icon-trash)' }}
-            />
-            {!collapsed && <span className="nav-sidebar__link-label">Trash Bin</span>}
-          </NavLink>
-        </div>
+        {/* Footer section follows */}
       </div>
       <div className="nav-sidebar__footer">
         <NavLink

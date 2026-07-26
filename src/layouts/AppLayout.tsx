@@ -3,8 +3,7 @@ import { Outlet, useParams, useLocation } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useProjectStore } from '@/store/projectStore';
-import { useWorkspaceStore } from '@/store/workspaceStore';
-import { ProjectDbProvider, useProjectDb } from '@/hooks/useProjectDb';
+import { ProjectDbProvider } from '@/hooks/useProjectDb';
 import { NavigationSidebar } from './NavigationSidebar';
 import { InspectorPanel } from './InspectorPanel';
 import { GlobalKeywordHoverCard } from '@/components/HoverCard';
@@ -28,19 +27,7 @@ function SuspenseWrap({ children }: { children: React.ReactNode }) {
   );
 }
 
-function WorkspaceInitializer({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) {
-  const { db, projectId } = useProjectDb();
-  const { isInitialized, isInitializing, initialize } = useWorkspaceStore();
 
-  useEffect(() => {
-    if (db && projectId) {
-      initialize(db, projectId);
-    }
-  }, [db, projectId, initialize]);
-
-  if (isInitializing || !isInitialized) return <>{fallback}</>;
-  return <>{children}</>;
-}
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
@@ -129,7 +116,7 @@ export function AppLayout() {
 
   return (
     <ProjectDbProvider projectId={projectId} fallback={SkeletonLayout}>
-      <WorkspaceInitializer fallback={SkeletonLayout}>
+
         <div className="app-shell">
           <header className="app-global-header">
           <div className="app-global-header__brand">
@@ -191,7 +178,7 @@ export function AppLayout() {
           onClose={() => setIsSettingsModalOpen(false)}
         />
       </div>
-      </WorkspaceInitializer>
+
     </ProjectDbProvider>
   );
 }

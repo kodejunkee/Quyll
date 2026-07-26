@@ -8,6 +8,7 @@ import type Database from '@tauri-apps/plugin-sql';
 import { openProjectDatabase } from '@/database/projectDatabase';
 import { initAppDatabase, listProjects, touchProject } from '@/database';
 import { useProjectStore } from '@/store/projectStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, LoadingSkeleton } from '@/components';
 
 interface ProjectDbContextValue {
@@ -33,6 +34,11 @@ interface ProjectDbProviderProps {
 }
 
 /**
+ * Module-level flag — ensures initAppDatabase() only runs once per app session.
+ */
+let appDbInitialized = false;
+
+/**
  * Opens the project database on mount, closes on unmount.
  * Children only render after the DB is ready.
  */
@@ -49,9 +55,12 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
     async function open() {
       try {
         let currentProjects = projects;
-        if (currentProjects.length === 0) {
+
+        // Only init the app DB once per session, and only if the store is empty
+        if (!appDbInitialized && currentProjects.length === 0) {
           try {
             await initAppDatabase();
+            appDbInitialized = true;
             const rows = await listProjects();
             currentProjects = rows.map((r) => ({
               id: r.id,
@@ -69,18 +78,34 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
           } catch (listErr) {
             console.error('[ProjectDbProvider] Failed to load global projects list:', listErr);
           }
+        } else if (!appDbInitialized) {
+          // Projects already in store from dashboard, just mark as initialized
+          appDbInitialized = true;
         }
 
         const activeProj = currentProjects.find((p) => p.id === projectId);
         const resolvedPath = activeProj?.path ?? `projects/${projectId}.quyll`;
 
+        // Open the project database (includes cached migration check)
         const conn = await openProjectDatabase(resolvedPath);
         if (cancelled) return;
-        setDb(conn);
-        await touchProject(projectId);
 
+        // Set DB immediately — this unblocks children rendering and entity loading
+        setDb(conn);
+
+        // Kick off entity loading immediately — don't wait for a child component to mount
+        const { initialize } = useWorkspaceStore.getState();
+        initialize(conn, projectId);
+
+        // Fire-and-forget: update last_opened_at timestamp (non-blocking)
+        touchProject(projectId).catch((err) =>
+          console.error('[ProjectDbProvider] touchProject failed:', err)
+        );
+
+        // Background: fetch project metadata without blocking the UI
         try {
           const metaRows = await conn.select<{ id: string; title: string; description?: string; author?: string; genre?: string }[]>('SELECT * FROM project_meta LIMIT 1');
+          if (cancelled) return;
           const meta = metaRows[0];
           if (meta) {
             setCurrentProject({
@@ -139,7 +164,9 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
     );
   }
 
-  if (!db) {
+  const { isInitialized, isInitializing } = useWorkspaceStore();
+
+  if (!db || isInitializing || !isInitialized) {
     if (fallback !== undefined) {
       return <>{fallback}</>;
     }

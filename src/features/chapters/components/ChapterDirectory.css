@@ -54,7 +54,7 @@
 }
 
 .chapter-directory__content--grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
 .chapter-directory__content--list {
@@ -101,7 +101,7 @@
 }
 
 .chapter-directory__card-number {
-  font-size: var(--font-size-xs);
+  font-size: calc(var(--font-size-xs) * 1.35);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
@@ -110,11 +110,14 @@
 }
 
 .chapter-directory__card-title {
-  font-size: var(--font-size-lg);
+  font-size: calc(var(--font-size-lg) * 1.35);
   font-weight: 500;
   color: var(--color-text);
   margin: 0;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chapter-directory__cover-wrap {
@@ -184,7 +187,7 @@
 }
 
 .chapter-book-cover__number {
-  font-size: 10px;
+  font-size: 13.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -192,14 +195,15 @@
 }
 
 .chapter-book-cover__title {
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--color-text);
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .chapter-directory__card-actions {

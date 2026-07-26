@@ -126,6 +126,7 @@ export function ChapterDirectory({
             <div 
               key={chapter.id} 
               className={`chapter-directory__card ${viewMode === 'list' ? 'chapter-directory__card--list-view' : ''}`}
+              title={chapter.title}
               onClick={() => navigate(`/project/${projectId}/chapters/${chapter.id}`)}
             >
               {viewMode === 'grid' ? (

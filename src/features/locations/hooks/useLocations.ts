@@ -1,26 +1,102 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
-import { useCrud, type CrudService } from '@/hooks/useCrud';
-import { locationService } from '../services/locationService';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { Location } from '@/types/database';
 
 export function useLocations() {
   const { db, projectId } = useProjectDb();
+  const store = useWorkspaceStore();
 
-  const service: CrudService<Location> = useMemo(() => ({
-    list: (pid: string) => locationService.list(db, pid),
-    create: (pid: string, data: Partial<Location>) => locationService.create(db, pid, data as Record<string, unknown>),
-    update: (id: string, data: Partial<Location>) => locationService.update(db, id, data as Record<string, unknown>),
-    softDelete: (id: string) => locationService.softDelete(db, id),
-    restore: (id: string) => locationService.restore(db, id),
-  }), [db]);
+  const items = store.locations;
+  const loading = store.isInitializing;
+  const error = store.initError;
 
-  const crud = useCrud<Location>(service, projectId);
-  const getById = useCallback((id: string) => locationService.getById(db, id), [db]);
-  const updateImage = useCallback(async (entityId: string, imageId: string | null) => {
-    await locationService.update(db, entityId, { image_id: imageId });
-    await crud.refresh();
-  }, [db, crud]);
+  const refresh = useCallback(async () => {
+    if (db && projectId) {
+      await store.initialize(db, projectId);
+    }
+  }, [db, projectId, store.initialize]);
 
-  return { ...crud, getById, updateImage };
+  const create = useCallback(
+    async (data: unknown): Promise<Location | null> => {
+      if (!projectId || !db) return null;
+      try {
+        return await store.createLocation(db, projectId, data as Partial<Location>);
+      } catch (err) {
+        console.error('[useLocations] create error:', err);
+        return null;
+      }
+    },
+    [db, projectId, store.createLocation]
+  );
+
+  const update = useCallback(
+    async (id: string, data: unknown): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.updateLocation(db, id, data as Partial<Location>);
+        return true;
+      } catch (err) {
+        console.error('[useLocations] update error:', err);
+        return false;
+      }
+    },
+    [db, store.updateLocation]
+  );
+
+  const remove = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.softDeleteLocation(db, id);
+        return true;
+      } catch (err) {
+        console.error('[useLocations] softDelete error:', err);
+        return false;
+      }
+    },
+    [db, store.softDeleteLocation]
+  );
+
+  const restore = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.restoreLocation(db, id);
+        return true;
+      } catch (err) {
+        console.error('[useLocations] restore error:', err);
+        return false;
+      }
+    },
+    [db, store.restoreLocation]
+  );
+
+  const getById = useCallback(
+    (id: string) => {
+      return store.locations.find(c => c.id === id) || null;
+    },
+    [store.locations]
+  );
+
+  const updateImage = useCallback(
+    async (entityId: string, imageId: string | null) => {
+      if (!db) return;
+      await store.updateLocation(db, entityId, { image_id: imageId });
+    },
+    [db, store.updateLocation]
+  );
+
+  return {
+    items,
+    loading,
+    error,
+    refresh,
+    create,
+    update,
+    remove,
+    restore,
+    getById,
+    updateImage,
+  };
 }

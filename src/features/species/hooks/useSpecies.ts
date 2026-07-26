@@ -1,12 +1,90 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
-import { useCrud, type CrudService } from '@/hooks/useCrud';
-import { speciesService } from '../services/speciesService';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { Species } from '@/types/database';
+
 export function useSpecies() {
   const { db, projectId } = useProjectDb();
-  const service: CrudService<Species> = useMemo(() => ({ list: (pid: string) => speciesService.list(db, pid), create: (pid: string, d: Partial<Species>) => speciesService.create(db, pid, d as Record<string, unknown>), update: (id: string, d: Partial<Species>) => speciesService.update(db, id, d as Record<string, unknown>), softDelete: (id: string) => speciesService.softDelete(db, id), restore: (id: string) => speciesService.restore(db, id) }), [db]);
-  const crud = useCrud<Species>(service, projectId);
-  const getById = useCallback((id: string) => speciesService.getById(db, id), [db]);
-  return { ...crud, getById };
+  const store = useWorkspaceStore();
+
+  const items = useMemo(() => {
+    return store.species.filter(item => item.deleted_at === null);
+  }, [store.species]);
+
+  const loading = store.isInitializing;
+  const error = store.initError ? new Error(store.initError) : null;
+
+  const refresh = useCallback(async () => {
+    if (db && projectId) {
+      await store.initialize(db, projectId);
+    }
+  }, [db, projectId, store.initialize]);
+
+  const create = useCallback(
+    async (data: unknown): Promise<Species | null> => {
+      if (!projectId || !db) return null;
+      try {
+        return await store.createSpecies(db, projectId, data as Partial<Species>);
+      } catch (err) {
+        console.error('[useSpecies] create error:', err);
+        return null;
+      }
+    },
+    [db, projectId, store.createSpecies]
+  );
+
+  const update = useCallback(
+    async (id: string, data: unknown): Promise<void> => {
+      if (!db) return;
+      try {
+        await store.updateSpecies(db, id, data as Partial<Species>);
+      } catch (err) {
+        console.error('[useSpecies] update error:', err);
+      }
+    },
+    [db, store.updateSpecies]
+  );
+
+  const remove = useCallback(
+    async (id: string): Promise<void> => {
+      if (!db) return;
+      try {
+        await store.softDeleteSpecies(db, id);
+      } catch (err) {
+        console.error('[useSpecies] remove error:', err);
+      }
+    },
+    [db, store.softDeleteSpecies]
+  );
+
+  const restore = useCallback(
+    async (id: string): Promise<void> => {
+      if (!db) return;
+      try {
+        await store.restoreSpecies(db, id);
+      } catch (err) {
+        console.error('[useSpecies] restore error:', err);
+      }
+    },
+    [db, store.restoreSpecies]
+  );
+
+  const getById = useCallback(
+    async (id: string): Promise<Species | null> => {
+      return store.species.find(item => item.id === id) || null;
+    },
+    [store.species]
+  );
+
+  return {
+    items,
+    loading,
+    error,
+    refresh,
+    create,
+    update,
+    remove,
+    restore,
+    getById,
+  };
 }

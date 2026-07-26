@@ -78,7 +78,7 @@ export default function TimelineEventDetailPage() {
         </div>
       </div>
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Timeline Event" size="md">
-        <TimelineEventForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
+        <TimelineEventForm defaultValues={entity} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
       </Modal>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.title}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" />
     </div>

@@ -7,6 +7,7 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState, LexicalEditor, LexicalNode } from 'lexical';
@@ -740,6 +741,7 @@ export default function ChaptersPage() {
                   contentEditable={<ContentEditable className="writing-editor__input" />}
                   ErrorBoundary={LexicalErrorBoundary}
                 />
+                <ClearEditorPlugin />
                 <HistoryPlugin key={activeChapterId} externalHistoryState={currentHistoryState} />
                 <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
                 <EditorRefPlugin editorRef={editorRef} />

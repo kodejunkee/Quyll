@@ -3,9 +3,15 @@ import type Database from '@tauri-apps/plugin-sql';
 import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint } from '@/types/database';
 import { characterService } from '@/features/characters/services/characterService';
 
-// We'll add other entity services as we transition them
-// import { chapterService } from '@/features/chapters/services/chapterService';
-// ...
+import { chapterService } from '@/features/chapters/services/chapterService';
+import { locationService } from '@/features/locations/services/locationService';
+import { organizationService } from '@/features/organizations/services/organizationService';
+import { speciesService } from '@/features/species/services/speciesService';
+import { itemService } from '@/features/items/services/itemService';
+import { worldSystemService } from '@/features/world-systems/services/worldSystemService';
+import { loreService } from '@/features/lore/services/loreService';
+import { timelineEventService } from '@/features/timeline/services/timelineEventService';
+import { plotPointService } from '@/features/plot-planner/services/plotPointService';
 
 interface WorkspaceState {
   isInitialized: boolean;
@@ -35,6 +41,57 @@ interface WorkspaceState {
   updateCharacter: (db: Database, id: string, data: Partial<Character>) => Promise<void>;
   softDeleteCharacter: (db: Database, id: string) => Promise<void>;
   restoreCharacter: (db: Database, id: string) => Promise<void>;
+
+  // Phase 2: Chapters, Locations, Organizations
+  createChapter: (db: Database, projectId: string, data: Partial<Chapter>) => Promise<Chapter>;
+  updateChapter: (db: Database, id: string, data: Partial<Chapter>) => Promise<void>;
+  softDeleteChapter: (db: Database, id: string) => Promise<void>;
+  restoreChapter: (db: Database, id: string) => Promise<void>;
+  updateChapterContent: (db: Database, id: string, content: string, wordCount: number, readingTime: number, updatedAt?: string) => Promise<void>;
+  reorderChapters: (db: Database, orderedIds: string[]) => Promise<void>;
+  duplicateChapter: (db: Database, chapter: Chapter) => Promise<Chapter>;
+
+  createLocation: (db: Database, projectId: string, data: Partial<Location>) => Promise<Location>;
+  updateLocation: (db: Database, id: string, data: Partial<Location>) => Promise<void>;
+  softDeleteLocation: (db: Database, id: string) => Promise<void>;
+  restoreLocation: (db: Database, id: string) => Promise<void>;
+
+  createOrganization: (db: Database, projectId: string, data: Partial<Organization>) => Promise<Organization>;
+  updateOrganization: (db: Database, id: string, data: Partial<Organization>) => Promise<void>;
+  softDeleteOrganization: (db: Database, id: string) => Promise<void>;
+  restoreOrganization: (db: Database, id: string) => Promise<void>;
+
+  // Phase 3: Species, Items, WorldSystems
+  createSpecies: (db: Database, projectId: string, data: Partial<Species>) => Promise<Species>;
+  updateSpecies: (db: Database, id: string, data: Partial<Species>) => Promise<void>;
+  softDeleteSpecies: (db: Database, id: string) => Promise<void>;
+  restoreSpecies: (db: Database, id: string) => Promise<void>;
+
+  createItem: (db: Database, projectId: string, data: Partial<Item>) => Promise<Item>;
+  updateItem: (db: Database, id: string, data: Partial<Item>) => Promise<void>;
+  softDeleteItem: (db: Database, id: string) => Promise<void>;
+  restoreItem: (db: Database, id: string) => Promise<void>;
+
+  createWorldSystem: (db: Database, projectId: string, data: Partial<WorldSystem>) => Promise<WorldSystem>;
+  updateWorldSystem: (db: Database, id: string, data: Partial<WorldSystem>) => Promise<void>;
+  softDeleteWorldSystem: (db: Database, id: string) => Promise<void>;
+  restoreWorldSystem: (db: Database, id: string) => Promise<void>;
+
+  // Phase 4: Lore, Timeline, Plot Points
+  createLore: (db: Database, projectId: string, data: Partial<LoreEntry>) => Promise<LoreEntry>;
+  updateLore: (db: Database, id: string, data: Partial<LoreEntry>) => Promise<void>;
+  softDeleteLore: (db: Database, id: string) => Promise<void>;
+  restoreLore: (db: Database, id: string) => Promise<void>;
+
+  createTimelineEvent: (db: Database, projectId: string, data: Partial<TimelineEvent>) => Promise<TimelineEvent>;
+  updateTimelineEvent: (db: Database, id: string, data: Partial<TimelineEvent>) => Promise<void>;
+  softDeleteTimelineEvent: (db: Database, id: string) => Promise<void>;
+  restoreTimelineEvent: (db: Database, id: string) => Promise<void>;
+
+  createPlotPoint: (db: Database, projectId: string, data: Partial<PlotPoint>) => Promise<PlotPoint>;
+  updatePlotPoint: (db: Database, id: string, data: Partial<PlotPoint>) => Promise<void>;
+  softDeletePlotPoint: (db: Database, id: string) => Promise<void>;
+  restorePlotPoint: (db: Database, id: string) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -63,12 +120,31 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ isInitializing: true, initError: null, activeProjectId: projectId });
 
     try {
-      // In Phase 1, we just load characters. 
-      // Later we will Promise.all() across all services.
-      const characters = await characterService.list(db, projectId);
+      // Load Phase 1, 2, 3 & 4 entities concurrently
+      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints] = await Promise.all([
+        characterService.list(db, projectId),
+        chapterService.list(db, projectId),
+        locationService.list(db, projectId),
+        organizationService.list(db, projectId),
+        speciesService.list(db, projectId),
+        itemService.list(db, projectId),
+        worldSystemService.list(db, projectId),
+        loreService.list(db, projectId),
+        timelineEventService.list(db, projectId),
+        plotPointService.list(db, projectId),
+      ]);
 
       set({
         characters,
+        chapters,
+        locations,
+        organizations,
+        species,
+        items,
+        worldSystems,
+        lore,
+        timeline,
+        plotPoints,
         isInitialized: true,
         isInitializing: false,
       });
@@ -148,5 +224,240 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     } catch (error) {
       console.error('[workspaceStore] Sync failed for restoreCharacter:', error);
     }
+  },
+
+  // --- Phase 2 Implementations ---
+
+  createChapter: async (db, projectId, data) => {
+    const newChapter = await chapterService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ chapters: [newChapter, ...state.chapters] }));
+    return newChapter;
+  },
+  updateChapter: async (db, id, data) => {
+    set((state) => ({
+      chapters: state.chapters.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await chapterService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateChapter:', error); }
+  },
+  softDeleteChapter: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ chapters: state.chapters.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await chapterService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreChapter: async (db, id) => {
+    set((state) => ({ chapters: state.chapters.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await chapterService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  updateChapterContent: async (db, id, content, wordCount, readingTime, updatedAt) => {
+    set((state) => ({
+      chapters: state.chapters.map((c) => c.id === id ? { ...c, content, word_count: wordCount, reading_time: readingTime, updated_at: updatedAt || new Date().toISOString() } : c)
+    }));
+    try { await chapterService.updateContent(db, id, content, wordCount, readingTime, updatedAt); } catch(error) { console.error('Sync failed', error); }
+  },
+  reorderChapters: async (db, orderedIds) => {
+    set((state) => {
+      const chaptersMap = new Map(state.chapters.map(c => [c.id, c]));
+      const newChapters = orderedIds.map((id, idx) => {
+        const c = chaptersMap.get(id);
+        return c ? { ...c, chapter_number: idx + 1 } : null;
+      }).filter(Boolean) as Chapter[];
+      // Keep any chapters not in orderedIds at the end
+      const missing = state.chapters.filter(c => !orderedIds.includes(c.id));
+      return { chapters: [...newChapters, ...missing] };
+    });
+    try { await chapterService.reorder(db, orderedIds); } catch(e) { console.error('Sync failed', e); }
+  },
+  duplicateChapter: async (db, chapter) => {
+    const newChapter = await chapterService.duplicate(db, chapter);
+    set((state) => ({ chapters: [...state.chapters, newChapter] }));
+    return newChapter;
+  },
+
+  createLocation: async (db, projectId, data) => {
+    const newLocation = await locationService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ locations: [newLocation, ...state.locations] }));
+    return newLocation;
+  },
+  updateLocation: async (db, id, data) => {
+    set((state) => ({
+      locations: state.locations.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await locationService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateLocation:', error); }
+  },
+  softDeleteLocation: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ locations: state.locations.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await locationService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreLocation: async (db, id) => {
+    set((state) => ({ locations: state.locations.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await locationService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createOrganization: async (db, projectId, data) => {
+    const newOrg = await organizationService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ organizations: [newOrg, ...state.organizations] }));
+    return newOrg;
+  },
+  updateOrganization: async (db, id, data) => {
+    set((state) => ({
+      organizations: state.organizations.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await organizationService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateOrganization:', error); }
+  },
+  softDeleteOrganization: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ organizations: state.organizations.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await organizationService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreOrganization: async (db, id) => {
+    set((state) => ({ organizations: state.organizations.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await organizationService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  // --- Phase 3 Implementations ---
+  createSpecies: async (db, projectId, data) => {
+    const newSpecies = await speciesService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ species: [newSpecies, ...state.species] }));
+    return newSpecies;
+  },
+  updateSpecies: async (db, id, data) => {
+    set((state) => ({
+      species: state.species.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await speciesService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateSpecies:', error); }
+  },
+  softDeleteSpecies: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ species: state.species.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await speciesService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreSpecies: async (db, id) => {
+    set((state) => ({ species: state.species.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await speciesService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createItem: async (db, projectId, data) => {
+    const newItem = await itemService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ items: [newItem, ...state.items] }));
+    return newItem;
+  },
+  updateItem: async (db, id, data) => {
+    set((state) => ({
+      items: state.items.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await itemService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateItem:', error); }
+  },
+  softDeleteItem: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ items: state.items.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await itemService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreItem: async (db, id) => {
+    set((state) => ({ items: state.items.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await itemService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createWorldSystem: async (db, projectId, data) => {
+    const newWorldSystem = await worldSystemService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ worldSystems: [newWorldSystem, ...state.worldSystems] }));
+    return newWorldSystem;
+  },
+  updateWorldSystem: async (db, id, data) => {
+    set((state) => ({
+      worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+    }));
+    try { await worldSystemService.update(db, id, data as Record<string, unknown>); } 
+    catch (error) { console.error('[workspaceStore] Sync failed for updateWorldSystem:', error); }
+  },
+  softDeleteWorldSystem: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({ worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
+    try { await worldSystemService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreWorldSystem: async (db, id) => {
+    set((state) => ({ worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, deleted_at: null } : c) }));
+    try { await worldSystemService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  // Phase 4: Lore, Timeline, Plot Points
+  createLore: async (db, projectId, data) => {
+    const newEntry = await loreService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ lore: [newEntry, ...state.lore] }));
+    return newEntry;
+  },
+  updateLore: async (db, id, data) => {
+    set((state) => ({
+      lore: state.lore.map((l) => (l.id === id ? { ...l, ...data } : l)),
+    }));
+    try { await loreService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeleteLore: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({
+      lore: state.lore.map((l) => (l.id === id ? { ...l, deleted_at: deletedAt } : l)),
+    }));
+    try { await loreService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreLore: async (db, id) => {
+    set((state) => ({
+      lore: state.lore.map((l) => (l.id === id ? { ...l, deleted_at: null } : l)),
+    }));
+    try { await loreService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createTimelineEvent: async (db, projectId, data) => {
+    const newEvent = await timelineEventService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ timeline: [newEvent, ...state.timeline] }));
+    return newEvent;
+  },
+  updateTimelineEvent: async (db, id, data) => {
+    set((state) => ({
+      timeline: state.timeline.map((te) => (te.id === id ? { ...te, ...data } : te)),
+    }));
+    try { await timelineEventService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeleteTimelineEvent: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({
+      timeline: state.timeline.map((te) => (te.id === id ? { ...te, deleted_at: deletedAt } : te)),
+    }));
+    try { await timelineEventService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreTimelineEvent: async (db, id) => {
+    set((state) => ({
+      timeline: state.timeline.map((te) => (te.id === id ? { ...te, deleted_at: null } : te)),
+    }));
+    try { await timelineEventService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createPlotPoint: async (db, projectId, data) => {
+    const newPoint = await plotPointService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ plotPoints: [newPoint, ...state.plotPoints] }));
+    return newPoint;
+  },
+  updatePlotPoint: async (db, id, data) => {
+    set((state) => ({
+      plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, ...data } : pp)),
+    }));
+    try { await plotPointService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeletePlotPoint: async (db, id) => {
+    const deletedAt = new Date().toISOString();
+    set((state) => ({
+      plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, deleted_at: deletedAt } : pp)),
+    }));
+    try { await plotPointService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restorePlotPoint: async (db, id) => {
+    set((state) => ({
+      plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, deleted_at: null } : pp)),
+    }));
+    try { await plotPointService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 }));

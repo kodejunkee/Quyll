@@ -18,7 +18,7 @@ function projectDbPath(projectFolderPath: string): string {
 export async function openProjectDatabase(projectFolderPath: string): Promise<Database> {
   const path = projectDbPath(projectFolderPath);
   const db = await openDatabase(path);
-  await migrateProjectDatabase(db);
+  await migrateProjectDatabase(db, path);
   return db;
 }
 

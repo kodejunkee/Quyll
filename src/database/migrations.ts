@@ -39,11 +39,29 @@ async function recordVersion(db: Database, version: number): Promise<void> {
   await execute(db, 'INSERT INTO schema_version (version) VALUES ($1)', [version]);
 }
 
+/**
+ * In-memory cache of schema versions per database path.
+ * Avoids redundant migration checks on re-open within the same app session.
+ * Naturally invalidated on app restart.
+ */
+const schemaVersionCache = new Map<string, number>();
+
 /** Run all pending migrations on a per-project database. */
-export async function migrateProjectDatabase(db: Database): Promise<void> {
+export async function migrateProjectDatabase(db: Database, dbPath?: string): Promise<void> {
+  // Fast path: if we already know this DB is up-to-date, skip entirely
+  if (dbPath && schemaVersionCache.get(dbPath) === CURRENT_SCHEMA_VERSION) {
+    return;
+  }
+
   const current = await getSchemaVersion(db);
 
-  // Always run CREATE TABLE IF NOT EXISTS in case new tables are added
+  // If already at current version, cache it and return — no DDL needed
+  if (current >= CURRENT_SCHEMA_VERSION) {
+    if (dbPath) schemaVersionCache.set(dbPath, current);
+    return;
+  }
+
+  // Run full DDL for fresh installs or upgrades
   await executeDDL(db, PROJECT_TABLES);
 
   if (current < 2) {
@@ -87,6 +105,9 @@ export async function migrateProjectDatabase(db: Database): Promise<void> {
     }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
+
+  // Cache the version now that migrations are done
+  if (dbPath) schemaVersionCache.set(dbPath, CURRENT_SCHEMA_VERSION);
 }
 
 /** Run all pending migrations on the global app database. */

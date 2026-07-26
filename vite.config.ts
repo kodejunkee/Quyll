@@ -32,4 +32,8 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    cssCodeSplit: false,
+    modulePreload: false,
+  },
 }));
