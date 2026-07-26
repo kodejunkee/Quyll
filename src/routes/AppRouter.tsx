@@ -7,7 +7,7 @@ import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
-const KnowledgeGraphPage = lazy(() => import('@/features/knowledge-graph/pages/KnowledgeGraphPage').then(m => ({ default: m.KnowledgeGraphPage })));
+// KnowledgeGraphPage removed
 const CharactersPage = lazy(() => import('@/features/characters/pages/CharactersPage'));
 const CharacterDetailPage = lazy(() => import('@/features/characters/pages/CharacterDetailPage'));
 const LocationsPage = lazy(() => import('@/features/locations/pages/LocationsPage'));
@@ -60,8 +60,7 @@ const router = createBrowserRouter([
       { path: 'chapters', element: null },
       { path: 'chapters/:chapterId', element: null },
 
-      { path: 'graph', element: <SuspenseWrap><KnowledgeGraphPage /></SuspenseWrap> },
-
+      // Knowledge Graph removed
       // Characters
       { path: 'characters', element: <SuspenseWrap><CharactersPage /></SuspenseWrap> },
       { path: 'characters/:entityId', element: <SuspenseWrap><CharacterDetailPage /></SuspenseWrap> },

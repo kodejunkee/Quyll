@@ -10,8 +10,10 @@ interface DraggableModalProps {
   initialX?: number;
   initialY?: number;
   width?: string;
+  height?: string;
   maxHeight?: string;
   closeOnClickOutside?: boolean;
+  contentStyle?: React.CSSProperties;
 }
 
 export function DraggableModal({
@@ -22,8 +24,10 @@ export function DraggableModal({
   initialX,
   initialY,
   width,
+  height,
   maxHeight,
   closeOnClickOutside = false,
+  contentStyle,
 }: DraggableModalProps) {
   const [position, setPosition] = useState({ 
     x: initialX ?? Math.max(20, window.innerWidth / 2 - (width ? parseInt(width, 10) / 2 : 200)), 
@@ -45,7 +49,7 @@ export function DraggableModal({
     if (e.button !== 0) return;
     
     // Prevent dragging if clicking a button
-    if ((e.target as HTMLElement).closest('.draggable-modal__btn')) return;
+    if ((e.target as HTMLElement).closest('button, .draggable-modal__btn')) return;
 
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
@@ -95,6 +99,7 @@ export function DraggableModal({
         left: `${position.x}px`, 
         top: `${position.y}px`,
         width: width || undefined,
+        height: height || undefined,
         maxHeight: maxHeight || undefined,
       }}
     >
@@ -124,7 +129,7 @@ export function DraggableModal({
           </button>
         </div>
       </div>
-      <div className="draggable-modal__content">
+      <div className="draggable-modal__content" style={contentStyle}>
         {children}
       </div>
     </div>

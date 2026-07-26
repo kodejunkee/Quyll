@@ -3,7 +3,8 @@ import { Outlet, useParams, useLocation } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useProjectStore } from '@/store/projectStore';
-import { ProjectDbProvider } from '@/hooks/useProjectDb';
+import { useWorkspaceStore } from '@/store/workspaceStore';
+import { ProjectDbProvider, useProjectDb } from '@/hooks/useProjectDb';
 import { NavigationSidebar } from './NavigationSidebar';
 import { InspectorPanel } from './InspectorPanel';
 import { GlobalKeywordHoverCard } from '@/components/HoverCard';
@@ -13,7 +14,7 @@ import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import { useNotification } from '@/components/Notification';
 import { ProjectSettingsModal } from '@/features/settings/components';
 import { ThemeToggle, LoadingSkeleton } from '@/components';
-import { Feather, Bot, Settings } from 'lucide-react';
+import { Feather, Bot, Settings, Search } from 'lucide-react';
 import './AppLayout.css';
 import '@/styles/redesign.css';
 
@@ -25,6 +26,20 @@ function SuspenseWrap({ children }: { children: React.ReactNode }) {
       {children}
     </Suspense>
   );
+}
+
+function WorkspaceInitializer({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) {
+  const { db, projectId } = useProjectDb();
+  const { isInitialized, isInitializing, initialize } = useWorkspaceStore();
+
+  useEffect(() => {
+    if (db && projectId) {
+      initialize(db, projectId);
+    }
+  }, [db, projectId, initialize]);
+
+  if (isInitializing || !isInitialized) return <>{fallback}</>;
+  return <>{children}</>;
 }
 
 export function AppLayout() {
@@ -60,10 +75,63 @@ export function AppLayout() {
 
   const hideInspector = isWritingWorkspace || inspectorCollapsed;
 
+  const SkeletonLayout = (
+    <div className="app-shell">
+      <header className="app-global-header">
+        <div className="app-global-header__brand">
+          <Feather size={20} className="app-global-header__logo" />
+          <span className="app-global-header__title">Quyll</span>
+          <span className="app-global-header__divider">/</span>
+          <span className="app-global-header__project">
+            {currentProject?.name || projects.find((p) => p.id === projectId)?.name || 'Loading...'}
+          </span>
+        </div>
+
+        <div className="app-global-header__center">
+          <div className="global-search-wrapper">
+            <div className="global-search-bar">
+              <Search size={16} className="global-search-bar__icon" />
+              <input disabled type="text" className="global-search-bar__input" placeholder="Search the project" />
+              <kbd className="global-search-bar__shortcut">Ctrl K</kbd>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-global-header__actions">
+          <button className="app-global-header__ai-btn" disabled>
+            <Bot size={15} className="app-global-header__ai-icon" />
+            <span className="app-global-header__ai-label">AI Assistant</span>
+            <span className="app-global-header__ai-badge">Coming Soon</span>
+          </button>
+          <ThemeToggle />
+          <button className="app-global-header__settings-btn" disabled>
+            <Settings size={18} />
+          </button>
+        </div>
+      </header>
+
+      <div className={`app-layout ${sidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''} ${hideInspector ? 'app-layout--inspector-collapsed' : ''}`}>
+        <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        <main className="app-layout__main">
+          <div style={{ padding: 'var(--space-6) var(--space-8)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <LoadingSkeleton variant="card" height="150px" />
+            <LoadingSkeleton variant="card" height="300px" />
+          </div>
+        </main>
+        {!isWritingWorkspace && (
+          <aside className="inspector-panel" style={{ width: '320px', borderLeft: '1px solid var(--color-border)', padding: 'var(--space-4)' }}>
+            <LoadingSkeleton variant="text" count={5} />
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <ProjectDbProvider projectId={projectId}>
-      <div className="app-shell">
-        <header className="app-global-header">
+    <ProjectDbProvider projectId={projectId} fallback={SkeletonLayout}>
+      <WorkspaceInitializer fallback={SkeletonLayout}>
+        <div className="app-shell">
+          <header className="app-global-header">
           <div className="app-global-header__brand">
             <Feather size={20} className="app-global-header__logo" />
             <span className="app-global-header__title">Quyll</span>
@@ -123,6 +191,7 @@ export function AppLayout() {
           onClose={() => setIsSettingsModalOpen(false)}
         />
       </div>
+      </WorkspaceInitializer>
     </ProjectDbProvider>
   );
 }

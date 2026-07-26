@@ -16,13 +16,18 @@ const baseService = createEntityService<Chapter>({
 export const chapterService = {
   ...baseService,
 
-  /** List chapters ordered by chapter_number (not created_at). */
+  /** List chapters ordered by chapter_number, explicitly excluding the content field for performance. */
   async list(db: Database, projectId: string): Promise<Chapter[]> {
-    return select<Chapter>(
+    const rows = await select<Omit<Chapter, 'content'>>(
       db,
-      `SELECT * FROM chapters WHERE project_id = $1 AND deleted_at IS NULL ORDER BY chapter_number ASC, created_at ASC`,
+      `SELECT id, project_id, title, chapter_number, word_count, reading_time, deleted_at, created_at, updated_at 
+       FROM chapters 
+       WHERE project_id = $1 AND deleted_at IS NULL 
+       ORDER BY chapter_number ASC, created_at ASC`,
       [projectId],
     );
+    // Return with empty content string to satisfy Chapter interface without heavy IPC
+    return rows.map(r => ({ ...r, content: '' })) as Chapter[];
   },
 
   /** Update only the content, word_count, and reading_time (optimized for autosave). */

@@ -7,6 +7,10 @@ import { getImageUrl, getImageById } from '@/services/imageService';
 import { CharacterDetailCard } from '@/features/characters/components/CharacterDetailCard';
 import './EntityDetailsModal.css';
 
+import { ContextualGraph } from '@/features/knowledge-graph/components/ContextualGraph';
+import { Network } from 'lucide-react';
+import { Button } from '@/components/Button';
+
 function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) {
   const { closeEntityModal, bringToFront } = useLayoutStore();
   const { db, projectId, projectPath } = useProjectDb();
@@ -14,6 +18,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
   const [data, setData] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'details' | 'graph'>('details');
 
   useEffect(() => {
     if (!db || !projectId) return;
@@ -105,21 +110,45 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
 
   const isCharacter = modalData.entityType === 'character';
 
+  // Determine width based on view mode
+  const modalWidth = viewMode === 'graph' ? '800px' : (isCharacter ? '760px' : '480px');
+  const modalHeight = viewMode === 'graph' ? '600px' : (isCharacter ? '86vh' : '80vh');
+
+  const titleNode = (
+    <div className="flex items-center gap-3">
+      <span>{title}</span>
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        onClick={() => setViewMode(v => v === 'details' ? 'graph' : 'details')}
+      >
+        <Network size={14} className="mr-1" />
+        {viewMode === 'details' ? 'See Relationship Graph' : 'Back to Details'}
+      </Button>
+    </div>
+  );
+
   return (
     <div 
       onPointerDown={() => bringToFront(modalData.entityId)}
       style={{ zIndex: modalData.zIndex, position: 'relative' }}
     >
       <DraggableModal
-        title={title}
+        title={titleNode}
         onClose={handleClose}
         initialX={modalData.initialX}
         initialY={modalData.initialY}
-        width={isCharacter ? '760px' : '480px'}
-        maxHeight={isCharacter ? '86vh' : '80vh'}
+        width={modalWidth}
+        height={viewMode === 'graph' ? modalHeight : undefined}
+        maxHeight={modalHeight}
         closeOnClickOutside={true}
+        contentStyle={viewMode === 'graph' ? { padding: 0, display: 'flex', flexDirection: 'column' } : undefined}
       >
-        {isCharacter ? (
+        {viewMode === 'graph' ? (
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <ContextualGraph entityId={modalData.entityId} />
+          </div>
+        ) : isCharacter ? (
           <CharacterDetailCard characterId={modalData.entityId} onClose={handleClose} />
         ) : loading ? (
           <div className="entity-details-modal__loading">Loading details...</div>
@@ -127,7 +156,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
           <div className="entity-details-modal__body">
             {imageUrl && (
               <div className="entity-details-modal__image-wrapper">
-                <img src={imageUrl} alt={title} className="entity-details-modal__image" />
+                <img src={imageUrl} alt={title as string} className="entity-details-modal__image" />
               </div>
             )}
             <div className="entity-details-modal__fields">

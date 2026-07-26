@@ -11,6 +11,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
   footer?: ReactNode;
+  subHeader?: ReactNode;
   draggable?: boolean;
 }
 
@@ -22,6 +23,7 @@ function Modal({
   size = 'md',
   children,
   footer,
+  subHeader,
   draggable = false,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -126,6 +128,7 @@ function Modal({
             icon={<X size={25} />}
           />
         </header>
+        {subHeader && <div className="modal__subheader">{subHeader}</div>}
         <div className="modal__body">{children}</div>
         {footer && <footer className="modal__footer">{footer}</footer>}
       </div>

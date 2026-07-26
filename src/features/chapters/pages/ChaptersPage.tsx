@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, matchPath, useBlocker } from 'react-router-dom';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -9,10 +9,17 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import type { EditorState, LexicalEditor } from 'lexical';
-import { $getRoot, $getSelection, $isRangeSelection } from 'lexical';
-import { PenLine, Download, RotateCcw } from 'lucide-react';
-import { EmptyState, Modal, Button } from '@/components';
+import type { EditorState, LexicalEditor, LexicalNode } from 'lexical';
+import { 
+  $getRoot, $getSelection, $isRangeSelection, $isTextNode, $isElementNode, 
+  $isLineBreakNode, $getNodeByKey,
+  CLEAR_EDITOR_COMMAND 
+} from 'lexical';
+import { createEmptyHistoryState } from '@lexical/react/LexicalHistoryPlugin';
+import type { HistoryState } from '@lexical/react/LexicalHistoryPlugin';
+import { Download, RotateCcw } from 'lucide-react';
+import { htmlToLexicalJson } from '@/services/htmlToMarkdown';
+import { Modal, Button } from '@/components';
 import { useSettings } from '@/features/settings';
 import { ExportDialog } from '@/features/settings/components';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -22,6 +29,8 @@ import { useDraftRecovery } from '../hooks/useDraftRecovery';
 import { EditorToolbar } from '../components/EditorToolbar';
 import { EditorStatusBar } from '../components/EditorStatusBar';
 import { ChapterListPanel } from '../components/ChapterListPanel';
+import { ChapterDirectory } from '../components/ChapterDirectory';
+import { ChapterForm } from '../components/ChapterForm';
 import { DraftRecoveryDialog } from '../components/DraftRecoveryDialog';
 import { FindAndReplacePlugin } from '../components/FindAndReplacePlugin';
 import { KeywordPlugin } from '../components/KeywordPlugin';
@@ -55,7 +64,7 @@ function EditorRefPlugin({ editorRef }: { editorRef: React.MutableRefObject<Lexi
 }
 
 /** Keeps explicit breaks aligned to the next document page and reports live pagination. */
-function PageLayoutPlugin({ onPageCountChange }: { onPageCountChange: (count: number) => void }) {
+function PageLayoutPlugin() {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     let frame = 0;
@@ -68,7 +77,15 @@ function PageLayoutPlugin({ onPageCountChange }: { onPageCountChange: (count: nu
         const pageHeight = Number.parseFloat(styles.getPropertyValue('--editor-page-height')) || 1056;
         const pageGap = Number.parseFloat(styles.getPropertyValue('--editor-page-gap')) || 28;
         
-        onPageCountChange(Math.max(1, Math.ceil(root.scrollHeight / (pageHeight + pageGap))));
+        const elements = Array.from(root.querySelectorAll('[data-lexical-page-break]')) as HTMLElement[];
+        for (const el of elements) {
+          const top = el.offsetTop;
+          const page = Math.floor(top / (pageHeight + pageGap)) + 1;
+          const targetTop = page * (pageHeight + pageGap);
+          if (targetTop > top) {
+            el.style.marginTop = `${targetTop - top}px`;
+          }
+        }
       });
     };
     const unregister = editor.registerUpdateListener(layout);
@@ -77,7 +94,7 @@ function PageLayoutPlugin({ onPageCountChange }: { onPageCountChange: (count: nu
     if (root) observer.observe(root);
     layout();
     return () => { unregister(); observer.disconnect(); cancelAnimationFrame(frame); };
-  }, [editor, onPageCountChange]);
+  }, [editor]);
   return null;
 }
 
@@ -133,8 +150,19 @@ export default function ChaptersPage() {
 
   const [activeChapterId, setActiveChapterId] = useState<string | null>(urlChapterId ?? null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
-  const [nextNum, setNextNum] = useState(1);
   const [editorKey, setEditorKey] = useState(0);
+  
+  // Keep history state per chapter
+  const historyStatesRef = useRef<Record<string, HistoryState>>({});
+  const currentHistoryState = useMemo(() => {
+    if (!activeChapterId) return undefined;
+    if (!historyStatesRef.current[activeChapterId]) {
+      historyStatesRef.current[activeChapterId] = createEmptyHistoryState();
+    }
+    return historyStatesRef.current[activeChapterId];
+  }, [activeChapterId]);
+
+  const [nextNum, setNextNum] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
@@ -143,7 +171,6 @@ export default function ChaptersPage() {
   const [charCount, setCharCount] = useState(0);
   const [paraCount, setParaCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
-  const [pageCount, setPageCount] = useState(1);
 
   // Editor reference for serialization
   const editorRef = useRef<LexicalEditor | null>(null);
@@ -152,6 +179,18 @@ export default function ChaptersPage() {
   // Draft recovery
   const { saveDraft, checkDraft, clearDraft } = useDraftRecovery();
   const [draftRecoveryOpen, setDraftRecoveryOpen] = useState(false);
+  const [pluginsLoaded, setPluginsLoaded] = useState(false);
+
+  // Defer heavy lexical plugins until after initial render
+  useEffect(() => {
+    if (activeChapter) {
+      const timer = setTimeout(() => setPluginsLoaded(true), 100);
+      return () => clearTimeout(timer);
+    } else {
+      setPluginsLoaded(false);
+    }
+    return undefined;
+  }, [activeChapter]);
   const pendingDraftRef = useRef<string | null>(null);
 
   // Grammar check
@@ -189,7 +228,7 @@ export default function ChaptersPage() {
   }, [activeChapterId, updateContent, clearDraft, refresh]);
 
   const { settings } = useSettings();
-  const { chapterListCollapsed, showKeywords } = useLayoutStore();
+  const { chapterListCollapsed, showKeywords, setLastActiveChapterId } = useLayoutStore();
 
   const { saveStatus, lastSavedAt, markDirty, saveNow, reset: resetAutosave } = useAutosave({
     intervalMinutes: settings?.autosave_interval ?? 5,
@@ -220,15 +259,20 @@ export default function ChaptersPage() {
     }
   }, [blocker]);
 
+  const saveStatusRef = useRef(saveStatus);
   useEffect(() => {
-    let unlisten: (() => void) | undefined;
+    saveStatusRef.current = saveStatus;
+  }, [saveStatus]);
+
+  useEffect(() => {
+    let unlistenPromise: Promise<() => void> | undefined;
     
     async function setupTauri() {
       try {
         const { getCurrentWindow } = await import('@tauri-apps/api/window');
         const win = getCurrentWindow();
-        unlisten = await win.onCloseRequested((event) => {
-          if (saveStatus === 'unsaved') {
+        unlistenPromise = win.onCloseRequested((event) => {
+          if (saveStatusRef.current === 'unsaved') {
             event.preventDefault();
             setUnsavedAction({
               type: 'closeApp',
@@ -249,9 +293,11 @@ export default function ChaptersPage() {
     void setupTauri();
     
     return () => {
-      if (unlisten) unlisten();
+      if (unlistenPromise) {
+        unlistenPromise.then(unlisten => unlisten());
+      }
     };
-  }, [saveStatus]);
+  }, []);
 
   const handleUnsavedSave = async () => {
     await saveNow();
@@ -299,14 +345,41 @@ export default function ChaptersPage() {
       setParaCount(0);
       setReadingTime(chapter.reading_time);
 
-      // Force re-mount the editor with new content
-      setEditorKey((k) => k + 1);
+      // Refresh editor content directly without remounting
+      const editor = editorRef.current;
+      if (editor) {
+        let safeState = undefined;
+        if (chapter.content && chapter.content.trim()) {
+          const trimmed = chapter.content.trim();
+          if (trimmed.startsWith('{')) {
+            safeState = trimmed;
+          } else {
+            safeState = htmlToLexicalJson(chapter.content);
+          }
+        }
+        
+        if (safeState) {
+          try {
+            const parsedState = editor.parseEditorState(safeState);
+            editor.setEditorState(parsedState);
+          } catch (e) {
+            console.error('Failed to parse editor state', e);
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+          }
+        } else {
+          editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+        }
+      } else {
+        // Fallback for first mount where editorRef might not be attached yet
+        setEditorKey((k) => k + 1);
+      }
+
       resetAutosave();
     },
     [getById, checkDraft, resetAutosave],
   );
 
-  /** Select a chapter — save current first, then load new one. */
+  /** Select a chapter — save current first, then let URL handle the rest. */
   const handleSelectChapter = useCallback(
     async (id: string) => {
       if (id === activeChapterId) return;
@@ -316,36 +389,56 @@ export default function ChaptersPage() {
         await saveNow();
       }
 
-      setActiveChapterId(id);
-      await loadChapter(id);
+      if (!id) {
+        setLastActiveChapterId(null);
+        navigate(`/project/${projectId}/chapters`);
+        return;
+      }
 
-      // Update URL
+      // Update URL (push state), let the useEffect handle loading
       if (projectId) {
-        navigate(`/project/${projectId}/chapters/${id}`, { replace: true });
+        navigate(`/project/${projectId}/chapters/${id}`);
       }
     },
-    [activeChapterId, saveNow, loadChapter, projectId, navigate],
+    [activeChapterId, saveNow, projectId, navigate, setLastActiveChapterId],
   );
 
-  // Load chapter from URL on mount
+  // Load chapter from URL on mount (and unload if on directory route)
   useEffect(() => {
-    if (urlChapterId && (urlChapterId !== activeChapterId || !activeChapter)) {
-      setActiveChapterId(urlChapterId);
-      void loadChapter(urlChapterId);
-    }
-  }, [urlChapterId, activeChapterId, activeChapter, loadChapter]);
-
-  // Auto-select first chapter if none selected
-  useEffect(() => {
-    if (!activeChapterId && chapters.length > 0 && !loading) {
-      const firstId = chapters[0]!.id;
-      setActiveChapterId(firstId);
-      void loadChapter(firstId);
-      if (projectId) {
-        navigate(`/project/${projectId}/chapters/${firstId}`, { replace: true });
+    if (urlChapterId) {
+      if (urlChapterId !== activeChapterId) {
+        setActiveChapterId(urlChapterId);
+        // Do not clear activeChapter here, so the editor remains mounted and seamlessly transitions content
+        void loadChapter(urlChapterId);
+      } else if (!activeChapter) {
+        void loadChapter(urlChapterId);
+      }
+    } else {
+      const isDirectoryRoute = location.pathname.endsWith('/chapters') || location.pathname.endsWith('/chapters/');
+      if (isDirectoryRoute && activeChapterId) {
+        setActiveChapterId(null);
+        setActiveChapter(null);
       }
     }
-  }, [chapters, loading, activeChapterId]);
+  }, [urlChapterId, activeChapterId, activeChapter, loadChapter, location.pathname]);
+
+  // Persistence redirect
+  useEffect(() => {
+    const isWritingWorkspace = location.pathname.endsWith('/chapters') || location.pathname.endsWith('/chapters/');
+    const currentLastActive = useLayoutStore.getState().lastActiveChapterId;
+    if (isWritingWorkspace && currentLastActive && !urlChapterId) {
+      navigate(`/project/${projectId}/chapters/${currentLastActive}`, { replace: true });
+    }
+  }, [location.pathname, urlChapterId, projectId, navigate]);
+
+  // Update lastActiveChapterId when a chapter is opened
+  useEffect(() => {
+    if (urlChapterId) {
+      setLastActiveChapterId(urlChapterId);
+    }
+  }, [urlChapterId, setLastActiveChapterId]);
+
+  // Remove auto-select first chapter logic. Let it stay empty if no urlChapterId.
 
   // Fetch next chapter number for create form
   useEffect(() => {
@@ -445,42 +538,96 @@ export default function ChaptersPage() {
     pendingDraftRef.current = null;
   }, [clearDraft, activeChapterId]);
 
+  const [isCheckingGrammar, setIsCheckingGrammar] = useState(false);
+
   /** Manual save from Ctrl+S. */
   const handleManualSave = useCallback(() => {
     void saveNow();
   }, [saveNow]);
+
+  // Store the map to resolve issues later
+  const grammarMapRef = useRef<{ key: string; start: number; end: number }[]>([]);
 
   /** Grammar Check from Status Bar */
   const handleOpenGrammarCheck = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
 
+    if (isCheckingGrammar) {
+      setGrammarModalOpen(false);
+      setIsCheckingGrammar(false);
+      return;
+    }
+
     let textToCheck = '';
     let isSelectionCheck = false;
+    let selectionStart = 0;
+    let selectionEnd = Number.MAX_SAFE_INTEGER;
+
+    setIsCheckingGrammar(true);
 
     editor.getEditorState().read(() => {
+      let text = '';
+      const map: { key: string; start: number; end: number }[] = [];
+      
+      const traverse = (node: LexicalNode) => {
+        if ($isTextNode(node)) {
+          const content = node.getTextContent();
+          map.push({ key: node.getKey(), start: text.length, end: text.length + content.length });
+          text += content;
+        } else if ($isElementNode(node)) {
+          const children = node.getChildren();
+          for (const child of children) {
+            traverse(child);
+          }
+          if (!node.isInline() && text.length > 0 && !text.endsWith('\n\n')) {
+            text += '\n\n'; 
+          }
+        } else if ($isLineBreakNode(node)) {
+          text += '\n';
+        }
+      };
+      
+      traverse($getRoot());
+      textToCheck = text;
+      grammarMapRef.current = map;
+
       const selection = $getSelection();
       if ($isRangeSelection(selection) && !selection.isCollapsed()) {
-        textToCheck = selection.getTextContent();
         isSelectionCheck = true;
-      } else {
-        textToCheck = $getRoot().getTextContent();
-        isSelectionCheck = false;
+        const nodes = selection.getNodes();
+        const firstTextNode = nodes.find($isTextNode);
+        const lastTextNode = [...nodes].reverse().find($isTextNode);
+        
+        if (firstTextNode && lastTextNode) {
+          const firstMap = map.find(m => m.key === firstTextNode.getKey());
+          const lastMap = map.find(m => m.key === lastTextNode.getKey());
+          if (firstMap && lastMap) {
+            selectionStart = firstMap.start;
+            selectionEnd = lastMap.end;
+          }
+        }
       }
     });
 
     checkGrammar(textToCheck).then(found => {
+      if (isSelectionCheck) {
+        found = found.filter(i => i.startOffset >= selectionStart && i.endOffset <= selectionEnd);
+      }
       setGrammarIssues(found);
       setIsGrammarSelection(isSelectionCheck);
+      setIsCheckingGrammar(false);
       
-      // Make sure chapter list is not collapsed if we want to show grammar checker in the panel
       const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
       if (chapterListCollapsed) {
         setChapterListCollapsed(false);
       }
       
       setGrammarModalOpen(true);
-    }).catch(console.error);
+    }).catch(err => {
+      console.error(err);
+      setIsCheckingGrammar(false);
+    });
   }, []);
 
   const handleApplyGrammarSuggestion = useCallback((issue: GrammarIssue) => {
@@ -488,16 +635,17 @@ export default function ChaptersPage() {
     if (!editor) return;
 
     editor.update(() => {
-      const root = $getRoot();
-      const allTextNodes = root.getAllTextNodes();
-      for (const node of allTextNodes) {
-        const content = node.getTextContent();
-        const idx = content.indexOf(issue.matchText);
-        if (idx !== -1 && issue.suggestion !== undefined) {
-          const before = content.slice(0, idx);
-          const after = content.slice(idx + issue.matchText.length);
+      const map = grammarMapRef.current;
+      const nodeInfo = map.find(m => issue.startOffset >= m.start && issue.startOffset < m.end);
+      
+      if (nodeInfo && issue.suggestion !== undefined) {
+        const node = $getNodeByKey(nodeInfo.key);
+        if ($isTextNode(node)) {
+          const localStart = issue.startOffset - nodeInfo.start;
+          const content = node.getTextContent();
+          const before = content.slice(0, localStart);
+          const after = content.slice(localStart + issue.matchText.length);
           node.setTextContent(before + issue.suggestion + after);
-          break;
         }
       }
     });
@@ -510,24 +658,26 @@ export default function ChaptersPage() {
     if (!editor) return;
 
     editor.update(() => {
-      const root = $getRoot();
-      const allTextNodes = root.getAllTextNodes();
-      for (const node of allTextNodes) {
-        const content = node.getTextContent();
-        const idx = content.indexOf(issue.matchText);
-        if (idx !== -1) {
+      const map = grammarMapRef.current;
+      const nodeInfo = map.find(m => issue.startOffset >= m.start && issue.startOffset < m.end);
+      
+      if (nodeInfo) {
+        const node = $getNodeByKey(nodeInfo.key);
+        if ($isTextNode(node)) {
+          const localStart = issue.startOffset - nodeInfo.start;
+          
           const selection = $getSelection();
           if ($isRangeSelection(selection)) {
-            selection.anchor.set(node.getKey(), idx, 'text');
-            selection.focus.set(node.getKey(), idx + issue.matchText.length, 'text');
+            selection.anchor.set(node.getKey(), localStart, 'text');
+            selection.focus.set(node.getKey(), localStart + issue.matchText.length, 'text');
           } else {
-            node.select(idx, idx + issue.matchText.length);
+            node.select(localStart, localStart + issue.matchText.length);
           }
+          
           const domElement = editor.getElementByKey(node.getKey());
           if (domElement) {
             domElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
-          break;
         }
       }
     });
@@ -546,13 +696,14 @@ export default function ChaptersPage() {
   } as React.CSSProperties;
 
   return (
-    <div className={`chapters-page ${chapterListCollapsed ? 'chapters-page--panel-collapsed' : ''}`} style={editorStyles}>
+    <div className={`chapters-page ${chapterListCollapsed ? 'chapters-page--panel-collapsed' : ''} ${!activeChapterId ? 'chapters-page--directory-mode' : ''}`} style={editorStyles}>
       {/* Main editing area */}
       <div className={`chapters-page__editor-area ${showKeywords ? 'show-keywords' : ''}`}>
-        {activeChapter ? (
-          <>
-            <div className="chapters-page__chapter-header">
-              <div className="chapters-page__chapter-info">
+        {activeChapterId ? (
+          activeChapter ? (
+            <>
+              <div className="chapters-page__chapter-header">
+                <div className="chapters-page__chapter-info">
                 <span className="chapters-page__chapter-num">
                   Chapter {String(activeChapter.chapter_number).padStart(2, '0')}
                 </span>
@@ -585,70 +736,77 @@ export default function ChaptersPage() {
             <LexicalComposer key={editorKey} initialConfig={createEditorConfig(editorInitialContent)}>
               <EditorToolbar />
               <div className="chapters-page__editor-scroll">
-                <KeywordPlugin />
                 <RichTextPlugin
                   contentEditable={<ContentEditable className="writing-editor__input" />}
                   ErrorBoundary={LexicalErrorBoundary}
                 />
-                <HistoryPlugin />
-                <ListPlugin />
-                <HorizontalRulePlugin />
-                <PageLayoutPlugin onPageCountChange={setPageCount} />
+                <HistoryPlugin key={activeChapterId} externalHistoryState={currentHistoryState} />
                 <OnChangePlugin onChange={handleEditorChange} ignoreSelectionChange />
                 <EditorRefPlugin editorRef={editorRef} />
-                <FindAndReplacePlugin />
-                <AutoFormatPlugin />
                 <SaveShortcutPlugin onSave={handleManualSave} />
-                <LexicalContextMenu />
+                {pluginsLoaded && (
+                  <>
+                    <KeywordPlugin />
+                    <ListPlugin />
+                    <HorizontalRulePlugin />
+                    <PageLayoutPlugin />
+                    <FindAndReplacePlugin />
+                    <AutoFormatPlugin />
+                    <LexicalContextMenu />
+                  </>
+                )}
               </div>
             </LexicalComposer>
           </>
         ) : (
-          <div className="chapters-page__empty">
-            <EmptyState
-              icon={PenLine}
-              title="Start writing"
-              description={
-                chapters.length === 0
-                  ? 'Create your first chapter to begin writing your story.'
-                  : 'Select a chapter from the panel to start editing.'
-              }
-              actionLabel={chapters.length === 0 ? 'Create Chapter' : undefined}
-              onAction={chapters.length === 0 ? () => setCreateOpen(true) : undefined}
-            />
+          <div className="chapters-page__loading">
+            <div className="chapters-page__spinner"></div>
+            Loading chapter...
           </div>
+        )) : (
+          <ChapterDirectory 
+            projectId={projectId!}
+            chapters={chapters}
+            loading={loading}
+            onCreateChapter={() => setCreateOpen(true)}
+            onRename={handleRenameChapter}
+            onDuplicate={handleDuplicateChapter}
+            onDelete={handleDeleteChapter}
+          />
         )}
       </div>
 
-      {/* Right panel — Chapter list */}
-      <ChapterListPanel
-        chapters={chapters}
-        activeChapterId={activeChapterId}
-        onSelect={handleSelectChapter}
-        onCreate={handleCreateChapter}
-        onRename={handleRenameChapter}
-        onDuplicate={handleDuplicateChapter}
-        onDelete={handleDeleteChapter}
-        loading={loading}
-        nextChapterNumber={nextNum}
-        createOpen={createOpen}
-        onCreateOpenChange={setCreateOpen}
-        grammarOpen={grammarModalOpen}
-        onGrammarToggle={() => {
-          const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
-          if (chapterListCollapsed) {
-             setChapterListCollapsed(false);
-             setGrammarModalOpen(true);
-          } else {
-             setGrammarModalOpen(!grammarModalOpen);
-          }
-        }}
-        grammarIssues={grammarIssues}
-        isGrammarSelection={isGrammarSelection}
-        onApplyGrammarSuggestion={handleApplyGrammarSuggestion}
-        onLocateGrammarIssue={handleLocateGrammarIssue}
-        onDismissGrammarIssue={handleDismissGrammarIssue}
-      />
+      {/* Right panel — Chapter list (only show in editor) */}
+      {activeChapterId && (
+        <ChapterListPanel
+          chapters={chapters}
+          activeChapterId={activeChapterId}
+          onSelect={handleSelectChapter}
+          onCreate={handleCreateChapter}
+          onRename={handleRenameChapter}
+          onDuplicate={handleDuplicateChapter}
+          onDelete={handleDeleteChapter}
+          loading={loading}
+          nextChapterNumber={nextNum}
+          createOpen={createOpen}
+          onCreateOpenChange={setCreateOpen}
+          grammarOpen={grammarModalOpen}
+          onGrammarToggle={() => {
+            const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
+            if (chapterListCollapsed) {
+               setChapterListCollapsed(false);
+               setGrammarModalOpen(true);
+            } else {
+               setGrammarModalOpen(!grammarModalOpen);
+            }
+          }}
+          grammarIssues={grammarIssues}
+          isGrammarSelection={isGrammarSelection}
+          onApplyGrammarSuggestion={handleApplyGrammarSuggestion}
+          onLocateGrammarIssue={handleLocateGrammarIssue}
+          onDismissGrammarIssue={handleDismissGrammarIssue}
+        />
+      )}
 
       {/* Bottom status bar — spans full width */}
       <EditorStatusBar
@@ -656,10 +814,10 @@ export default function ChaptersPage() {
         characterCount={charCount}
         paragraphCount={paraCount}
         readingTime={readingTime}
-        pageCount={pageCount}
         saveStatus={activeChapter ? saveStatus : 'saved'}
         lastSavedAt={lastSavedAt}
         onGrammarCheck={activeChapter ? handleOpenGrammarCheck : undefined}
+        isCheckingGrammar={isCheckingGrammar}
       />
 
       {/* Draft recovery dialog */}
@@ -674,6 +832,19 @@ export default function ChaptersPage() {
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
       />
+
+      {/* Create Chapter Modal */}
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Chapter" size="sm">
+        <ChapterForm
+          onSubmit={async (data) => {
+            await handleCreateChapter(data);
+            setCreateOpen(false);
+          }}
+          onCancel={() => setCreateOpen(false)}
+          submitLabel="Create"
+          defaultValues={{ title: '', chapter_number: nextNum }}
+        />
+      </Modal>
 
       {/* Unsaved Changes Modal */}
       <Modal

@@ -335,4 +335,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 7;

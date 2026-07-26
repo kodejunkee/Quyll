@@ -1,7 +1,7 @@
 .nav-sidebar {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg, #000000);
+  background: var(--color-bg-surface, #000000);
   border-right: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
   height: 100%;
   overflow: hidden;
@@ -67,7 +67,7 @@
 .nav-sidebar__section-title {
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   letter-spacing: 0.08em;
   padding: var(--space-1) var(--space-2);
   user-select: none;
@@ -80,9 +80,9 @@
   padding: 9px 14px;
   margin: 0 var(--space-1);
   border-radius: 8px;
-  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
-  background: var(--color-bg-elevated, #090a0d);
-  color: var(--color-text-secondary);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
   text-decoration: none;
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -100,14 +100,14 @@
 
 .nav-sidebar__link--active {
   color: var(--color-text);
-  background: var(--color-bg-surface, rgba(255, 255, 255, 0.12));
+  background: var(--color-bg-elevated, rgba(255, 255, 255, 0.12));
   border-color: var(--color-primary-subtle, rgba(245, 158, 11, 0.5));
   font-weight: 600;
   box-shadow: none;
 }
 
 .nav-sidebar__link--active:hover {
-  background: var(--color-bg-surface, rgba(255, 255, 255, 0.12));
+  background: var(--color-bg-elevated, rgba(255, 255, 255, 0.12));
   transform: none;
 }
 

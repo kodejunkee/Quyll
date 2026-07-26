@@ -7,14 +7,17 @@ import { Dropdown } from '@/components/Dropdown';
 import './CharacterForm.css';
 import '@/styles/redesign.css';
 
+export type CharacterTab = 'identity' | 'attributes' | 'background';
+
 interface CharacterFormProps {
   defaultValues?: Partial<CharacterFormData>;
   onSubmit: (data: CharacterFormData) => void;
   onCancel: () => void;
   submitLabel?: string;
+  activeTab: CharacterTab;
 }
 
-export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Save' }: CharacterFormProps) {
+export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Save', activeTab }: CharacterFormProps) {
   const {
     register,
     handleSubmit,
@@ -50,7 +53,6 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
 
   const statusValue = watch('status');
   const genderValue = watch('gender') || '';
-  const [activeTab, setActiveTab] = useState<'identity' | 'attributes' | 'background'>('identity');
 
   const GENDER_OPTIONS = [
     { label: 'Not Specified', value: '' },
@@ -64,29 +66,6 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
 
   return (
     <form className="character-form" onSubmit={handleSubmit(onSubmit)}>
-      <div className="character-form__tabs">
-        <button
-          type="button"
-          className={`character-form__tab ${activeTab === 'identity' ? 'active' : ''}`}
-          onClick={() => setActiveTab('identity')}
-        >
-          Identity
-        </button>
-        <button
-          type="button"
-          className={`character-form__tab ${activeTab === 'attributes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('attributes')}
-        >
-          Attributes
-        </button>
-        <button
-          type="button"
-          className={`character-form__tab ${activeTab === 'background' ? 'active' : ''}`}
-          onClick={() => setActiveTab('background')}
-        >
-          Background & Story
-        </button>
-      </div>
 
       <div className="character-form__grid">
         {activeTab === 'identity' && (
@@ -173,3 +152,32 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
     </form>
   );
 }
+
+export function CharacterFormTabs({ activeTab, onTabChange }: { activeTab: CharacterTab; onTabChange: (tab: CharacterTab) => void }) {
+  return (
+    <div className="character-form__tabs">
+      <button
+        type="button"
+        className={`character-form__tab ${activeTab === 'identity' ? 'active' : ''}`}
+        onClick={() => onTabChange('identity')}
+      >
+        Identity
+      </button>
+      <button
+        type="button"
+        className={`character-form__tab ${activeTab === 'attributes' ? 'active' : ''}`}
+        onClick={() => onTabChange('attributes')}
+      >
+        Attributes
+      </button>
+      <button
+        type="button"
+        className={`character-form__tab ${activeTab === 'background' ? 'active' : ''}`}
+        onClick={() => onTabChange('background')}
+      >
+        Background & Story
+      </button>
+    </div>
+  );
+}
+

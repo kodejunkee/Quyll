@@ -1,45 +1,107 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
-import { useCrud, type CrudService } from '@/hooks/useCrud';
-import { characterService } from '../services/characterService';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { Character } from '@/types/database';
 
 /**
  * Hook providing CRUD operations for characters in the current project.
- * Wraps the generic useCrud with the character service.
+ * Uses the in-memory workspaceStore for instantaneous UI updates,
+ * and syncs to SQLite in the background.
  */
 export function useCharacters() {
   const { db, projectId } = useProjectDb();
+  const store = useWorkspaceStore();
 
-  const service: CrudService<Character> = useMemo(
-    () => ({
-      list: (pid: string) => characterService.list(db, pid),
-      create: async (pid: string, data: Partial<Character>) => {
-        return characterService.create(db, pid, data as Record<string, unknown>);
-      },
-      update: async (id: string, data: Partial<Character>) => {
-        await characterService.update(db, id, data as Record<string, unknown>);
-      },
-      softDelete: (id: string) => characterService.softDelete(db, id),
-      restore: (id: string) => characterService.restore(db, id),
-    }),
-    [db],
+  const items = store.characters;
+  const loading = store.isInitializing;
+  const error = store.initError;
+
+  const refresh = useCallback(async () => {
+    if (db && projectId) {
+      await store.initialize(db, projectId);
+    }
+  }, [db, projectId, store.initialize]);
+
+  const create = useCallback(
+    async (data: unknown): Promise<Character | null> => {
+      if (!projectId || !db) return null;
+      try {
+        return await store.createCharacter(db, projectId, data as Partial<Character>);
+      } catch (err) {
+        console.error('[useCharacters] create error:', err);
+        return null;
+      }
+    },
+    [db, projectId, store.createCharacter]
   );
 
-  const crud = useCrud<Character>(service, projectId);
+  const update = useCallback(
+    async (id: string, data: unknown): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.updateCharacter(db, id, data as Partial<Character>);
+        return true;
+      } catch (err) {
+        console.error('[useCharacters] update error:', err);
+        return false;
+      }
+    },
+    [db, store.updateCharacter]
+  );
+
+  const remove = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.softDeleteCharacter(db, id);
+        return true;
+      } catch (err) {
+        console.error('[useCharacters] softDelete error:', err);
+        return false;
+      }
+    },
+    [db, store.softDeleteCharacter]
+  );
+
+  const restore = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!db) return false;
+      try {
+        await store.restoreCharacter(db, id);
+        return true;
+      } catch (err) {
+        console.error('[useCharacters] restore error:', err);
+        return false;
+      }
+    },
+    [db, store.restoreCharacter]
+  );
 
   const getById = useCallback(
-    (id: string) => characterService.getById(db, id),
-    [db],
+    (id: string) => {
+      return store.characters.find(c => c.id === id) || null;
+    },
+    [store.characters]
   );
 
   const updateImage = useCallback(
     async (characterId: string, imageId: string | null) => {
-      await characterService.update(db, characterId, { image_id: imageId });
-      await crud.refresh();
+      if (!db) return;
+      await store.updateCharacter(db, characterId, { image_id: imageId });
     },
-    [db, crud],
+    [db, store.updateCharacter]
   );
 
-  return { ...crud, getById, updateImage };
+  return {
+    items,
+    loading,
+    error,
+    refresh,
+    create,
+    update,
+    remove,
+    restore,
+    getById,
+    updateImage,
+  };
 }

@@ -24,6 +24,8 @@ interface LayoutState {
   openEntityModal: (entityId: string, entityType: string, x?: number, y?: number) => void;
   closeEntityModal: (entityId: string) => void;
   bringToFront: (entityId: string) => void;
+  lastActiveChapterId: string | null;
+  setLastActiveChapterId: (id: string | null) => void;
 }
 
 function loadBool(key: string, fallback: boolean): boolean {
@@ -37,6 +39,9 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   chapterListCollapsed: loadBool('quyll-chapter-list-collapsed', false),
   showKeywords: loadBool('quyll-show-keywords', true),
   activeEntityModals: [],
+  lastActiveChapterId: null,
+
+  setLastActiveChapterId: (id) => set({ lastActiveChapterId: id }),
 
   toggleShowKeywords: () =>
     set((s) => {

@@ -43,9 +43,11 @@ async function recordVersion(db: Database, version: number): Promise<void> {
 export async function migrateProjectDatabase(db: Database): Promise<void> {
   const current = await getSchemaVersion(db);
 
+  // Always run CREATE TABLE IF NOT EXISTS in case new tables are added
+  await executeDDL(db, PROJECT_TABLES);
+
   if (current < 2) {
-    // Fresh install or v1 -> run full DDL
-    await executeDDL(db, PROJECT_TABLES);
+    // Fresh install or v1 -> we just ran full DDL, so we're up to date
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   } else if (current < CURRENT_SCHEMA_VERSION) {
     if (current < 3) {
@@ -66,6 +68,21 @@ export async function migrateProjectDatabase(db: Database): Promise<void> {
         await execute(db, "UPDATE pinned_references SET entity_type = 'world_system' WHERE entity_type = 'magic_system'");
       } catch (e) {
         console.error('Failed to run migration to schema v4', e);
+      }
+    }
+    if (current < 7) {
+      // Add deleted_at to all entity tables for soft delete support
+      const tables = [
+        'chapters', 'characters', 'locations', 'organizations',
+        'species', 'items', 'world_systems', 'lore',
+        'timeline_events', 'plot_points'
+      ];
+      for (const t of tables) {
+        try {
+          await execute(db, `ALTER TABLE ${t} ADD COLUMN deleted_at TEXT`);
+        } catch {
+          // Ignore if column exists or table doesn't exist yet
+        }
       }
     }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);

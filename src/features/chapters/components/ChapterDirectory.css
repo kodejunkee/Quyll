@@ -1,0 +1,309 @@
+.chapter-directory {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.chapter-directory__header {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chapter-directory__title {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.chapter-directory__subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.chapter-directory__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.chapter-directory__search {
+  flex: 1;
+  max-width: 400px;
+}
+
+.chapter-directory__view-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+/* Content Grid / List */
+.chapter-directory__content {
+  display: grid;
+  gap: 16px;
+}
+
+.chapter-directory__content--grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.chapter-directory__content--list {
+  grid-template-columns: 1fr;
+}
+
+/* Cards */
+.chapter-directory__card {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.chapter-directory__card:hover {
+  transform: translateY(-4px);
+}
+
+/* List View Overrides */
+.chapter-directory__card--list-view {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.chapter-directory__card--list-view:hover {
+  background: var(--color-surface-3);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.chapter-directory__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.chapter-directory__card-number {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.chapter-directory__card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.chapter-directory__cover-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.chapter-book-cover {
+  width: 100%;
+  height: 140px;
+  border-radius: 6px 8px 8px 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.chapter-directory__card:hover .chapter-book-cover {
+  border-color: var(--color-primary);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='light'] .chapter-book-cover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='light'] .chapter-directory__card:hover .chapter-book-cover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+.chapter-book-cover__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='light'] .chapter-book-cover__spine {
+  background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 100%);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chapter-book-cover__frame {
+  position: absolute;
+  inset: 12px 14px 12px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  gap: 6px;
+}
+
+[data-theme='light'] .chapter-book-cover__frame {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.chapter-book-cover__number {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-secondary);
+}
+
+.chapter-book-cover__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.chapter-directory__card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.chapter-directory__menu-btn {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #E5E7EB;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  padding: 0;
+  opacity: 0;
+}
+
+.chapter-directory__card:hover .chapter-directory__menu-btn {
+  opacity: 1;
+}
+
+.chapter-directory__menu-btn:hover,
+.chapter-directory__menu-btn:focus {
+  background: rgba(0, 0, 0, 0.7);
+  opacity: 1;
+}
+
+.chapter-directory__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.chapter-directory__menu-item {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.chapter-directory__menu-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.chapter-directory__menu-item--danger {
+  color: var(--color-danger);
+}
+
+.chapter-directory__menu-item--danger:hover {
+  background: var(--color-danger-subtle);
+}
+
+.chapter-directory__card-info {
+  display: flex;
+  flex-direction: column;
+  padding: 0 4px;
+}
+
+.chapter-directory__card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.chapter-directory__card-stats span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chapter-directory__loading,
+.chapter-directory__empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+}

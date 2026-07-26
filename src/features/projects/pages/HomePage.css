@@ -183,6 +183,10 @@
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+[data-theme='light'] .home-hero__card {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
 .home-hero__card::after {
   content: '';
   position: absolute;
@@ -247,6 +251,20 @@
   opacity: 0.85;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   margin-left: 6px;
+}
+
+[data-theme='light'] .hero-book-cover {
+  box-shadow: 4px 6px 16px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='light'] .hero-book-cover__spine {
+  background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 100%);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .hero-book-cover__emblem {
+  color: var(--color-text-secondary);
+  filter: none;
 }
 
 .home-hero__info {
@@ -477,7 +495,7 @@
 
 .view-toggle-btn.active {
   background: var(--color-primary);
-  color: #FFFFFF;
+  color: var(--color-primary-text, #FFFFFF);
 }
 
 .view-toggle-btn:hover:not(.active) {
@@ -559,6 +577,24 @@
   color: #F3F4F6;
   opacity: 0.85;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+[data-theme='light'] .book-cover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='light'] .book-cover__spine {
+  background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 100%);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .book-cover__frame {
+  border: 1px solid rgba(234, 179, 8, 0.6);
+}
+
+[data-theme='light'] .book-cover__emblem {
+  color: var(--color-text-secondary);
+  filter: none;
 }
 
 .book-cover__ribbon {

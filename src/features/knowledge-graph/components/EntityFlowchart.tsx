@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -11,18 +11,16 @@ import {
   Position,
   Connection,
   ConnectionMode,
-  type Edge,
-  type Node,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { graphService, GraphData } from '@/services/graphService';
 import { useLayoutStore } from '@/store/layoutStore';
-import { Filter, Map as MapIcon, Users } from 'lucide-react';
-import { Button, SearchBar, Modal, Input } from '@/components';
+import { Button, Modal, Input } from '@/components';
 import { relationshipService } from '@/services/relationshipService';
-import './KnowledgeGraphPage.css';
+import './EntityFlowchart.css';
 
 const TYPE_COLORS: Record<string, string> = {
   character: '#22a854',      // Emerald Green (142°)
@@ -37,17 +35,12 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 // ─── Handle IDs ─────────────────────────────────────────────────
-// Visible handles (user-interactive): top, bottom, left, right
-// Invisible routing handles: top-left, top-right, bottom-left, bottom-right
-// Each position has both a source and target variant.
 type HandleSide = 'top' | 'bottom' | 'left' | 'right';
 
 const SIDE_SOURCE_ID: Record<HandleSide, string> = { top: 'ts', bottom: 'b', left: 'l', right: 'r' };
 const SIDE_TARGET_ID: Record<HandleSide, string> = { top: 't', bottom: 'bt', left: 'lt', right: 'rt' };
 
 // ─── Smart handle selection ─────────────────────────────────────
-// Picks the best source/target handle based on relative node position
-// and avoids re-using handles already claimed by other edges.
 function getBestHandles(
   sourcePos: { x: number; y: number },
   targetPos: { x: number; y: number },
@@ -58,32 +51,25 @@ function getBestHandles(
 ): { sourceHandle: string; targetHandle: string } {
   const dx = targetPos.x - sourcePos.x;
   const dy = targetPos.y - sourcePos.y;
-  const angle = Math.atan2(dy, dx) * (180 / Math.PI); // -180 to 180
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-  // Rank sides by preference based on the angle to the target
-  // angle 0 = target is to the right, 90 = below, -90 = above, ±180 = left
   let sourceSides: HandleSide[];
   let targetSides: HandleSide[];
 
   if (angle >= -45 && angle < 45) {
-    // Target is to the RIGHT
     sourceSides = ['right', 'bottom', 'top', 'left'];
     targetSides = ['left', 'top', 'bottom', 'right'];
   } else if (angle >= 45 && angle < 135) {
-    // Target is BELOW
     sourceSides = ['bottom', 'right', 'left', 'top'];
     targetSides = ['top', 'left', 'right', 'bottom'];
   } else if (angle >= -135 && angle < -45) {
-    // Target is ABOVE
     sourceSides = ['top', 'right', 'left', 'bottom'];
     targetSides = ['bottom', 'left', 'right', 'top'];
   } else {
-    // Target is to the LEFT
     sourceSides = ['left', 'top', 'bottom', 'right'];
     targetSides = ['right', 'bottom', 'top', 'left'];
   }
 
-  // Pick best available source handle
   const usedSrc = usedSourceHandles.get(sourceId) ?? new Set();
   let sourceHandle = SIDE_SOURCE_ID[sourceSides[0]!];
   for (const side of sourceSides) {
@@ -94,7 +80,6 @@ function getBestHandles(
     }
   }
 
-  // Pick best available target handle
   const usedTgt = usedTargetHandles.get(targetId) ?? new Set();
   let targetHandle = SIDE_TARGET_ID[targetSides[0]!];
   for (const side of targetSides) {
@@ -105,7 +90,6 @@ function getBestHandles(
     }
   }
 
-  // Record usage
   if (!usedSourceHandles.has(sourceId)) usedSourceHandles.set(sourceId, new Set());
   usedSourceHandles.get(sourceId)!.add(sourceHandle);
   if (!usedTargetHandles.has(targetId)) usedTargetHandles.set(targetId, new Set());
@@ -118,44 +102,45 @@ function getBestHandles(
 const GraphNodeComponent = memo(({ data }: { data: any }) => {
   const color = TYPE_COLORS[data.type] || '#ccc';
   const isSelected = data.selected;
-  const isCharacter = data.type === 'character';
   
   return (
     <div 
-      className={`kg-node ${isSelected ? 'kg-node--selected' : ''} ${isCharacter ? 'kg-node--character' : ''}`}
+      className={`ef-node ${isSelected ? 'ef-node--selected' : ''}`}
       style={{ borderColor: color, boxShadow: isSelected ? `0 0 0 2px ${color}` : 'none' }}
     >
-      {/* ── Visible handles (user-interactive) ── */}
-      <Handle type="target" position={Position.Top} id="t" className="kg-node__handle kg-node__handle--visible" />
-      <Handle type="source" position={Position.Bottom} id="b" className="kg-node__handle kg-node__handle--visible" />
-      <Handle type="source" position={Position.Left} id="l" className="kg-node__handle kg-node__handle--visible" />
-      <Handle type="source" position={Position.Right} id="r" className="kg-node__handle kg-node__handle--visible" />
+      {/* Source handles (one per side) */}
+      <Handle type="source" position={Position.Top} id="ts" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="source" position={Position.Bottom} id="b" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="source" position={Position.Left} id="l" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="source" position={Position.Right} id="r" className="ef-node__handle ef-node__handle--visible" />
 
-      {/* ── Invisible routing handles (auto-pathing only) ── */}
-      <Handle type="source" position={Position.Top} id="ts" className="kg-node__handle kg-node__handle--routing" />
-      <Handle type="target" position={Position.Bottom} id="bt" className="kg-node__handle kg-node__handle--routing" />
-      <Handle type="target" position={Position.Left} id="lt" className="kg-node__handle kg-node__handle--routing" />
-      <Handle type="target" position={Position.Right} id="rt" className="kg-node__handle kg-node__handle--routing" />
+      {/* Target handles (one per side) */}
+      <Handle type="target" position={Position.Top} id="t" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="target" position={Position.Bottom} id="bt" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="target" position={Position.Left} id="lt" className="ef-node__handle ef-node__handle--visible" />
+      <Handle type="target" position={Position.Right} id="rt" className="ef-node__handle ef-node__handle--visible" />
 
-      <div className="kg-node__badge" style={{ backgroundColor: color }}>
+      <div className="ef-node__badge" style={{ backgroundColor: color }}>
         {data.type.replace('_', ' ')}
       </div>
-      <div className="kg-node__label">{data.label}</div>
+      <div className="ef-node__label">{data.label}</div>
     </div>
   );
 });
 
 const nodeTypes = { graphNode: GraphNodeComponent };
 
-type ViewMode = 'all' | 'characters' | 'map';
+interface EntityFlowchartProps {
+  entityType: string;
+  searchQuery?: string;
+}
 
-function KnowledgeGraphInner() {
+function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartProps) {
   const { db, projectId } = useProjectDb();
   const { openEntityModal } = useLayoutStore();
+  const { fitView } = useReactFlow();
   
   const [data, setData] = useState<GraphData>({ nodes: [], links: [] });
-  const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
@@ -173,16 +158,28 @@ function KnowledgeGraphInner() {
     graphService.getGraphData(db, projectId).then(setData);
   }, [db, projectId]);
 
+  // Track the layout key so we know when to re-layout vs just update edges
+  const layoutKeyRef = useRef<string>('');
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+
+  // Keep nodePositionsRef in sync when the user drags nodes
+  const handleNodesChange = useCallback((changes: any[]) => {
+    onNodesChange(changes);
+    for (const change of changes) {
+      if (change.type === 'position' && change.position) {
+        nodePositionsRef.current.set(change.id, change.position);
+      }
+    }
+  }, [onNodesChange]);
+
   // Apply Layout, Smart Handles, and Filters
   useEffect(() => {
     if (!data.nodes.length) return;
 
-    let filteredNodes = data.nodes;
-    if (viewMode === 'characters') {
-      filteredNodes = data.nodes.filter(n => n.type === 'character');
-    } else if (viewMode === 'map') {
-      filteredNodes = data.nodes.filter(n => n.type === 'location');
-    }
+    const currentLayoutKey = `${entityType}::${searchQuery}`;
+    const needsFullLayout = layoutKeyRef.current !== currentLayoutKey;
+
+    let filteredNodes = data.nodes.filter(n => n.type === entityType);
 
     if (searchQuery) {
       const lowerQ = searchQuery.toLowerCase();
@@ -193,47 +190,95 @@ function KnowledgeGraphInner() {
     const filteredEdges = data.links.filter(l => nodeIds.has(l.source) && nodeIds.has(l.target));
 
     // Build React Flow nodes
-    const rfNodes: Node[] = filteredNodes.map(n => ({
+    const rfNodes = filteredNodes.map(n => ({
       id: n.id,
       type: 'graphNode',
       data: { label: n.name, type: n.type, selected: false },
       position: { x: 0, y: 0 },
     }));
 
-    // Apply Dagre layout FIRST so we have node positions for smart handle selection
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    
-    const rankdir = viewMode === 'characters' ? 'TB' : (viewMode === 'map' ? 'LR' : 'TB');
-    dagreGraph.setGraph({ rankdir, ranksep: 120, nodesep: 80 });
-
-    rfNodes.forEach((node) => {
-      dagreGraph.setNode(node.id, { width: 150, height: 60 });
-    });
-
-    filteredEdges.forEach((edge) => {
-      dagreGraph.setEdge(edge.source, edge.target);
-    });
-
-    dagre.layout(dagreGraph);
-
-    // Build position map for smart handle selection
+    // Build position map — either from dagre (initial) or from saved positions (update)
     const positionMap = new Map<string, { x: number; y: number }>();
-    const layoutedNodes = rfNodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      const pos = {
-        x: (nodeWithPosition?.x ?? 0) - 75,
-        y: (nodeWithPosition?.y ?? 0) - 30,
-      };
-      positionMap.set(node.id, pos);
-      return { ...node, position: pos };
-    });
+
+    if (needsFullLayout) {
+      // Full dagre layout for initial render or when filters change
+      const dagreGraph = new dagre.graphlib.Graph();
+      dagreGraph.setDefaultEdgeLabel(() => ({}));
+      
+      const rankdir = entityType === 'location' ? 'LR' : 'TB';
+      dagreGraph.setGraph({ rankdir, ranksep: 120, nodesep: 80 });
+
+      rfNodes.forEach((node) => {
+        dagreGraph.setNode(node.id, { width: 150, height: 60 });
+      });
+
+      filteredEdges.forEach((edge) => {
+        dagreGraph.setEdge(edge.source, edge.target);
+      });
+
+      dagre.layout(dagreGraph);
+
+      rfNodes.forEach((node) => {
+        const nodeWithPosition = dagreGraph.node(node.id);
+        const pos = {
+          x: (nodeWithPosition?.x ?? 0) - 75,
+          y: (nodeWithPosition?.y ?? 0) - 30,
+        };
+        positionMap.set(node.id, pos);
+      });
+
+      layoutKeyRef.current = currentLayoutKey;
+      nodePositionsRef.current = new Map(positionMap);
+    } else {
+      // Preserve existing positions, place only brand-new nodes with dagre
+      const existingPositions = nodePositionsRef.current;
+      const newNodeIds = rfNodes.filter(n => !existingPositions.has(n.id)).map(n => n.id);
+
+      // Copy existing positions
+      for (const node of rfNodes) {
+        const saved = existingPositions.get(node.id);
+        if (saved) {
+          positionMap.set(node.id, saved);
+        }
+      }
+
+      // Layout only new nodes if any
+      if (newNodeIds.length > 0) {
+        const dagreGraph = new dagre.graphlib.Graph();
+        dagreGraph.setDefaultEdgeLabel(() => ({}));
+        const rankdir = entityType === 'location' ? 'LR' : 'TB';
+        dagreGraph.setGraph({ rankdir, ranksep: 120, nodesep: 80 });
+
+        rfNodes.forEach((node) => {
+          dagreGraph.setNode(node.id, { width: 150, height: 60 });
+        });
+        filteredEdges.forEach((edge) => {
+          dagreGraph.setEdge(edge.source, edge.target);
+        });
+        dagre.layout(dagreGraph);
+
+        for (const id of newNodeIds) {
+          const nodeWithPosition = dagreGraph.node(id);
+          const pos = {
+            x: (nodeWithPosition?.x ?? 0) - 75,
+            y: (nodeWithPosition?.y ?? 0) - 30,
+          };
+          positionMap.set(id, pos);
+          nodePositionsRef.current.set(id, pos);
+        }
+      }
+    }
+
+    const layoutedNodes = rfNodes.map(node => ({
+      ...node,
+      position: positionMap.get(node.id) ?? { x: 0, y: 0 },
+    }));
 
     // Build edges with smart handle selection
     const usedSourceHandles = new Map<string, Set<string>>();
     const usedTargetHandles = new Map<string, Set<string>>();
 
-    const rfEdges: Edge[] = filteredEdges.map(e => {
+    const rfEdges = filteredEdges.map(e => {
       const sourcePos = positionMap.get(e.source) ?? { x: 0, y: 0 };
       const targetPos = positionMap.get(e.target) ?? { x: 0, y: 0 };
       
@@ -250,7 +295,7 @@ function KnowledgeGraphInner() {
         sourceHandle,
         targetHandle,
         label: e.label,
-        type: 'default', // Bezier curves
+        type: 'default',
         animated: true,
         style: { stroke: 'rgba(255,255,255,0.35)', strokeWidth: 2 },
         labelStyle: { fill: '#ccc', fontSize: 11, fontWeight: 500 },
@@ -260,9 +305,21 @@ function KnowledgeGraphInner() {
 
     setNodes(layoutedNodes);
     setEdges(rfEdges);
-  }, [data, viewMode, searchQuery]);
+    
+    // Fit view only on initial layout
+    if (needsFullLayout) {
+      setTimeout(() => {
+        fitView({ duration: 300, padding: 0.2 });
+      }, 50);
+    }
+  }, [data, entityType, searchQuery, setNodes, setEdges, fitView]);
+
+  const isValidConnection = useCallback((connection: Connection) => {
+    return connection.source !== connection.target;
+  }, []);
 
   const onConnect = useCallback((connection: Connection) => {
+    if (connection.source === connection.target) return;
     const sourceNode = nodes.find(n => n.id === connection.source);
     const targetNode = nodes.find(n => n.id === connection.target);
     if (!sourceNode || !targetNode) return;
@@ -318,53 +375,17 @@ function KnowledgeGraphInner() {
   }, [openEntityModal]);
 
   return (
-    <div className="kg-page">
-      <header className="kg-page__header">
-        <div className="kg-page__title-group">
-          <h1 className="kg-page__title">Knowledge Graph</h1>
-          <p className="kg-page__subtitle">
-            Explore your world's connections. Drag nodes to reposition them.
-          </p>
-        </div>
-        
-        <div className="kg-page__controls">
-          <div className="kg-page__view-toggle">
-            <Button 
-              variant={viewMode === 'all' ? 'primary' : 'secondary'} 
-              onClick={() => setViewMode('all')}
-            >
-              <Filter size={16} /> All Network
-            </Button>
-            <Button 
-              variant={viewMode === 'characters' ? 'primary' : 'secondary'} 
-              onClick={() => setViewMode('characters')}
-            >
-              <Users size={16} /> Character Web
-            </Button>
-            <Button 
-              variant={viewMode === 'map' ? 'primary' : 'secondary'} 
-              onClick={() => setViewMode('map')}
-            >
-              <MapIcon size={16} /> Map View
-            </Button>
-          </div>
-          <SearchBar 
-            value={searchQuery} 
-            onChange={setSearchQuery} 
-            placeholder="Search nodes..." 
-          />
-        </div>
-      </header>
-
-      <div className="kg-page__canvas">
+    <div className="entity-flowchart">
+      <div className="entity-flowchart__canvas">
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
           onConnect={onConnect}
+          isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
           connectionMode={ConnectionMode.Loose}
           colorMode="dark"
@@ -412,10 +433,10 @@ function KnowledgeGraphInner() {
   );
 }
 
-export function KnowledgeGraphPage() {
+export function EntityFlowchart(props: EntityFlowchartProps) {
   return (
     <ReactFlowProvider>
-      <KnowledgeGraphInner />
+      <EntityFlowchartInner {...props} />
     </ReactFlowProvider>
   );
 }

@@ -4,8 +4,7 @@ import { User, Edit, Trash2, Upload, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal/Modal';
 import { Dialog } from '@/components/Dialog/Dialog';
-import { CharacterForm } from './CharacterForm';
-import { MiniGraphPreview } from './MiniGraphPreview';
+import { CharacterForm, CharacterFormTabs, type CharacterTab } from './CharacterForm';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { characterService } from '../services/characterService';
 import { select } from '@/database/databaseService';
@@ -49,8 +48,9 @@ export function CharacterDetailCard({
   const [relationships, setRelationships] = useState<RelationshipItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState<Error | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [editTab, setEditTab] = useState<CharacterTab>('identity');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -121,40 +121,44 @@ export function CharacterDetailCard({
         );
         setRelationships(resolvedRels);
 
-        // Load Mention References across chapters
         const chapterQuery = `
-          SELECT DISTINCT c.id, c.title, c.chapter_number, c.content
-          FROM keywords k
-          JOIN chapters c ON k.chapter_id = c.id
-          WHERE k.project_id = $1 AND k.entity_id = $2 AND c.deleted_at IS NULL
-          ORDER BY c.chapter_number ASC
+          SELECT id, title, chapter_number, content
+          FROM chapters
+          WHERE project_id = $1 AND deleted_at IS NULL
+          ORDER BY chapter_number ASC
         `;
-        const chapRows = await select<any>(db, chapterQuery, [projectId, characterId]);
+        const chapRows = await select<any>(db, chapterQuery, [projectId]);
 
-        const resolvedMentions: MentionItem[] = chapRows.map(c => {
+        const resolvedMentions: MentionItem[] = [];
+        
+        chapRows.forEach(c => {
           const content = c.content || '';
           const lines = content.split('\n');
+          let found = false;
           let lineIdx = 1;
 
           const namesToFind = [
             row.name,
-            ...row.aliases.split(',').map((a: string) => a.trim()).filter(Boolean),
+            ...(row.aliases || '').split(',').map((a: string) => a.trim()).filter(Boolean),
           ];
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].toLowerCase();
             if (namesToFind.some(n => n && line.includes(n.toLowerCase()))) {
               lineIdx = i + 1;
+              found = true;
               break;
             }
           }
 
-          return {
-            chapterId: c.id,
-            chapterNumber: c.chapter_number ?? 0,
-            title: c.title || 'Untitled Chapter',
-            lineIndex: lineIdx,
-          };
+          if (found) {
+            resolvedMentions.push({
+              chapterId: c.id,
+              chapterNumber: c.chapter_number ?? 0,
+              title: c.title || 'Untitled Chapter',
+              lineIndex: lineIdx,
+            });
+          }
         });
 
         setMentions(resolvedMentions);
@@ -314,9 +318,12 @@ export function CharacterDetailCard({
           </div>
         </div>
 
-        {/* Top-right Actions (Note: NO duplicate button per instructions) */}
+        {/* Top-right Actions */}
         <div className="character-detail-card__header-actions">
-          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => {
+                setEditTab('identity');
+                setEditOpen(true);
+              }}>
             <Edit size={14} /> Edit
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="text-danger hover:bg-danger/10">
@@ -497,15 +504,6 @@ export function CharacterDetailCard({
               ) : (
                 <p className="character-detail-card__empty-text mb-3">No direct relationships added yet.</p>
               )}
-
-              <div className="pt-3 border-t border-border-subtle">
-                <span className="text-xs font-semibold text-text-tertiary uppercase tracking-wider block mb-2">
-                  Graph preview:
-                </span>
-                {db && projectId && (
-                  <MiniGraphPreview entityId={characterId} db={db} projectId={projectId} />
-                )}
-              </div>
             </div>
           </div>
 
@@ -541,8 +539,15 @@ export function CharacterDetailCard({
       </div>
 
       {/* Edit Form Modal */}
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Character" size="lg">
+      <Modal 
+        open={editOpen} 
+        onClose={() => setEditOpen(false)} 
+        title="Edit Character" 
+        size="lg"
+        subHeader={<CharacterFormTabs activeTab={editTab} onTabChange={setEditTab} />}
+      >
         <CharacterForm
+          activeTab={editTab}
           defaultValues={{
             ...character,
             status: character.status as 'Alive' | 'Dead' | 'Unknown' | 'Other',

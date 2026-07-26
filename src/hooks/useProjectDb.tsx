@@ -29,13 +29,14 @@ export function useProjectDb(): ProjectDbContextValue {
 interface ProjectDbProviderProps {
   projectId: string;
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
  * Opens the project database on mount, closes on unmount.
  * Children only render after the DB is ready.
  */
-export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProps) {
+export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbProviderProps) {
   const [db, setDb] = useState<Database | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { projects, setProjects, setCurrentProject } = useProjectStore();
@@ -139,6 +140,9 @@ export function ProjectDbProvider({ projectId, children }: ProjectDbProviderProp
   }
 
   if (!db) {
+    if (fallback !== undefined) {
+      return <>{fallback}</>;
+    }
     return (
       <div style={{ padding: 'var(--space-6) var(--space-8)' }}>
         <LoadingSkeleton variant="card" count={3} />

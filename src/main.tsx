@@ -12,4 +12,14 @@ import '@/styles/animations.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
 
+// Disable native context menu everywhere except in the editor and inputs
+document.addEventListener('contextmenu', (e) => {
+  const target = e.target as HTMLElement;
+  const isEditable = target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+  
+  if (!isEditable) {
+    e.preventDefault();
+  }
+});
+
 createRoot(root).render(<App />);

@@ -1,4 +1,4 @@
-import { Cloud, CloudOff, SpellCheck } from 'lucide-react';
+import { Cloud, CloudOff, SpellCheck, Loader2 } from 'lucide-react';
 import { formatNumber, formatReadingTime } from '../utils/writingStats';
 import './EditorStatusBar.css';
 
@@ -9,19 +9,19 @@ interface EditorStatusBarProps {
   characterCount: number;
   paragraphCount: number;
   readingTime: number;
-  pageCount: number;
   saveStatus: SaveStatus;
   lastSavedAt: string | null;
   onGrammarCheck?: () => void;
+  isCheckingGrammar?: boolean;
 }
 
 export function EditorStatusBar({
   wordCount,
   characterCount,
   readingTime,
-  pageCount,
   saveStatus,
   onGrammarCheck,
+  isCheckingGrammar = false,
 }: EditorStatusBarProps) {
   return (
     <div className="editor-status-bar">
@@ -37,10 +37,6 @@ export function EditorStatusBar({
         <span className="editor-status-bar__stat">
           <span className="editor-status-bar__label">Read: </span>
           <strong className="editor-status-bar__value">{formatReadingTime(readingTime)}</strong>
-        </span>
-        <span className="editor-status-bar__stat">
-          <span className="editor-status-bar__label">Pages: </span>
-          <strong className="editor-status-bar__value">{pageCount}</strong>
         </span>
         <span className="editor-status-bar__cloud" title={`Save status: ${saveStatus}`}>
           {saveStatus === 'unsaved' ? (
@@ -58,10 +54,15 @@ export function EditorStatusBar({
           type="button"
           className="editor-status-bar__grammar-btn"
           onClick={onGrammarCheck}
+          disabled={isCheckingGrammar}
           title="Check grammar and writing style"
         >
-          <SpellCheck size={13} className="editor-status-bar__grammar-icon" />
-          <span>Grammar Check</span>
+          {isCheckingGrammar ? (
+            <Loader2 size={13} className="editor-status-bar__grammar-icon editor-status-bar__grammar-icon--spin" />
+          ) : (
+            <SpellCheck size={13} className="editor-status-bar__grammar-icon" />
+          )}
+          <span>{isCheckingGrammar ? 'Checking...' : 'Grammar Check'}</span>
         </button>
       )}
     </div>

@@ -136,53 +136,53 @@
 
 /* ===== Light Theme ===== */
 [data-theme='light'] {
-  --color-bg: hsl(220, 20%, 98%);
-  --color-bg-elevated: hsl(0, 0%, 100%);
-  --color-bg-surface: hsl(220, 16%, 93%);
-  --color-bg-hover: hsl(220, 14%, 88%);
-  --color-bg-active: hsl(220, 14%, 84%);
+  --color-bg: hsl(220, 15%, 94%); /* Slightly darker background to make cards pop */
+  --color-bg-elevated: hsl(0, 0%, 100%); /* Pure white cards for better contrast */
+  --color-bg-surface: hsl(220, 15%, 90%);
+  --color-bg-hover: hsl(220, 15%, 86%);
+  --color-bg-active: hsl(220, 15%, 82%);
 
-  --color-border: hsl(220, 14%, 86%);
-  --color-border-subtle: hsl(220, 14%, 91%);
+  --color-border: hsl(220, 15%, 85%); /* Slightly more visible borders */
+  --color-border-subtle: hsl(220, 15%, 90%);
 
-  --color-text: hsl(220, 20%, 12%);
-  --color-text-secondary: hsl(220, 10%, 40%);
-  --color-text-tertiary: hsl(220, 8%, 56%);
+  --color-text: hsl(0, 0%, 0%); /* Pure black */
+  --color-text-secondary: hsl(220, 10%, 25%);
+  --color-text-tertiary: hsl(220, 8%, 45%);
   --color-text-inverse: hsl(220, 20%, 98%);
 
-  --color-danger: hsl(354, 78%, 48%);
-  --color-danger-hover: hsl(354, 78%, 40%);
-  --color-danger-subtle: hsla(354, 78%, 48%, 0.08);
+  --color-danger: hsl(354, 70%, 52%);
+  --color-danger-hover: hsl(354, 70%, 44%);
+  --color-danger-subtle: hsla(354, 70%, 52%, 0.08);
 
-  --color-warning: hsl(38, 92%, 40%);
-  --color-success: hsl(142, 70%, 38%);
+  --color-warning: hsl(38, 85%, 45%);
+  --color-success: hsl(142, 60%, 42%);
 
-  --color-overlay: rgba(3, 7, 18, 0.4);
+  --color-overlay: rgba(15, 20, 30, 0.25);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.08);
 
-  --scrollbar-track: hsl(220, 16%, 93%);
-  --scrollbar-thumb: hsl(220, 14%, 76%);
-  --scrollbar-thumb-hover: hsl(220, 14%, 66%);
+  --scrollbar-track: hsl(220, 14%, 96%);
+  --scrollbar-thumb: hsl(220, 10%, 80%);
+  --scrollbar-thumb-hover: hsl(220, 10%, 70%);
 
   /* Glassmorphic values for Light theme */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-blur: blur(14px);
-  --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.03);
+  --glass-bg: rgba(250, 251, 253, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.04);
+  --glass-blur: blur(16px);
+  --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.02);
 
-  --color-accent-white-primary: hsl(0, 0%, 12%);
+  --color-accent-white-primary: hsl(0, 0%, 15%);
   --color-accent-white-hover: hsl(0, 0%, 0%);
-  --color-accent-white-active: hsl(0, 0%, 20%);
-  --color-accent-white-subtle: rgba(0, 0, 0, 0.08);
-  --color-accent-white-secondary: hsl(0, 0%, 30%);
+  --color-accent-white-active: hsl(0, 0%, 25%);
+  --color-accent-white-subtle: rgba(0, 0, 0, 0.06);
+  --color-accent-white-secondary: hsl(0, 0%, 40%);
 
   --home-bg-image: none;
-  --hero-bg: var(--color-primary-subtle);
-  --hero-border: var(--color-primary);
+  --hero-bg: var(--color-bg-elevated);
+  --hero-border: var(--color-border-subtle);
   --hero-title: var(--color-text);
   --hero-desc: var(--color-text-secondary);
 }

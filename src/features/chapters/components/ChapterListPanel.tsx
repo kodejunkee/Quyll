@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, FileText, PanelRight, PanelRightClose, BookOpen } from 'lucide-react';
+import { Plus, FileText, PanelRight, PanelRightClose, BookOpen, LayoutGrid } from 'lucide-react';
 import { Button, SearchBar, Modal, Dialog } from '@/components';
 import { ChapterForm } from './ChapterForm';
 import { ChapterListItem } from './ChapterListItem';
@@ -95,9 +95,14 @@ export function ChapterListPanel({
         {!chapterListCollapsed && <h2 className="chapter-list-panel__title">Chapters</h2>}
         <div className="chapter-list-panel__header-actions">
           {!chapterListCollapsed && (
-            <Button variant="primary" size="sm" onClick={() => onCreateOpenChange(true)} title="New Chapter">
-              <Plus size={14} />
-            </Button>
+            <>
+              <Button variant="ghost" size="sm" onClick={() => onSelect('')} title="Chapter Directory">
+                <LayoutGrid size={14} />
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => onCreateOpenChange(true)} title="New Chapter">
+                <Plus size={14} />
+              </Button>
+            </>
           )}
           <button
             className="chapter-list-panel__toggle"
@@ -202,15 +207,7 @@ export function ChapterListPanel({
         </>
       )}
 
-      {/* Create Chapter Modal */}
-      <Modal open={createOpen} onClose={() => onCreateOpenChange(false)} title="Create Chapter" size="sm">
-        <ChapterForm
-          onSubmit={handleCreate}
-          onCancel={() => onCreateOpenChange(false)}
-          submitLabel="Create"
-          defaultValues={{ title: '', chapter_number: nextChapterNumber }}
-        />
-      </Modal>
+
 
       {/* Rename Chapter Modal */}
       <Modal open={!!renameTarget} onClose={() => setRenameTarget(null)} title="Rename Chapter" size="sm">

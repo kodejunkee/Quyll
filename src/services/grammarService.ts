@@ -12,53 +12,56 @@ export interface GrammarIssue {
   endOffset: number;
 }
 
-import { LocalLinter } from 'harper.js';
-import { binaryInlined } from 'harper.js/binaryInlined';
+let worker: Worker | null = null;
+let reqCounter = 0;
+const pendingRequests = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void }>();
 
-let harperLinter: LocalLinter | null = null;
-let initializing = false;
-
-async function getLinter(): Promise<LocalLinter> {
-  if (harperLinter) return harperLinter;
-  if (initializing) {
-    // wait for it
-    while (!harperLinter) {
-      await new Promise(r => setTimeout(r, 50));
-    }
-    return harperLinter;
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(new URL('./harperWorker.ts', import.meta.url), { type: 'module' });
+    worker.onmessage = (e) => {
+      const { type, reqId, results, error } = e.data;
+      if (type === 'LINT_DONE') {
+        const p = pendingRequests.get(reqId);
+        if (p) {
+          p.resolve(results);
+          pendingRequests.delete(reqId);
+        }
+      } else if (type === 'LINT_ERROR') {
+        const p = pendingRequests.get(reqId);
+        if (p) {
+          p.reject(new Error(error));
+          pendingRequests.delete(reqId);
+        }
+      }
+    };
   }
-  initializing = true;
-  harperLinter = new LocalLinter({ binary: binaryInlined });
-  initializing = false;
-  return harperLinter;
+  return worker;
 }
 
 /**
- * Checks text for grammar mistakes and duplicate words using harper.js.
+ * Checks text for grammar mistakes and duplicate words using harper.js in a Web Worker.
  * Every issue returned has an actionable suggestion/correction.
  */
 export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
   if (!text || !text.trim()) return [];
 
-  const issues: GrammarIssue[] = [];
-  let idCounter = 1;
+  const w = getWorker();
+  const reqId = ++reqCounter;
 
   try {
-    const linter = await getLinter();
-    const lints = await linter.lint(text);
+    const lints: any[] = await new Promise((resolve, reject) => {
+      pendingRequests.set(reqId, { resolve, reject });
+      w.postMessage({ type: 'LINT', text, reqId });
+    });
+
+    const issues: GrammarIssue[] = [];
+    let idCounter = 1;
 
     for (const lint of lints) {
-      const msg = lint.message();
-      const span = lint.span();
-      const sugs = lint.suggestions();
-      const kind = lint.lint_kind();
-      
-      const startOffset = span.start;
-      const endOffset = span.end;
+      const { message, startOffset, endOffset, kind, suggestion } = lint;
       const matchText = text.substring(startOffset, endOffset);
-      const suggestion = sugs && sugs.length > 0 ? sugs[0]?.get_replacement_text() : undefined;
       
-      // Determine severity based on kind, everything is a warning by default for UI simplicity
       let severity: GrammarSeverity = 'warning';
       if (kind === 'Error' || kind === 'Spelling') {
         severity = 'error';
@@ -68,7 +71,7 @@ export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
         id: `grammar-${idCounter++}-${startOffset}`,
         type: 'grammar',
         severity,
-        message: msg,
+        message,
         suggestion,
         matchText,
         startOffset,
@@ -76,13 +79,12 @@ export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
       });
     }
 
+    issues.sort((a, b) => a.startOffset - b.startOffset);
+    return issues;
   } catch (err) {
-    console.error('Error running Harper grammar check:', err);
+    console.error('Error running Harper grammar check in worker:', err);
+    return [];
   }
-
-  // Sort by start offset ascending
-  issues.sort((a, b) => a.startOffset - b.startOffset);
-  return issues;
 }
 
 /**

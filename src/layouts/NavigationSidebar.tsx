@@ -15,8 +15,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   Home,
-  Trash2,
-  Share2
+  Trash2
 } from 'lucide-react';
 import './NavigationSidebar.css';
 
@@ -30,7 +29,7 @@ const NAV_SECTIONS = [
     title: 'NAVIGATION',
     items: [
       { path: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, colorKey: 'dashboard' },
-      { path: 'chapters', label: 'Chapters', icon: BookOpen, colorKey: 'chapters' },
+      { path: 'chapters', label: 'Chapters', icon: BookOpen, colorKey: 'chapters', useLastActive: true },
     ],
   },
   {
@@ -53,8 +52,13 @@ function accentStyle(colorKey: string): CSSProperties {
   return { '--nav-accent': `var(--color-icon-${colorKey})` } as CSSProperties;
 }
 
+import { useLayoutStore } from '@/store/layoutStore';
+
+// ... (I need to import useLayoutStore properly, wait, I will replace the whole component function)
+
 export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProps) {
   const { projectId } = useParams<{ projectId: string }>();
+  const { lastActiveChapterId } = useLayoutStore();
 
   return (
     <nav className={`nav-sidebar ${collapsed ? 'nav-sidebar--collapsed' : ''}`}>
@@ -75,44 +79,39 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
           <div key={section.title} className="nav-sidebar__section">
             {!collapsed && <div className="nav-sidebar__section-title">{section.title}</div>}
             
-            {section.items.map(({ path, label, icon: Icon, colorKey }) => (
-              <NavLink
-                key={path}
-                to={`/project/${projectId}/${path}`}
-                className={({ isActive }) =>
-                  `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-                }
-                title={collapsed ? label : undefined}
-                style={accentStyle(colorKey)}
-              >
-                <Icon
-                  size={18}
-                  className="nav-sidebar__link-icon"
-                  style={{ color: `var(--color-icon-${colorKey})` }}
-                />
-                {!collapsed && <span className="nav-sidebar__link-label">{label}</span>}
-              </NavLink>
-            ))}
+            {section.items.map((item) => {
+              const { path, label, icon: Icon, colorKey } = item;
+              const useLastActive = 'useLastActive' in item ? item.useLastActive : false;
+              
+              const targetPath = useLastActive && lastActiveChapterId 
+                ? `/project/${projectId}/${path}/${lastActiveChapterId}`
+                : `/project/${projectId}/${path}`;
+
+              return (
+                <NavLink
+                  key={path}
+                  to={targetPath}
+                  className={({ isActive }) =>
+                    `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
+                  }
+                  title={collapsed ? label : undefined}
+                  style={accentStyle(colorKey)}
+                >
+                  <Icon
+                    size={18}
+                    className="nav-sidebar__link-icon"
+                    style={{ color: `var(--color-icon-${colorKey})` }}
+                  />
+                  {!collapsed && <span className="nav-sidebar__link-label">{label}</span>}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
 
         <div className="nav-sidebar__section">
           {!collapsed && <div className="nav-sidebar__section-title">TOOLS</div>}
-          <NavLink
-            to={`/project/${projectId}/graph`}
-            className={({ isActive }) =>
-              `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
-            }
-            title={collapsed ? 'Knowledge Graph' : undefined}
-            style={accentStyle('graph')}
-          >
-            <Share2
-              size={18}
-              className="nav-sidebar__link-icon"
-              style={{ color: 'var(--color-icon-graph)' }}
-            />
-            {!collapsed && <span className="nav-sidebar__link-label">Knowledge Graph</span>}
-          </NavLink>
+
           <NavLink
             to={`/project/${projectId}/trash`}
             className={({ isActive }) =>

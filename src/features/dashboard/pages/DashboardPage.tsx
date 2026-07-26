@@ -1,8 +1,10 @@
-import { useEffect, useState, type ElementType } from 'react';
+import { useEffect, useCallback, useState, type ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
+import { useDashboardStore } from '@/store/dashboardStore';
 import { ExportDialog } from '@/features/settings';
+import { Button } from '@/components';
 import {
   ArrowRight, BookOpen, Users, MapPin, Building2, Bug, Sword,
   Globe, ScrollText, Clock, GitBranch, Type, PenLine, Plus, Download,
@@ -30,44 +32,87 @@ const STAT_CONFIGS: StatConfig[] = [
 export default function DashboardPage() {
   const { db, projectId } = useProjectDb();
   const navigate = useNavigate();
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [latestChapter, setLatestChapter] = useState<LatestChapter | null>(null);
-  const [writingStats, setWritingStats] = useState({ totalWords: 0, totalReadingTime: 0 });
+  const { setDashboardData, getDashboardData } = useDashboardStore();
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  useEffect(() => {
-    async function loadDashboard() {
-      const results: Record<string, number> = {};
-      let totalWords = 0;
-      let totalReadingTime = 0;
-      for (const { table } of STAT_CONFIGS) {
-        try {
-          if (table === 'chapters') {
-            const rows = await select<{ cnt: number; words: number; time: number }>(db,
-              `SELECT COUNT(*) as cnt, COALESCE(SUM(word_count), 0) as words, COALESCE(SUM(reading_time), 0) as time FROM chapters WHERE project_id = $1 AND deleted_at IS NULL`, [projectId]);
-            results[table] = rows[0]?.cnt ?? 0;
-            totalWords = rows[0]?.words ?? 0;
-            totalReadingTime = rows[0]?.time ?? 0;
-          } else {
-            const rows = await select<{ cnt: number }>(db,
-              `SELECT COUNT(*) as cnt FROM ${table} WHERE project_id = $1 AND deleted_at IS NULL`, [projectId]);
-            results[table] = rows[0]?.cnt ?? 0;
-          }
-        } catch { results[table] = 0; }
-      }
+  // Initialize from cache (if available), otherwise use sensible defaults
+  const cached = getDashboardData(projectId);
+  const [counts, setCounts] = useState<Record<string, number>>(cached?.counts ?? {});
+  const [latestChapter, setLatestChapter] = useState<LatestChapter | null>(cached?.latestChapter ?? null);
+  const [writingStats, setWritingStats] = useState(cached?.writingStats ?? { totalWords: 0, totalReadingTime: 0 });
+  
+  // Track whether data has ever been loaded (from cache or fresh)
+  const [hasLoaded, setHasLoaded] = useState(!!cached);
+
+  const loadDashboard = useCallback(async () => {
+    const results: Record<string, number> = {};
+    let totalWords = 0;
+    let totalReadingTime = 0;
+
+    // Run all stats queries concurrently
+    const promises = STAT_CONFIGS.map(async ({ table }) => {
       try {
-        const chapters = await select<LatestChapter>(db,
-          `SELECT id, title, chapter_number, word_count, updated_at FROM chapters WHERE project_id = $1 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`, [projectId]);
-        setLatestChapter(chapters[0] ?? null);
-      } catch { setLatestChapter(null); }
-      setCounts(results);
-      setWritingStats({ totalWords, totalReadingTime });
-    }
+        if (table === 'chapters') {
+          const rows = await select<{ cnt: number; words: number; time: number }>(
+            db,
+            `SELECT COUNT(*) as cnt, COALESCE(SUM(word_count), 0) as words, COALESCE(SUM(reading_time), 0) as time FROM chapters WHERE project_id = $1 AND deleted_at IS NULL`,
+            [projectId]
+          );
+          results[table] = rows[0]?.cnt ?? 0;
+          totalWords = rows[0]?.words ?? 0;
+          totalReadingTime = rows[0]?.time ?? 0;
+        } else {
+          const rows = await select<{ cnt: number }>(
+            db,
+            `SELECT COUNT(*) as cnt FROM ${table} WHERE project_id = $1 AND deleted_at IS NULL`,
+            [projectId]
+          );
+          results[table] = rows[0]?.cnt ?? 0;
+        }
+      } catch {
+        results[table] = 0;
+      }
+    });
+
+    // Get latest chapter concurrently
+    let freshLatest: LatestChapter | null = null;
+    const latestChapterPromise = select<LatestChapter>(
+      db,
+      `SELECT id, title, chapter_number, word_count, updated_at FROM chapters WHERE project_id = $1 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+      [projectId]
+    )
+      .then((chapters) => { freshLatest = chapters[0] ?? null; })
+      .catch(() => { freshLatest = null; });
+
+    await Promise.all([...promises, latestChapterPromise]);
+
+    const freshWritingStats = { totalWords, totalReadingTime };
+
+    // Update local state
+    setCounts(results);
+    setLatestChapter(freshLatest);
+    setWritingStats(freshWritingStats);
+    setHasLoaded(true);
+
+    // Persist to the global store so next navigation is instant
+    setDashboardData(projectId, {
+      counts: results,
+      latestChapter: freshLatest,
+      writingStats: freshWritingStats,
+    });
+  }, [db, projectId, setDashboardData]);
+
+  useEffect(() => {
     void loadDashboard();
-  }, [db, projectId]);
+  }, [loadDashboard]);
 
   const open = (path: string) => navigate(`/project/${projectId}/${path}`);
   const totalWorldEntries = Object.entries(counts).filter(([table]) => table !== 'chapters').reduce((sum, [, count]) => sum + count, 0);
+
+  // If we have no cached data and haven't loaded yet, show nothing to avoid the flash
+  if (!hasLoaded) {
+    return null;
+  }
 
   return (
     <div className="dashboard-page">
@@ -77,21 +122,13 @@ export default function DashboardPage() {
           <h1 className="dashboard-page__title">Dashboard</h1>
           <p className="dashboard-page__subtitle">Keep your story moving and your world within reach.</p>
         </div>
-        <button 
+        <Button 
+          variant="secondary"
           onClick={() => setIsExportOpen(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
-            background: 'var(--color-surface-2)', color: 'var(--color-text-primary)',
-            padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)', fontSize: 'var(--font-size-sm)',
-            fontWeight: 500, cursor: 'pointer', transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-3)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--color-surface-2)')}
+          icon={<Download size={16} />}
         >
-          <Download size={16} />
           Export Project
-        </button>
+        </Button>
       </header>
 
       <section className="dashboard-page__continue">

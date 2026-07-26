@@ -1,4 +1,4 @@
-import { Button } from '@/components';
+// Removed unused Button import
 import { type GrammarIssue } from '@/services/grammarService';
 import { SpellCheck, CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import './GrammarCheckerPanel.css';
@@ -120,6 +120,13 @@ export function GrammarCheckerPanel({
                       className="grammar-panel__action-btn"
                     >
                       Locate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDismissIssue(issue.id)}
+                      className="grammar-panel__action-btn grammar-panel__action-btn--ignore"
+                    >
+                      Ignore
                     </button>
                   </div>
                 </div>

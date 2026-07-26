@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Feather,
@@ -162,6 +162,14 @@ export default function HomePage() {
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
+  const createTitleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (createOpen && createTitleInputRef.current) {
+      setTimeout(() => createTitleInputRef.current?.focus(), 10);
+    }
+  }, [createOpen]);
+
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -686,6 +694,11 @@ export default function HomePage() {
                           e.stopPropagation();
                           setOpenMenuId(openMenuId === project.id ? null : project.id);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                          }
+                        }}
                         aria-label="Project Actions"
                         type="button"
                       >
@@ -840,6 +853,11 @@ export default function HomePage() {
                             e.stopPropagation();
                             setOpenMenuId(openMenuId === project.id ? null : project.id);
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                            }
+                          }}
                           type="button"
                         >
                           <MoreVertical size={16} />
@@ -917,7 +935,7 @@ export default function HomePage() {
 
       {/* Create Project Modal */}
       <Modal open={createOpen} onClose={() => { setCreateOpen(false); setIsOtherGenre(false); }} title="Create New Project" size="md">
-        <div className="home-modal-form">
+        <form className="home-modal-form" onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) handleCreate(); }}>
           <Input
             label="Title"
             placeholder="e.g. The Fallen Kingdom"
@@ -925,6 +943,7 @@ export default function HomePage() {
             onChange={(e) => setNewTitle(e.target.value)}
             required
             autoFocus
+            ref={createTitleInputRef}
           />
           <TextArea
             label="Description / Excerpt"
@@ -969,40 +988,39 @@ export default function HomePage() {
                     placeholder="Type your custom genre..."
                     value={isKnownGenre ? '' : newGenre}
                     onChange={(e) => setNewGenre(e.target.value)}
-                    autoFocus
                   />
                 )}
               </div>
             );
           })()}
           <div className="home-modal-actions">
-            <Button variant="primary" onClick={handleCreate} disabled={!newTitle.trim()}>
+            <Button variant="primary" type="submit" disabled={!newTitle.trim()}>
               Create Project
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Rename Dialog */}
       <Modal open={!!renameTarget} onClose={() => setRenameTarget(null)} title="Rename Project" size="sm">
-        <div className="home-modal-form">
+        <form className="home-modal-form" onSubmit={(e) => { e.preventDefault(); if (renameName.trim()) handleRename(); }}>
           <Input
             label="New Name"
             value={renameName}
             onChange={(e) => setRenameName(e.target.value)}
             autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && renameName.trim()) {
-                handleRename();
+            ref={(el) => {
+              if (el && !!renameTarget) {
+                setTimeout(() => el.focus(), 10);
               }
             }}
           />
           <div className="home-modal-actions">
-            <Button variant="primary" onClick={handleRename} disabled={!renameName.trim()}>
-              Rename
+            <Button variant="primary" type="submit" disabled={!renameName.trim()}>
+              Rename Project
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Delete Confirmation */}

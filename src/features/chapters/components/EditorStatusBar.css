@@ -84,3 +84,18 @@
 .editor-status-bar__grammar-icon {
   color: var(--color-primary, #8b5cf6);
 }
+
+.editor-status-bar__grammar-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: var(--color-bg-hover, rgba(139, 92, 246, 0.05));
+}
+
+.editor-status-bar__grammar-icon--spin {
+  animation: grammar-spin 1s linear infinite;
+}
+
+@keyframes grammar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
