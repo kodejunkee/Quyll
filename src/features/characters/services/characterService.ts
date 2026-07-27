@@ -14,4 +14,5 @@ export const characterService = createEntityService<Character>({
   columns: CHARACTER_COLUMNS,
   entityType: EntityType.Character,
   nameColumn: 'name',
+  aliasesColumn: 'aliases',
 });

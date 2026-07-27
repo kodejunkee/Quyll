@@ -36,4 +36,7 @@ export default defineConfig(async () => ({
     cssCodeSplit: false,
     modulePreload: false,
   },
+  worker: {
+    format: "es"
+  }
 }));

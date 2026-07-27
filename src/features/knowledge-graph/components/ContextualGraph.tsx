@@ -18,7 +18,7 @@ import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { graphService, GraphData } from '@/services/graphService';
-import { useLayoutStore } from '@/store/layoutStore';
+
 import './EntityFlowchart.css'; // Reuse styles
 
 const TYPE_COLORS: Record<string, string> = {

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type Database from '@tauri-apps/plugin-sql';
-import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint } from '@/types/database';
+import type { Timestamp } from '@/types/common';
+import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint, GlossaryEntry } from '@/types/database';
 import { characterService } from '@/features/characters/services/characterService';
 
 import { chapterService } from '@/features/chapters/services/chapterService';
@@ -12,6 +13,7 @@ import { worldSystemService } from '@/features/world-systems/services/worldSyste
 import { loreService } from '@/features/lore/services/loreService';
 import { timelineEventService } from '@/features/timeline/services/timelineEventService';
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
+import { glossaryService } from '@/features/glossary/services/glossaryService';
 
 interface WorkspaceState {
   isInitialized: boolean;
@@ -30,6 +32,7 @@ interface WorkspaceState {
   lore: LoreEntry[];
   timeline: TimelineEvent[];
   plotPoints: PlotPoint[];
+  glossary: GlossaryEntry[];
 
   // Initialization
   initialize: (db: Database, projectId: string) => Promise<void>;
@@ -92,6 +95,12 @@ interface WorkspaceState {
   updatePlotPoint: (db: Database, id: string, data: Partial<PlotPoint>) => Promise<void>;
   softDeletePlotPoint: (db: Database, id: string) => Promise<void>;
   restorePlotPoint: (db: Database, id: string) => Promise<void>;
+
+  // Glossary
+  createGlossary: (db: Database, projectId: string, data: Partial<GlossaryEntry>) => Promise<GlossaryEntry>;
+  updateGlossary: (db: Database, id: string, data: Partial<GlossaryEntry>) => Promise<void>;
+  softDeleteGlossary: (db: Database, id: string) => Promise<void>;
+  restoreGlossary: (db: Database, id: string) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -110,6 +119,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   lore: [],
   timeline: [],
   plotPoints: [],
+  glossary: [],
 
   initialize: async (db, projectId) => {
     // If already initialized for this project, skip
@@ -121,7 +131,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
     try {
       // Load Phase 1, 2, 3 & 4 entities concurrently
-      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints] = await Promise.all([
+      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, glossary] = await Promise.all([
         characterService.list(db, projectId),
         chapterService.list(db, projectId),
         locationService.list(db, projectId),
@@ -132,6 +142,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         loreService.list(db, projectId),
         timelineEventService.list(db, projectId),
         plotPointService.list(db, projectId),
+        glossaryService.list(db, projectId),
       ]);
 
       set({
@@ -145,6 +156,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         lore,
         timeline,
         plotPoints,
+        glossary,
         isInitialized: true,
         isInitializing: false,
       });
@@ -179,7 +191,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     // 1. Optimistic UI update! Instantaneous.
     set((state) => ({
       characters: state.characters.map((c) =>
-        c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c
+        c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c
       ),
     }));
 
@@ -193,7 +205,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   softDeleteCharacter: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     
     // 1. Optimistic UI update
     set((state) => ({
@@ -235,13 +247,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateChapter: async (db, id, data) => {
     set((state) => ({
-      chapters: state.chapters.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      chapters: state.chapters.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await chapterService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateChapter:', error); }
   },
   softDeleteChapter: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ chapters: state.chapters.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await chapterService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -251,13 +263,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateChapterContent: async (db, id, content, wordCount, readingTime, updatedAt) => {
     set((state) => ({
-      chapters: state.chapters.map((c) => c.id === id ? { ...c, content, word_count: wordCount, reading_time: readingTime, updated_at: updatedAt || new Date().toISOString() } : c)
+      chapters: state.chapters.map((c) => c.id === id ? { ...c, content, word_count: wordCount, reading_time: readingTime, updated_at: (updatedAt || new Date().toISOString()) as Timestamp } : c)
     }));
     try { await chapterService.updateContent(db, id, content, wordCount, readingTime, updatedAt); } catch(error) { console.error('Sync failed', error); }
   },
   reorderChapters: async (db, orderedIds) => {
     set((state) => {
-      const chaptersMap = new Map(state.chapters.map(c => [c.id, c]));
+      const chaptersMap = new Map(state.chapters.map(c => [c.id as string, c]));
       const newChapters = orderedIds.map((id, idx) => {
         const c = chaptersMap.get(id);
         return c ? { ...c, chapter_number: idx + 1 } : null;
@@ -281,13 +293,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateLocation: async (db, id, data) => {
     set((state) => ({
-      locations: state.locations.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      locations: state.locations.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await locationService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateLocation:', error); }
   },
   softDeleteLocation: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ locations: state.locations.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await locationService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -303,13 +315,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateOrganization: async (db, id, data) => {
     set((state) => ({
-      organizations: state.organizations.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      organizations: state.organizations.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await organizationService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateOrganization:', error); }
   },
   softDeleteOrganization: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ organizations: state.organizations.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await organizationService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -326,13 +338,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateSpecies: async (db, id, data) => {
     set((state) => ({
-      species: state.species.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      species: state.species.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await speciesService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateSpecies:', error); }
   },
   softDeleteSpecies: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ species: state.species.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await speciesService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -348,13 +360,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateItem: async (db, id, data) => {
     set((state) => ({
-      items: state.items.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      items: state.items.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await itemService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateItem:', error); }
   },
   softDeleteItem: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ items: state.items.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await itemService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -370,13 +382,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateWorldSystem: async (db, id, data) => {
     set((state) => ({
-      worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c),
+      worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, ...data, updated_at: (new Date().toISOString() as Timestamp) } : c),
     }));
     try { await worldSystemService.update(db, id, data as Record<string, unknown>); } 
     catch (error) { console.error('[workspaceStore] Sync failed for updateWorldSystem:', error); }
   },
   softDeleteWorldSystem: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({ worldSystems: state.worldSystems.map((c) => c.id === id ? { ...c, deleted_at: deletedAt } : c) }));
     try { await worldSystemService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
@@ -398,7 +410,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try { await loreService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
   },
   softDeleteLore: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({
       lore: state.lore.map((l) => (l.id === id ? { ...l, deleted_at: deletedAt } : l)),
     }));
@@ -423,7 +435,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try { await timelineEventService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
   },
   softDeleteTimelineEvent: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({
       timeline: state.timeline.map((te) => (te.id === id ? { ...te, deleted_at: deletedAt } : te)),
     }));
@@ -448,7 +460,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try { await plotPointService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
   },
   softDeletePlotPoint: async (db, id) => {
-    const deletedAt = new Date().toISOString();
+    const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({
       plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, deleted_at: deletedAt } : pp)),
     }));
@@ -459,5 +471,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, deleted_at: null } : pp)),
     }));
     try { await plotPointService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createGlossary: async (db, projectId, data) => {
+    const newEntry = await glossaryService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ glossary: [newEntry, ...state.glossary] }));
+    return newEntry;
+  },
+  updateGlossary: async (db, id, data) => {
+    set((state) => ({
+      glossary: state.glossary.map((g) => (g.id === id ? { ...g, ...data } : g)),
+    }));
+    try { await glossaryService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeleteGlossary: async (db, id) => {
+    const deletedAt = (new Date().toISOString() as Timestamp);
+    set((state) => ({
+      glossary: state.glossary.map((g) => (g.id === id ? { ...g, deleted_at: deletedAt } : g)),
+    }));
+    try { await glossaryService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restoreGlossary: async (db, id) => {
+    set((state) => ({
+      glossary: state.glossary.map((g) => (g.id === id ? { ...g, deleted_at: null } : g)),
+    }));
+    try { await glossaryService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 }));

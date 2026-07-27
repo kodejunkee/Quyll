@@ -547,7 +547,7 @@ export function openPdfPrintDialog(html: string, title: string): void {
   if (doc) {
     doc.open();
     doc.write(
-      `<!DOCTYPE html><html><head><title>${title}</title><style>@page{margin:1in}body{font-family:serif;line-height:1.6;margin:0}h1{break-after:avoid}.chapter+.chapter,.entity+.entity{break-before:page}hr{border:0;break-after:page;page-break-after:always}</style></head><body>${html}</body></html>`,
+      `<!DOCTYPE html><html><head><title>${title}</title><style>@page{margin:0}body{font-family:serif;line-height:1.6;margin:1in}h1{break-after:avoid}.chapter+.chapter,.entity+.entity{break-before:page}hr{border:0;break-after:page;page-break-after:always}</style></head><body>${html}</body></html>`,
     );
     doc.close();
 

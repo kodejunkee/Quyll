@@ -87,7 +87,7 @@ export function useCharacters() {
   const updateImage = useCallback(
     async (characterId: string, imageId: string | null) => {
       if (!db) return;
-      await store.updateCharacter(db, characterId, { image_id: imageId });
+      await store.updateCharacter(db, characterId, { image_id: imageId as import('@/types/common').UUID | null });
     },
     [db, store.updateCharacter]
   );

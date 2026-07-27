@@ -10,7 +10,7 @@ import type { PlotPointFormData } from '../types/plotPoint';
 import './PlotPlannerPage.css';
 
 export default function PlotPlannerPage() {
-  const { items, loading, create } = usePlotPoints();
+  const { items, isLoading: loading, create } = usePlotPoints();
   const [createOpen, setCreateOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'flowchart'>('flowchart');
   const { query, setQuery, filterItems } = useSearch();

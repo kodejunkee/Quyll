@@ -164,8 +164,9 @@ export function GlobalKeywordHoverCard() {
           case 'species': tableName = 'species'; descCol = 'lifespan'; break;
           case 'item': tableName = 'items'; descCol = 'type'; break;
           case 'world_system': tableName = 'world_systems'; descCol = 'description'; break;
-          case 'lore': tableName = 'lore'; descCol = 'category'; break;
+          case 'lore': tableName = 'lore'; descCol = 'category'; nameCol = 'title'; break;
           case 'timeline_event': tableName = 'timeline_events'; nameCol = 'title'; descCol = 'date'; break;
+          case 'glossary': tableName = 'glossaries'; nameCol = 'term'; descCol = 'definition'; break;
         }
 
         if (tableName) {

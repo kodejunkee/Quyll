@@ -37,13 +37,10 @@ export function ChapterListPanel({
   chapters,
   activeChapterId,
   onSelect,
-  onCreate,
   onRename,
   onDuplicate,
   onDelete,
   loading,
-  nextChapterNumber,
-  createOpen,
   onCreateOpenChange,
   grammarOpen,
   onGrammarToggle,
@@ -71,11 +68,6 @@ export function ChapterListPanel({
   }, [contextMenuId]);
 
   const filtered = filterItems(chapters, (c) => `${c.chapter_number} ${c.title}`);
-
-  async function handleCreate(data: ChapterFormData) {
-    await onCreate(data);
-    onCreateOpenChange(false);
-  }
 
   async function handleRename(data: ChapterFormData) {
     if (!renameTarget) return;

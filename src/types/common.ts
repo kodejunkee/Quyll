@@ -24,6 +24,7 @@ export enum EntityType {
   Lore = 'lore',
   TimelineEvent = 'timeline_event',
   PlotPoint = 'plot_point',
+  Glossary = 'glossary',
   Image = 'image',
 }
 

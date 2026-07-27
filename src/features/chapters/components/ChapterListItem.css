@@ -9,10 +9,15 @@
   transition: all var(--transition-fast);
 }
 
-.chapter-list-item:hover {
+.chapter-list-item:hover,
+.chapter-list-item--menu-open {
   background: var(--color-bg-hover, rgba(255, 255, 255, 0.06));
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateX(2px);
+}
+
+.chapter-list-item--menu-open {
+  z-index: 10;
 }
 
 .chapter-list-item--active {

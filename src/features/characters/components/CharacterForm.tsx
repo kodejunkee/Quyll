@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { characterSchema, CHARACTER_STATUSES, type CharacterFormData } from '../types/character';

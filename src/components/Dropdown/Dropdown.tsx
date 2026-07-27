@@ -69,10 +69,17 @@ export function Dropdown({
     let offsetBottom = 0;
 
     if (portalDialog) {
-      const dialogRect = portalDialog.getBoundingClientRect();
-      offsetTop = dialogRect.top;
-      offsetLeft = dialogRect.left;
-      offsetBottom = window.innerHeight - dialogRect.bottom;
+      const style = window.getComputedStyle(portalDialog);
+      // If the dialog has a transform, it establishes a containing block for position: fixed.
+      // Otherwise, the dropdown is positioned relative to the viewport.
+      const establishesCB = style.transform !== 'none' || style.filter !== 'none' || style.perspective !== 'none';
+      
+      if (establishesCB) {
+        const dialogRect = portalDialog.getBoundingClientRect();
+        offsetTop = dialogRect.top;
+        offsetLeft = dialogRect.left;
+        offsetBottom = window.innerHeight - dialogRect.bottom;
+      }
     }
 
     if (openUp) {

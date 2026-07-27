@@ -9,7 +9,7 @@ import type { TimelineEventFormData } from '../types/timelineEvent';
 import './TimelinePage.css';
 
 export default function TimelinePage() {
-  const { items, loading, create } = useTimelineEvents();
+  const { items, isLoading: loading, create } = useTimelineEvents();
   const [createOpen, setCreateOpen] = useState(false);
   const { query, setQuery, filterItems } = useSearch();
 

@@ -15,7 +15,8 @@ import {
   PanelLeft,
   PanelLeftClose,
   Home,
-  Trash2
+  Trash2,
+  BookA
 } from 'lucide-react';
 import './NavigationSidebar.css';
 
@@ -42,6 +43,7 @@ const NAV_SECTIONS = [
       { path: 'items', label: 'Items & Artefacts', icon: Package, colorKey: 'item' },
       { path: 'world-systems', label: 'World Systems', icon: Globe, colorKey: 'world_system' },
       { path: 'lore', label: 'Lore', icon: ScrollText, colorKey: 'lore' },
+      { path: 'glossary', label: 'Glossary', icon: BookA, colorKey: 'glossary' },
     ],
   },
   {
@@ -74,7 +76,7 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
           className="nav-sidebar__toggle"
           onClick={onToggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={collapsed ? 'Expand (Ctrl+B)' : 'Collapse (Ctrl+B)'}
+          title={collapsed ? 'Expand (Ctrl+\\)' : 'Collapse (Ctrl+\\)'}
         >
           {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
         </button>

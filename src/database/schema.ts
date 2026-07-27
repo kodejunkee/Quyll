@@ -210,6 +210,22 @@ CREATE TABLE IF NOT EXISTS plot_points (
 );
 CREATE INDEX IF NOT EXISTS idx_plot_points_project ON plot_points(project_id);
 
+-- Glossaries
+CREATE TABLE IF NOT EXISTS glossaries (
+  id               TEXT PRIMARY KEY,
+  project_id       TEXT NOT NULL,
+  term             TEXT NOT NULL DEFAULT '',
+  aliases          TEXT NOT NULL DEFAULT '',
+  definition       TEXT NOT NULL DEFAULT '',
+  category         TEXT NOT NULL DEFAULT '',
+  notes            TEXT NOT NULL DEFAULT '',
+  keyword_enabled  INTEGER NOT NULL DEFAULT 0,
+  deleted_at       TEXT,
+  created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_glossaries_project ON glossaries(project_id);
+
 -- Images
 CREATE TABLE IF NOT EXISTS images (
   id            TEXT PRIMARY KEY,
@@ -335,4 +351,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;

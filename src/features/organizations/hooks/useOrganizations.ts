@@ -82,7 +82,7 @@ export function useOrganizations() {
   const updateImage = useCallback(
     async (entityId: string, imageId: string | null) => {
       if (!db) return;
-      await store.updateOrganization(db, entityId, { image_id: imageId });
+      await store.updateOrganization(db, entityId, { image_id: imageId as import('@/types/common').UUID | null });
     },
     [db, store.updateOrganization]
   );

@@ -48,7 +48,6 @@ export function CharacterDetailCard({
   const [relationships, setRelationships] = useState<RelationshipItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editTab, setEditTab] = useState<CharacterTab>('identity');
   const [deleteOpen, setDeleteOpen] = useState(false);

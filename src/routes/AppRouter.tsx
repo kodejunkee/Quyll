@@ -20,6 +20,7 @@ const ItemsPage = lazy(() => import('@/features/items/pages/ItemsPage'));
 const ItemDetailPage = lazy(() => import('@/features/items/pages/ItemDetailPage'));
 const WorldSystemsPage = lazy(() => import('@/features/world-systems/pages/WorldSystemsPage'));
 const WorldSystemDetailPage = lazy(() => import('@/features/world-systems/pages/WorldSystemDetailPage'));
+const GlossaryDirectoryPage = lazy(() => import('@/features/glossary/pages/GlossaryDirectoryPage').then(m => ({ default: m.GlossaryDirectoryPage })));
 const LorePage = lazy(() => import('@/features/lore/pages/LorePage'));
 const LoreDetailPage = lazy(() => import('@/features/lore/pages/LoreDetailPage'));
 const TimelinePage = lazy(() => import('@/features/timeline/pages/TimelinePage'));
@@ -88,6 +89,9 @@ const router = createBrowserRouter([
       // Lore
       { path: 'lore', element: <SuspenseWrap><LorePage /></SuspenseWrap> },
       { path: 'lore/:entityId', element: <SuspenseWrap><LoreDetailPage /></SuspenseWrap> },
+
+      // Glossary
+      { path: 'glossary', element: <SuspenseWrap><GlossaryDirectoryPage /></SuspenseWrap> },
 
       // Timeline
       { path: 'timeline', element: <SuspenseWrap><TimelinePage /></SuspenseWrap> },

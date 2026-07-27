@@ -82,7 +82,7 @@ export function useLocations() {
   const updateImage = useCallback(
     async (entityId: string, imageId: string | null) => {
       if (!db) return;
-      await store.updateLocation(db, entityId, { image_id: imageId });
+      await store.updateLocation(db, entityId, { image_id: imageId as import('@/types/common').UUID | null });
     },
     [db, store.updateLocation]
   );

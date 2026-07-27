@@ -16,6 +16,7 @@ export interface EntityServiceConfig {
   columns: string[];
   entityType?: EntityType;
   nameColumn?: string;
+  aliasesColumn?: string;
 }
 
 /**
@@ -77,8 +78,13 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
       // Sync keyword if enabled
       if (config.entityType && config.nameColumn && data.keyword_enabled) {
         const nameVal = data[config.nameColumn] as string | undefined;
+        let aliasesVal = '';
+        if (config.aliasesColumn) {
+          aliasesVal = (data[config.aliasesColumn] as string | undefined) || '';
+        }
         if (nameVal) {
-          await keywordService.upsert(db, projectId, config.entityType, id, nameVal);
+          const displayNames = [nameVal, ...aliasesVal.split(',').map(a => a.trim()).filter(Boolean)];
+          await keywordService.setEntityKeywords(db, projectId, config.entityType, id, displayNames);
         }
       }
 
@@ -116,7 +122,13 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         if (updatedRows.length > 0) {
           const row = updatedRows[0];
           if (row && row.keyword_enabled) {
-            await keywordService.upsert(db, row.project_id, config.entityType, id, row[config.nameColumn]);
+            const nameVal = row[config.nameColumn];
+            let aliasesVal = '';
+            if (config.aliasesColumn && row[config.aliasesColumn]) {
+              aliasesVal = row[config.aliasesColumn];
+            }
+            const displayNames = [nameVal, ...aliasesVal.split(',').map((a: string) => a.trim()).filter(Boolean)];
+            await keywordService.setEntityKeywords(db, row.project_id, config.entityType, id, displayNames);
           } else if (row) {
             await keywordService.remove(db, row.project_id, id);
           }
@@ -159,7 +171,13 @@ export function createEntityService<T extends { id: string }>(config: EntityServ
         );
         const firstRow = rows[0];
         if (firstRow && firstRow.keyword_enabled) {
-          await keywordService.upsert(db, firstRow.project_id, config.entityType, id, firstRow[config.nameColumn]);
+          const nameVal = firstRow[config.nameColumn];
+          let aliasesVal = '';
+          if (config.aliasesColumn && firstRow[config.aliasesColumn]) {
+            aliasesVal = firstRow[config.aliasesColumn];
+          }
+          const displayNames = [nameVal, ...aliasesVal.split(',').map((a: string) => a.trim()).filter(Boolean)];
+          await keywordService.setEntityKeywords(db, firstRow.project_id, config.entityType, id, displayNames);
         }
       }
     },

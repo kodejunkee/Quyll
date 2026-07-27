@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import { useDashboardStore } from '@/store/dashboardStore';
+import { useProjectStore } from '@/store/projectStore';
 import { ExportDialog } from '@/features/settings';
 import { Button } from '@/components';
 import {
@@ -33,6 +34,7 @@ export default function DashboardPage() {
   const { db, projectId } = useProjectDb();
   const navigate = useNavigate();
   const { setDashboardData, getDashboardData } = useDashboardStore();
+  const { currentProject } = useProjectStore();
   const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Initialize from cache (if available), otherwise use sensible defaults
@@ -131,16 +133,34 @@ export default function DashboardPage() {
         </Button>
       </header>
 
-      <section className="dashboard-page__continue">
-        <div className="dashboard-page__continue-icon"><PenLine size={21} /></div>
+      <section className="dashboard-page__continue" style={{ alignItems: 'flex-start' }}>
+        <div className="dashboard-page__continue-icon" style={{ marginTop: '2px' }}><PenLine size={21} /></div>
         <div className="dashboard-page__continue-copy">
-          <span className="page-eyebrow">Continue writing</span>
-          <h2>{latestChapter?.title ?? 'Start your story'}</h2>
-          {latestChapter ? (
-            <p>Chapter {String(latestChapter.chapter_number).padStart(2, '0')} · Draft · {formatNumber(latestChapter.word_count)} words · Edited {formatTimeAgo(latestChapter.updated_at)}</p>
-          ) : <p>Create your first chapter and give your story somewhere to begin.</p>}
+          <span className="page-eyebrow">Project Overview</span>
+          <h2>{currentProject?.name ?? 'Untitled Project'}</h2>
+          
+          <p style={{ marginTop: '8px', color: 'var(--color-text-secondary)', maxWidth: '600px', lineHeight: '1.5' }}>
+            {currentProject?.description || 'No description provided for this project.'}
+          </p>
+
+          <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)' }}>
+            {currentProject?.author && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ opacity: 0.7 }}>Author:</span> <strong style={{ color: 'var(--color-text-primary)' }}>{currentProject.author}</strong>
+              </span>
+            )}
+            {currentProject?.genre && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ opacity: 0.7 }}>Genre:</span> <strong style={{ color: 'var(--color-text-primary)' }}>{currentProject.genre}</strong>
+              </span>
+            )}
+          </div>
         </div>
-        <button className="dashboard-page__primary-action" onClick={() => open(latestChapter ? `chapters/${latestChapter.id}` : 'chapters')}>
+        <button 
+          className="dashboard-page__primary-action" 
+          onClick={() => open(latestChapter ? `chapters/${latestChapter.id}` : 'chapters')}
+          style={{ alignSelf: 'center' }}
+        >
           {latestChapter ? 'Continue writing' : 'Create first chapter'} {latestChapter ? <ArrowRight size={16} /> : <Plus size={16} />}
         </button>
       </section>

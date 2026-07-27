@@ -300,6 +300,21 @@ export default function ChaptersPage() {
     };
   }, []);
 
+  // Ctrl+N to create a new chapter (only when on a chapters route)
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        if (!locationRef.current.pathname.includes('/chapters')) return;
+        e.preventDefault();
+        setCreateOpen(true);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleUnsavedSave = async () => {
     await saveNow();
     if (unsavedAction) {

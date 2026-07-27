@@ -25,7 +25,7 @@ export function ChapterListItem({
   onDelete,
 }: ChapterListItemProps) {
   return (
-    <div className={`chapter-list-item ${active ? 'chapter-list-item--active' : ''}`}>
+    <div className={`chapter-list-item ${active ? 'chapter-list-item--active' : ''} ${showMenu ? 'chapter-list-item--menu-open' : ''}`} title={chapter.title}>
       <button
         className="chapter-list-item__content"
         onClick={onSelect}

@@ -160,6 +160,25 @@ export default function HomePage() {
   const [sortField, setSortField] = useState<'opened' | 'date' | 'name'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setIsSortMenuOpen(false);
+      }
+    };
+
+    if (isSortMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortMenuOpen]);
 
   const [createOpen, setCreateOpen] = useState(false);
   const createTitleInputRef = useRef<HTMLInputElement>(null);
@@ -249,13 +268,17 @@ export default function HomePage() {
     void loadProjects();
   }, [loadProjects]);
 
-  // Listen for Ctrl+K to focus search input or open command palette
+  // Listen for Ctrl+K to focus search input, Ctrl+N to create new project
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         const searchInput = document.getElementById('home-search-input');
         if (searchInput) searchInput.focus();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setCreateOpen(true);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
@@ -559,7 +582,7 @@ export default function HomePage() {
             </h3>
             <div className="home-section__controls">
               {viewTab === 'active' ? (
-                <div className="home-section__sort-wrap">
+                <div className="home-section__sort-wrap" ref={sortMenuRef}>
                   <button
                     className={`home-section__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
                     onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}

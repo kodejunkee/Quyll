@@ -30,37 +30,30 @@ export const keywordService = {
   },
 
   /**
-   * Ensure a keyword exists for an entity.
-   * If the entity already has a keyword, updates its display name.
-   * If not, creates a new keyword record.
+   * Replace all keywords for an entity.
+   * This allows an entity to have multiple valid keyword triggers (e.g. main name + aliases).
    */
-  async upsert(
+  async setEntityKeywords(
     db: Database,
     projectId: string,
     entityType: EntityType,
     entityId: string,
-    displayName: string,
+    displayNames: string[],
   ): Promise<void> {
-    const existing = await select<Keyword>(
-      db,
-      `SELECT * FROM keywords WHERE project_id = $1 AND entity_id = $2`,
-      [projectId, entityId],
-    );
+    // Clean up existing keywords for this entity
+    await keywordService.remove(db, projectId, entityId);
 
-    const firstExisting = existing[0];
-    if (firstExisting) {
-      await execute(
-        db,
-        `UPDATE keywords SET display_name = $1 WHERE id = $2`,
-        [displayName, firstExisting.id],
-      );
-    } else {
+    // Filter out empty strings and duplicates
+    const uniqueNames = Array.from(new Set(displayNames.map(n => n.trim()).filter(Boolean)));
+    
+    // Insert new keywords
+    for (const name of uniqueNames) {
       const id = generateId();
       await execute(
         db,
         `INSERT INTO keywords (id, project_id, entity_type, entity_id, display_name)
          VALUES ($1, $2, $3, $4, $5)`,
-        [id, projectId, entityType, entityId, displayName],
+        [id, projectId, entityType, entityId, name],
       );
     }
   },

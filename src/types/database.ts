@@ -208,6 +208,21 @@ export interface PlotPoint {
   readonly updated_at: Timestamp;
 }
 
+/** A glossary term and definition. */
+export interface GlossaryEntry {
+  readonly id: UUID;
+  readonly project_id: UUID;
+  readonly term: string;
+  readonly aliases: string;
+  readonly definition: string;
+  readonly category: string;
+  readonly notes: string;
+  readonly keyword_enabled: number;
+  readonly deleted_at: Timestamp | null;
+  readonly created_at: Timestamp;
+  readonly updated_at: Timestamp;
+}
+
 /** Metadata for an image stored on disk. */
 export interface Image {
   readonly id: UUID;
