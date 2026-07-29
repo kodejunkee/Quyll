@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { Character } from '@/types/database';
@@ -12,7 +12,7 @@ export function useCharacters() {
   const { db, projectId } = useProjectDb();
   const store = useWorkspaceStore();
 
-  const items = store.characters;
+  const items = useMemo(() => store.characters.filter((c) => !c.deleted_at), [store.characters]);
   const loading = store.isInitializing;
   const error = store.initError;
 

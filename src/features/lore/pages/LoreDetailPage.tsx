@@ -15,7 +15,7 @@ export default function LoreDetailPage() {
   const load = useCallback(async () => { if (!entityId) return; setEntity(await loreService.getById(db, entityId)); }, [db, entityId]);
   useEffect(() => { void load(); }, [load]);
   async function handleUpdate(d: LoreFormData) { if (!entityId) return; await loreService.update(db, entityId, d as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await loreService.softDelete(db, entityId); navigate(`/project/${projectId}/lore`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteLore(db, entityId); navigate(`/project/${projectId}/lore`); }
   if (!entity) return <div className="entity-detail__loading">Loading...</div>;
   const fields = [{ label: 'Category', value: entity.category }];
   const sections = [{ label: 'Content', value: entity.content }, { label: 'Notes', value: entity.notes }];

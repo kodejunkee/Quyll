@@ -78,6 +78,7 @@
   --color-icon-lore: hsl(52, 82%, 46%);                 /* Rich Gold */
   --color-icon-timeline_event: hsl(250, 68%, 62%);      /* Deep Indigo */
   --color-icon-plot_planner: hsl(330, 72%, 55%);        /* Rose Pink */
+  --color-icon-language: hsl(190, 75%, 50%);             /* Language Teal */
   --color-icon-graph: hsl(205, 80%, 55%);               /* Sky Blue */
   --color-icon-trash: hsl(0, 72%, 55%);                 /* True Red */
   --color-icon-settings: hsl(220, 15%, 62%);            /* Slate Gray */
@@ -94,18 +95,18 @@
 /* ===== Dark Theme (default) ===== */
 [data-theme='dark'],
 :root {
-  --color-bg: #000000;
-  --color-bg-elevated: #090a0d;
-  --color-bg-surface: #12141a;
-  --color-bg-hover: #1c1f26;
-  --color-bg-active: #262933;
+  --color-bg: #0b0c0e;
+  --color-bg-elevated: #101216;
+  --color-bg-surface: #171a20;
+  --color-bg-hover: #1c2027;
+  --color-bg-active: #232832;
 
-  --color-border: rgba(255, 255, 255, 0.14);
-  --color-border-subtle: rgba(255, 255, 255, 0.07);
+  --color-border: #303641;
+  --color-border-subtle: #222730;
 
-  --color-text: #f5f6f8;
-  --color-text-secondary: #a0a6b2;
-  --color-text-tertiary: #6b7280;
+  --color-text: #f0f1f3;
+  --color-text-secondary: #a3a9b4;
+  --color-text-tertiary: #707887;
   --color-text-inverse: #000000;
 
   --color-danger: hsl(354, 78%, 56%);
@@ -136,19 +137,24 @@
 
 /* ===== Light Theme ===== */
 [data-theme='light'] {
-  --color-bg: hsl(220, 15%, 94%); /* Slightly darker background to make cards pop */
-  --color-bg-elevated: hsl(0, 0%, 100%); /* Pure white cards for better contrast */
-  --color-bg-surface: hsl(220, 15%, 90%);
-  --color-bg-hover: hsl(220, 15%, 86%);
-  --color-bg-active: hsl(220, 15%, 82%);
+  --color-bg:#f7f8fa;
+  --color-bg-elevated:#ffffff;
+  --color-bg-surface:#f0f2f5;
+  --color-bg-hover:#edf0f4;
+  --color-bg-active:#e3e7ed;
 
-  --color-border: hsl(220, 15%, 85%); /* Slightly more visible borders */
-  --color-border-subtle: hsl(220, 15%, 90%);
+  --color-border:#cbd2dc;
+  --color-border-subtle:#dde2e9;
 
-  --color-text: hsl(0, 0%, 0%); /* Pure black */
-  --color-text-secondary: hsl(220, 10%, 25%);
-  --color-text-tertiary: hsl(220, 8%, 45%);
+  --color-text:#171b24;
+  --color-text-secondary:#536071;
+  --color-text-tertiary:#778397;
   --color-text-inverse: hsl(220, 20%, 98%);
+  
+  --color-primary:#3769e8;
+  --color-primary-hover:#2d59cc;
+  --color-primary-active:#2449ad;
+  --color-primary-subtle:rgba(55,105,232,.1);
 
   --color-danger: hsl(354, 70%, 52%);
   --color-danger-hover: hsl(354, 70%, 44%);
@@ -157,7 +163,11 @@
   --color-warning: hsl(38, 85%, 45%);
   --color-success: hsl(142, 60%, 42%);
 
-  --color-overlay: rgba(15, 20, 30, 0.25);
+  --color-overlay: rgba(15, 23, 42, 0.36);
+
+  --scrollbar-track:#f6f7f9;
+  --scrollbar-thumb:#cbd1da;
+  --scrollbar-thumb-hover:#aeb6c2;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.03);

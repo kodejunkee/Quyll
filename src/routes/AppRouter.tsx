@@ -27,6 +27,7 @@ const TimelinePage = lazy(() => import('@/features/timeline/pages/TimelinePage')
 const TimelineEventDetailPage = lazy(() => import('@/features/timeline/pages/TimelineEventDetailPage'));
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
+const LanguageStudioPage = lazy(() => import('@/features/world/pages/LanguageStudio'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 const TrashPage = lazy(() => import('@/features/trash/pages/TrashPage').then(m => ({ default: m.TrashPage })));
 
@@ -100,6 +101,8 @@ const router = createBrowserRouter([
       // Plot Planner
       { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
       { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
+      { path: 'language-studio', element: <SuspenseWrap><LanguageStudioPage /></SuspenseWrap> },
+      { path: 'language-studio/:entityId', element: <SuspenseWrap><LanguageStudioPage /></SuspenseWrap> },
 
       { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
       { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },

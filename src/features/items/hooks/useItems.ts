@@ -7,9 +7,7 @@ export function useItems() {
   const { db, projectId } = useProjectDb();
   const store = useWorkspaceStore();
 
-  const items = useMemo(() => {
-    return store.items.filter(item => item.deleted_at === null);
-  }, [store.items]);
+  const items = useMemo(() => store.items.filter((i) => !i.deleted_at), [store.items]);
 
   const loading = store.isInitializing;
   const error = store.initError ? new Error(store.initError) : null;

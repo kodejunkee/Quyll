@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useThemeStore } from '@/store/themeStore';
 import { Modal, Dropdown } from '@/components';
-import { Palette, Type, Sparkles, Bell, Cloud, Info } from 'lucide-react';
+import { Palette, Type, Sparkles, Bell, Cloud, Info, Key } from 'lucide-react';
+import { aiProviderManager } from '@/features/ai/services/AiProviderManager';
 import './GlobalSettingsModal.css';
 
 const FONT_OPTIONS = [
@@ -33,7 +34,7 @@ const ACCENT_OPTIONS = [
   { value: 'yellow', label: 'Yellow' },
 ];
 
-  type GlobalTab = 'appearance' | 'defaults' | 'updates' | 'about';
+  type GlobalTab = 'appearance' | 'defaults' | 'ai_providers' | 'updates' | 'about';
 
   interface GlobalSettingsModalProps {
     isOpen: boolean;
@@ -43,6 +44,38 @@ const ACCENT_OPTIONS = [
   export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProps) {
     const { theme, setTheme, accent, setAccent, defaultFont, setDefaultFont } = useThemeStore();
     const [activeTab, setActiveTab] = useState<GlobalTab>('appearance');
+    
+    // AI API Keys state
+    const [groqKey, setGroqKey] = useState('');
+    const [openaiKey, setOpenaiKey] = useState('');
+    const [anthropicKey, setAnthropicKey] = useState('');
+    const [geminiKey, setGeminiKey] = useState('');
+    const [grokKey, setGrokKey] = useState('');
+
+    useEffect(() => {
+      if (isOpen) {
+        aiProviderManager.initStore().then(async () => {
+          setGroqKey(await aiProviderManager.getApiKey('groq') || '');
+          setOpenaiKey(await aiProviderManager.getApiKey('openai') || '');
+          setAnthropicKey(await aiProviderManager.getApiKey('anthropic') || '');
+          setGeminiKey(await aiProviderManager.getApiKey('gemini') || '');
+          setGrokKey(await aiProviderManager.getApiKey('grok') || '');
+        });
+      }
+    }, [isOpen]);
+
+    const handleKeyChange = (provider: string, key: string) => {
+      // Update state first so the input is immediately responsive
+      if (provider === 'groq') setGroqKey(key);
+      if (provider === 'openai') setOpenaiKey(key);
+      if (provider === 'anthropic') setAnthropicKey(key);
+      if (provider === 'gemini') setGeminiKey(key);
+      if (provider === 'grok') setGrokKey(key);
+      // Save in background (fire-and-forget)
+      aiProviderManager.saveApiKey(provider, key).catch(err => {
+        console.error(`Failed to save ${provider} key:`, err);
+      });
+    };
 
     const tabs: { id: GlobalTab; label: string; icon: React.ReactNode }[] = [
       { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
@@ -132,6 +165,7 @@ const ACCENT_OPTIONS = [
               </div>
             )}
 
+
             {activeTab === 'updates' && (
               <div className="global-settings-modal__section">
                 <div className="global-settings-modal__ai-card" style={{ marginBottom: '16px' }}>
@@ -144,16 +178,6 @@ const ACCENT_OPTIONS = [
                   </div>
                 </div>
                 
-                <div className="global-settings-modal__ai-card" style={{ marginBottom: '16px' }}>
-                  <Type size={24} className="global-settings-modal__ai-icon" />
-                  <div>
-                    <h4 className="global-settings-modal__ai-title">Language Builder (Coming Soon)</h4>
-                    <p className="global-settings-modal__ai-desc">
-                      An AI-assisted language building entity tool will be available here to help you construct fictional languages, grammar rules, and vocabulary.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="global-settings-modal__ai-card">
                   <Cloud size={24} className="global-settings-modal__ai-icon" />
                   <div>
@@ -170,7 +194,7 @@ const ACCENT_OPTIONS = [
               <div className="global-settings-modal__section">
                 <div style={{ textAlign: 'center', padding: '32px 0' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--color-text)' }}>Quyll</h3>
-                  <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>Version 0.1.0-alpha</p>
+                  <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>Version 0.2.0-beta</p>
                   
                   <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left', lineHeight: '1.6', color: 'var(--color-text-secondary)' }}>
                     <p style={{ marginBottom: '16px' }}>

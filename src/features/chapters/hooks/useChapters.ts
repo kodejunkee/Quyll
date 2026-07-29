@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { useWorkspaceStore } from '@/store/workspaceStore';
+import { chapterService } from '../services/chapterService';
 import type { Chapter } from '@/types/database';
 
 /**
@@ -12,7 +13,7 @@ export function useChapters() {
   const { db, projectId } = useProjectDb();
   const store = useWorkspaceStore();
 
-  const items = store.chapters;
+  const items = useMemo(() => store.chapters.filter((c) => !c.deleted_at), [store.chapters]);
   const loading = store.isInitializing;
   const error = store.initError;
 
@@ -78,10 +79,12 @@ export function useChapters() {
   );
 
   const getById = useCallback(
-    (id: string) => {
-      return store.chapters.find(c => c.id === id) || null;
+    async (id: string) => {
+      if (!db) return null;
+      // Fetch full chapter from DB because store chapters omit 'content' for performance
+      return await chapterService.getById(db, id);
     },
-    [store.chapters]
+    [db]
   );
 
   const updateContent = useCallback(

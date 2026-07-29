@@ -400,6 +400,36 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
       }
     }
 
+    // Languages
+    if (data.languages) {
+      for (const lang of data.languages) {
+        await execute(db, `
+          INSERT INTO languages (id, project_id, name, description, native_speakers, writing_system, grammar_rules, notes, keyword_enabled, deleted_at, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `, [lang.id, newProjectId, lang.name, lang.description, lang.native_speakers, lang.writing_system, lang.grammar_rules, lang.notes, lang.keyword_enabled ? 1 : 0, lang.deleted_at, lang.created_at, lang.updated_at]);
+      }
+    }
+
+    // Language Dictionary
+    if (data.languageDictionary) {
+      for (const entry of data.languageDictionary) {
+        await execute(db, `
+          INSERT INTO language_dictionary (id, language_id, word, translation, part_of_speech, pronunciation, example_usage, notes, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [entry.id, entry.language_id, entry.word, entry.translation, entry.part_of_speech, entry.pronunciation, entry.example_usage, entry.notes, entry.created_at, entry.updated_at]);
+      }
+    }
+
+    // Language Translations
+    if (data.languageTranslations) {
+      for (const translation of data.languageTranslations) {
+        await execute(db, `
+          INSERT INTO language_translations (id, language_id, input_text, output_text, mode, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [translation.id, translation.language_id, translation.input_text, translation.output_text, translation.mode, translation.created_at]);
+      }
+    }
+
     // Images
     if (data.images) {
       for (const img of data.images) {

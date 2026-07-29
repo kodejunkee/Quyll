@@ -16,7 +16,8 @@ import {
   PanelLeftClose,
   Home,
   Trash2,
-  BookA
+  BookA,
+  Languages
 } from 'lucide-react';
 import './NavigationSidebar.css';
 
@@ -51,6 +52,7 @@ const NAV_SECTIONS = [
     items: [
       { path: 'timeline', label: 'Timeline', icon: Clock, colorKey: 'timeline_event' },
       { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner' },
+      { path: 'language-studio', label: 'Language Studio', icon: Languages, colorKey: 'language' },
       { path: 'trash', label: 'Trash Bin', icon: Trash2, colorKey: 'trash' },
     ],
   },

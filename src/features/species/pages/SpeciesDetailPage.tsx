@@ -17,7 +17,7 @@ export default function SpeciesDetailPage() {
   const load = useCallback(async () => { if (!entityId) return; const row = await speciesService.getById(db, entityId); setEntity(row); if (row?.image_id) { const img = await getImageById(db, row.image_id); if (img) setImageUrl(await getImageUrl(projectPath, img.path)); } else setImageUrl(null); }, [db, entityId, projectPath]);
   useEffect(() => { void load(); }, [load]);
   async function handleUpdate(d: SpeciesFormData) { if (!entityId) return; await speciesService.update(db, entityId, d as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await speciesService.softDelete(db, entityId); navigate(`/project/${projectId}/species`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteSpecies(db, entityId); navigate(`/project/${projectId}/species`); }
   async function handleImageUpload() { if (!entityId || !entity) return; const f = await pickImageFile(); if (!f) return; setImageLoading(true); try { const img = await uploadImage(db, entity.project_id, projectPath, f, 'species'); await speciesService.update(db, entityId, { image_id: img.id }); await load(); } finally { setImageLoading(false); } }
   async function handleImageRemove() { if (!entityId || !entity?.image_id) return; setImageLoading(true); try { await removeImage(db, projectPath, entity.image_id); await speciesService.update(db, entityId, { image_id: null }); await load(); } finally { setImageLoading(false); } }
   if (!entity) return <div className="entity-detail__loading">Loading...</div>;

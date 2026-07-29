@@ -26,6 +26,7 @@ export enum EntityType {
   PlotPoint = 'plot_point',
   Glossary = 'glossary',
   Image = 'image',
+  Language = 'language',
 }
 
 /**

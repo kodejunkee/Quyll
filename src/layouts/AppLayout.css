@@ -8,13 +8,13 @@
 }
 
 .app-global-header {
-  height: 56px;
+  height: 54px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-4);
-  background: var(--color-bg-surface, #090a0d);
+  padding: 0 14px;
+  background: #0d0f12;
   border-bottom: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.08));
   z-index: 100;
 }
@@ -22,17 +22,17 @@
 .app-global-header__brand {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 220px;
+  gap: 8px;
+  min-width: 232px;
 }
 
 .app-global-header__logo {
-  color: var(--color-primary, #F59E0B);
+  color: var(--color-primary);
   flex-shrink: 0;
 }
 
 .app-global-header__title {
-  font-size: 1.05rem;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.02em;
@@ -44,18 +44,19 @@
 }
 
 .app-global-header__project {
-  font-size: var(--font-size-sm);
+  font-size: 12px;
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 190px;
 }
 
 .app-global-header__center {
   flex: 1;
   display: flex;
   justify-content: center;
-  max-width: 520px;
+  max-width: 460px;
   margin: 0 var(--space-4);
 }
 
@@ -105,8 +106,8 @@
 .app-global-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-width: 220px;
+  gap: 8px;
+  min-width: 232px;
   justify-content: flex-end;
 }
 
@@ -114,44 +115,44 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  height: 34px;
+  height: 32px;
   padding: 0 var(--space-3);
-  background: var(--color-bg-surface, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
-  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .app-global-header__ai-btn:hover {
-  border-color: var(--color-primary, #F59E0B);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--color-border);
+  background: var(--color-bg-surface);
 }
 
 .app-global-header__ai-icon {
-  color: var(--color-primary, #F59E0B);
+  color: var(--color-text-secondary);
 }
 
 .app-global-header__ai-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-primary, #F59E0B);
+  color: var(--color-text-secondary);
 }
 
 .app-global-header__ai-badge {
-  font-size: 0.68rem;
+  font-size: 10px;
   color: var(--color-text-tertiary);
 }
 
 .app-global-header__settings-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-surface, rgba(255, 255, 255, 0.04));
+  background: transparent;
   border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
-  border-radius: var(--radius-md);
+  border-radius: 7px;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -167,7 +168,7 @@
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr var(--inspector-width);
   flex: 1;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 54px);
   overflow: hidden;
   transition: grid-template-columns var(--transition-slow);
 }

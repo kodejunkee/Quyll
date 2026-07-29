@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal/Modal';
 import { Dialog } from '@/components/Dialog/Dialog';
 import { CharacterForm, CharacterFormTabs, type CharacterTab } from './CharacterForm';
 import { useProjectDb } from '@/hooks/useProjectDb';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { characterService } from '../services/characterService';
 import { select } from '@/database/databaseService';
 import { pickImageFile, uploadImage, removeImage, getImageUrl, getImageById } from '@/services/imageService';
@@ -187,9 +188,11 @@ export function CharacterDetailCard({
     await loadData();
   }
 
+  const softDeleteCharacter = useWorkspaceStore((state) => state.softDeleteCharacter);
+
   async function handleDelete() {
     if (!db || !characterId) return;
-    await characterService.softDelete(db, characterId);
+    await softDeleteCharacter(db, characterId);
     setDeleteOpen(false);
     if (onClose) onClose();
     if (onNavigateBack) onNavigateBack();

@@ -7,9 +7,7 @@ export function useWorldSystems() {
   const { db, projectId } = useProjectDb();
   const store = useWorkspaceStore();
 
-  const items = useMemo(() => {
-    return store.worldSystems.filter(item => item.deleted_at === null);
-  }, [store.worldSystems]);
+  const items = useMemo(() => store.worldSystems.filter((ws) => !ws.deleted_at), [store.worldSystems]);
 
   const loading = store.isInitializing;
   const error = store.initError ? new Error(store.initError) : null;

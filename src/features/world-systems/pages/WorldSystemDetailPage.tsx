@@ -16,7 +16,7 @@ export default function WorldSystemDetailPage() {
   const load = useCallback(async () => { if (!entityId) return; setEntity(await worldSystemService.getById(db, entityId)); }, [db, entityId]);
   useEffect(() => { void load(); }, [load]);
   async function handleUpdate(d: WorldSystemFormData) { if (!entityId) return; await worldSystemService.update(db, entityId, d as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await worldSystemService.softDelete(db, entityId); navigate(`/project/${projectId}/world-systems`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteWorldSystem(db, entityId); navigate(`/project/${projectId}/world-systems`); }
   if (!entity) return <div className="entity-detail__loading">Loading...</div>;
   const fields = [{ label: 'Source / Basis', value: entity.energy_source }];
   const sections = [{ label: 'Description', value: entity.description }, { label: 'Rules', value: entity.rules }, { label: 'Limitations', value: entity.limitations }, { label: 'Notes', value: entity.examples }];

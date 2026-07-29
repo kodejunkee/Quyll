@@ -24,6 +24,7 @@ import type {
   AiHistory,
   AiPreference,
 } from '@/types/database';
+import type { Language, LanguageDictionaryEntry, LanguageTranslationHistory } from './languageService';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak, UnderlineType } from 'docx';
 
 export type ExportFormat = 'markdown' | 'text' | 'pdf' | 'docx' | 'quyll';
@@ -129,6 +130,9 @@ export interface QuyllExportData {
   aiPrompts?: AiPrompt[];
   aiHistory?: AiHistory[];
   aiPreferences?: AiPreference[];
+  languages?: Language[];
+  languageDictionary?: LanguageDictionaryEntry[];
+  languageTranslations?: LanguageTranslationHistory[];
 }
 
 export async function buildQuyllExport(
@@ -155,6 +159,10 @@ export async function buildQuyllExport(
   const aiPrompts = await select<AiPrompt>(db, 'SELECT * FROM ai_prompts WHERE project_id = $1', [projectId]);
   const aiHistory = await select<AiHistory>(db, 'SELECT * FROM ai_history WHERE project_id = $1', [projectId]);
   const aiPreferences = await select<AiPreference>(db, 'SELECT * FROM ai_preferences WHERE project_id = $1', [projectId]);
+  
+  const languages = await select<Language>(db, 'SELECT * FROM languages WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const languageDictionary = await select<LanguageDictionaryEntry>(db, 'SELECT * FROM language_dictionary WHERE language_id IN (SELECT id FROM languages WHERE project_id = $1)', [projectId]);
+  const languageTranslations = await select<LanguageTranslationHistory>(db, 'SELECT * FROM language_translations WHERE language_id IN (SELECT id FROM languages WHERE project_id = $1)', [projectId]);
 
   const imageFiles: { path: string; base64: string }[] = [];
   const appData = await appDataDir();
@@ -201,6 +209,9 @@ export async function buildQuyllExport(
     aiPrompts,
     aiHistory,
     aiPreferences,
+    languages,
+    languageDictionary,
+    languageTranslations,
   };
   return JSON.stringify(data);
 }

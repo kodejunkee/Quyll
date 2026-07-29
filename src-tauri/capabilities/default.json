@@ -35,6 +35,8 @@
       "allow": [
         { "path": "**" }
       ]
-    }
+    },
+    "store:default",
+    "store:allow-load"
   ]
 }

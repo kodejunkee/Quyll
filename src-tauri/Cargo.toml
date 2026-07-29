@@ -1,6 +1,6 @@
 [package]
 name = "quyll"
-version = "0.1.0"
+version = "0.2.0"
 description = "A professional writing workspace for authors"
 authors = ["Jayce"]
 edition = "2021"
@@ -20,3 +20,4 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tauri-plugin-store = "2.4.4"

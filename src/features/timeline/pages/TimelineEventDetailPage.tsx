@@ -32,7 +32,7 @@ export default function TimelineEventDetailPage() {
   }
   async function handleDelete() {
     if (!entityId) return;
-    await timelineEventService.softDelete(db, entityId);
+    await useWorkspaceStore.getState().softDeleteTimelineEvent(db, entityId);
     navigate(`/project/${projectId}/timeline`);
   }
 

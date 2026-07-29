@@ -31,7 +31,7 @@ export default function OrganizationDetailPage() {
   useEffect(() => { void load(); }, [load]);
 
   async function handleUpdate(data: OrganizationFormData) { if (!entityId) return; await organizationService.update(db, entityId, data as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await organizationService.softDelete(db, entityId); navigate(`/project/${projectId}/organizations`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteOrganization(db, entityId); navigate(`/project/${projectId}/organizations`); }
   async function handleImageUpload() { if (!entityId || !entity) return; const f = await pickImageFile(); if (!f) return; setImageLoading(true); try { const img = await uploadImage(db, entity.project_id, projectPath, f, 'organization'); await organizationService.update(db, entityId, { image_id: img.id }); await load(); } finally { setImageLoading(false); } }
   async function handleImageRemove() { if (!entityId || !entity?.image_id) return; setImageLoading(true); try { await removeImage(db, projectPath, entity.image_id); await organizationService.update(db, entityId, { image_id: null }); await load(); } finally { setImageLoading(false); } }
 

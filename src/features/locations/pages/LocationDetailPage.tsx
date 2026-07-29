@@ -32,7 +32,7 @@ export default function LocationDetailPage() {
   useEffect(() => { void load(); }, [load]);
 
   async function handleUpdate(data: LocationFormData) { if (!entityId) return; await locationService.update(db, entityId, data as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await locationService.softDelete(db, entityId); navigate(`/project/${projectId}/locations`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteLocation(db, entityId); navigate(`/project/${projectId}/locations`); }
   async function handleImageUpload() { if (!entityId || !entity) return; const f = await pickImageFile(); if (!f) return; setImageLoading(true); try { const img = await uploadImage(db, entity.project_id, projectPath, f, 'location'); await locationService.update(db, entityId, { image_id: img.id }); await load(); } finally { setImageLoading(false); } }
   async function handleImageRemove() { if (!entityId || !entity?.image_id) return; setImageLoading(true); try { await removeImage(db, projectPath, entity.image_id); await locationService.update(db, entityId, { image_id: null }); await load(); } finally { setImageLoading(false); } }
 

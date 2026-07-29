@@ -22,7 +22,7 @@ export default function ItemDetailPage() {
   }, [db, entityId, projectPath]);
   useEffect(() => { void load(); }, [load]);
   async function handleUpdate(d: ItemFormData) { if (!entityId) return; await itemService.update(db, entityId, d as unknown as Record<string, unknown>); setEditOpen(false); await load(); }
-  async function handleDelete() { if (!entityId) return; await itemService.softDelete(db, entityId); navigate(`/project/${projectId}/items`); }
+  async function handleDelete() { if (!entityId) return; await useWorkspaceStore.getState().softDeleteItem(db, entityId); navigate(`/project/${projectId}/items`); }
   async function handleImageUpload() { if (!entityId || !entity) return; const f = await pickImageFile(); if (!f) return; setImageLoading(true); try { const img = await uploadImage(db, entity.project_id, projectPath, f, 'item'); await itemService.update(db, entityId, { image_id: img.id }); await load(); } finally { setImageLoading(false); } }
   async function handleImageRemove() { if (!entityId || !entity?.image_id) return; setImageLoading(true); try { await removeImage(db, projectPath, entity.image_id); await itemService.update(db, entityId, { image_id: null }); await load(); } finally { setImageLoading(false); } }
   if (!entity) return <div className="entity-detail__loading">Loading...</div>;

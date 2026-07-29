@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Users, MapPin, Building2, Dna, Package, Globe, ScrollText, Clock } from 'lucide-react';
+import { Users, MapPin, Building2, Dna, Package, Globe, ScrollText, Clock, Languages } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { relationshipService } from '@/services/relationshipService';
 import type { PinnedReference } from '@/types/database';
@@ -24,6 +24,7 @@ const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
   world_system: { icon: Globe, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
   timeline_event: { icon: Clock, colorKey: 'timeline_event' },
+  language: { icon: Languages, colorKey: 'language' },
 };
 
 export function ReferenceBubbles() {

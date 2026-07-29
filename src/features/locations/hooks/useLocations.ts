@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import type { Location } from '@/types/database';
@@ -7,7 +7,7 @@ export function useLocations() {
   const { db, projectId } = useProjectDb();
   const store = useWorkspaceStore();
 
-  const items = store.locations;
+  const items = useMemo(() => store.locations.filter((l) => !l.deleted_at), [store.locations]);
   const loading = store.isInitializing;
   const error = store.initError;
 

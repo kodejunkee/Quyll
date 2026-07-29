@@ -31,7 +31,7 @@ export default function PlotPointDetailPage() {
   }
   async function handleDelete() {
     if (!entityId) return;
-    await plotPointService.softDelete(db, entityId);
+    await useWorkspaceStore.getState().softDeletePlotPoint(db, entityId);
     navigate(`/project/${projectId}/plot-planner`);
   }
 
