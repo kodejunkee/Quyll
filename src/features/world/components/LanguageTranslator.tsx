@@ -68,9 +68,13 @@ export function LanguageTranslator({ languageId }: LanguageTranslatorProps) {
 
       if (result.missingWords.length > 0) {
         const additionalDictWords: DictionaryWord[] = [];
+        
+        // Build map for derivation lookups
+        const dictMap = new Map<string, string>();
+        entries.forEach(e => dictMap.set(e.translation.toLowerCase().trim(), e.word));
 
         for (const missing of result.missingWords) {
-          const generatedWord = LanguageGenerator.generateWord(missing, grammarConfig, language.id);
+          const generatedWord = LanguageGenerator.generateWord(missing, grammarConfig, language.id, dictMap);
           const entry = await languageService.createDictionaryEntry(db, languageId, {
             word: generatedWord,
             translation: missing,
@@ -83,6 +87,8 @@ export function LanguageTranslator({ languageId }: LanguageTranslatorProps) {
             translation: missing,
             part_of_speech: '',
           });
+          // Add to map so subsequent missing words in the same sentence can derive from it
+          dictMap.set(missing.toLowerCase().trim(), generatedWord);
         }
 
         result = engine.translate(translateSentence, additionalDictWords);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wand2, Loader2, Sparkles, Volume2, Layers, Users, Zap, CheckCircle2 } from 'lucide-react';
+import { Wand2, Loader2, Sparkles, Volume2, Layers, Users, Zap } from 'lucide-react';
 import { Button, Modal } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { languageService } from '@/services/languageService';
@@ -76,6 +76,12 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.pluralAffix = '-ri';
         newConfig.pastTenseAffix = 'na-';
         newConfig.futureTenseAffix = 'el-';
+        newConfig.allowedOnsets = ['l', 'r', 'th', 'fl', 'gl', 'sl', 'n', 'v', 'f'];
+        newConfig.allowedCodas = ['n', 'l', 'r', 'th', 's'];
+        newConfig.phonemeWeights = { 'l': 4, 'r': 3, 'th': 3, 's': 2, 'a': 3, 'e': 4, 'i': 3, 'ae': 2, 'ea': 2 };
+        newConfig.vowelHarmony = { enabled: true, groups: [['a', 'e', 'i', 'ae', 'ea'], ['o', 'ou']] };
+        newConfig.derivationalAffixes = { place: '-dor', agent: '-iel', adjective: '-wen', abstractNoun: '-ath', diminutive: '-il', augmentative: '-nor' };
+        newConfig.soundChangeRules = [{ pattern: 'll', replacement: 'l' }, { pattern: 'nn', replacement: 'n' }, { pattern: 'thth', replacement: 'th' }];
         setSpeakers('High Elves');
         break;
       case 'orcish':
@@ -85,6 +91,11 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.pluralAffix = '-hai';
         newConfig.pastTenseAffix = '-ug';
         newConfig.futureTenseAffix = 'g-';
+        newConfig.allowedOnsets = ['k', 'kr', 'gr', 'dr', 'zg', 'gh', 'g', 'r', 't', 'd', 'z'];
+        newConfig.allowedCodas = ['k', 'g', 'rk', 'zg', 'r', 'gh'];
+        newConfig.phonemeWeights = { 'k': 4, 'g': 3, 'r': 3, 'z': 2, 'gh': 2, 'a': 3, 'u': 3, 'o': 2 };
+        newConfig.derivationalAffixes = { place: '-goth', agent: '-hai', adjective: '-ug', abstractNoun: '-arz', diminutive: '-ik', augmentative: '-thrak' };
+        newConfig.soundChangeRules = [{ pattern: 'kk', replacement: 'k' }, { pattern: 'gg', replacement: 'gh' }];
         setSpeakers('Orc Clans');
         break;
       case 'semitic':
@@ -93,6 +104,12 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.syllableStructures = ['CVC', 'CV'];
         newConfig.pluralAffix = '-im';
         newConfig.pastTenseAffix = 'ya-';
+        newConfig.allowedOnsets = ['q', 'k', 'sh', 'm', 'n', 'l', 't', 's', 'h'];
+        newConfig.allowedCodas = ['m', 'n', 'l', 'sh', 'q', 's'];
+        newConfig.phonemeWeights = { 'q': 3, 'sh': 3, 'm': 2, 'a': 4, 'i': 3, 'u': 2 };
+        newConfig.vowelHarmony = { enabled: true, groups: [['a', 'u'], ['i']] };
+        newConfig.derivationalAffixes = { place: '-stan', agent: '-im', adjective: '-i', abstractNoun: '-iya', diminutive: '-el', augmentative: '-akh' };
+        newConfig.soundChangeRules = [{ pattern: 'hh', replacement: 'h' }];
         setSpeakers('Ancient Priests');
         break;
       case 'scifi':
@@ -100,6 +117,11 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.consonants = ['x', 'z', 'v', 'k', 't', 'p', 'b'];
         newConfig.syllableStructures = ['CV', 'CVC', 'CCV'];
         newConfig.pluralAffix = '-xex';
+        newConfig.allowedOnsets = ['x', 'zv', 'kt', 'vr', 'px', 'z', 'v', 'k', 't', 'p'];
+        newConfig.allowedCodas = ['x', 'vz', 'kt', 'z', 'v'];
+        newConfig.phonemeWeights = { 'x': 4, 'z': 3, 'v': 3, 'k': 2, 'e': 3, 'i': 3, 'y': 2 };
+        newConfig.derivationalAffixes = { place: '-xar', agent: '-vex', adjective: '-ik', abstractNoun: '-zyn', diminutive: '-ip', augmentative: '-thex' };
+        newConfig.soundChangeRules = [{ pattern: 'xx', replacement: 'x' }, { pattern: 'zz', replacement: 'z' }];
         setSpeakers('Constructs');
         break;
       case 'trade':
@@ -107,6 +129,10 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.consonants = ['p', 't', 'k', 'm', 'n', 'l', 's'];
         newConfig.syllableStructures = ['CV', 'CVC'];
         newConfig.pluralAffix = '-s';
+        newConfig.allowedOnsets = ['p', 't', 'k', 'm', 's', 'l', 'n'];
+        newConfig.allowedCodas = ['n', 's', 'l'];
+        newConfig.phonemeWeights = { 't': 3, 's': 3, 'l': 2, 'a': 3, 'e': 3, 'o': 2 };
+        newConfig.derivationalAffixes = { place: '-ton', agent: '-er', adjective: '-al', abstractNoun: '-ade', diminutive: '-et', augmentative: '-orn' };
         setSpeakers('Merchants');
         break;
     }
@@ -142,15 +168,17 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
 
       // Basic starter vocabulary to seed the dictionary
       const starterWords = ['hello', 'goodbye', 'yes', 'no', 'I', 'you'];
+      const dictMap = new Map<string, string>();
       for (const word of starterWords) {
         // Just mock generate some words
-        const conlangWord = await import('../engine/LanguageGenerator').then(m => m.LanguageGenerator.generateWord(word, config, language.id));
+        const conlangWord = await import('../engine/LanguageGenerator').then(m => m.LanguageGenerator.generateWord(word, config, language.id, dictMap));
         await languageService.createDictionaryEntry(db, language.id, {
           word: conlangWord,
           translation: word,
           part_of_speech: '',
           pronunciation: '',
         });
+        dictMap.set(word, conlangWord);
       }
 
       onComplete();

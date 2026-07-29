@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, Card, Dialog, Modal } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { plotPointService } from '../services/plotPointService';
@@ -87,3 +88,4 @@ export default function PlotPointDetailPage() {
     </div>
   );
 }
+

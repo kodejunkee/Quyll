@@ -4,7 +4,7 @@ import { Button, Modal } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { languageService } from '@/services/languageService';
 import type { Language, LanguageDictionaryEntry } from '@/services/languageService';
-import { aiProviderManager } from '@/features/ai/services/AiProviderManager';
+import { LanguageGenerator } from '../engine/LanguageGenerator';
 import { parseGrammarConfig } from '../engine/LanguageGrammarConfig';
 import './LanguageDictionary.css';
 
@@ -35,10 +35,9 @@ export function LanguageDictionary({ languageId }: LanguageDictionaryProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Partial<LanguageDictionaryEntry>>({});
 
-  // AI Batch Generator Modal State
+  // Procedural Batch Generator Modal State
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
-  const [genTopic, setGenTopic] = useState('Nature & Magic');
-  const [genCount, setGenCount] = useState(10);
+  const [batchWordsList, setBatchWordsList] = useState('');
   const [isGeneratingWords, setIsGeneratingWords] = useState(false);
 
   useEffect(() => {
@@ -74,46 +73,41 @@ export function LanguageDictionary({ languageId }: LanguageDictionaryProps) {
   };
 
   const handleGenerateBatch = async () => {
-    if (!db || !language || !languageId) return;
+    if (!db || !language || !languageId || !batchWordsList.trim()) return;
     setIsGeneratingWords(true);
 
     try {
       const cfg = parseGrammarConfig(language.grammar_rules);
-      const systemPrompt = `You are inventing vocabulary for the fictional language "${language.name}".
+      
+      const wordsToGenerate = batchWordsList
+        .split(',')
+        .map(w => w.trim().toLowerCase())
+        .filter(w => w.length > 0);
 
-Phonology/Style: ${cfg.phonologyHints || 'Harmonious fantasy tongue'}
+      // Deduplicate to avoid regenerating the exact same word multiple times in one batch
+      const uniqueWords = [...new Set(wordsToGenerate)];
 
-Task: Generate ${genCount} unique conlang words related to the topic/domain "${genTopic}".
+      // Build map for derivation lookups
+      const dictMap = new Map<string, string>();
+      entries.forEach(e => dictMap.set(e.translation.toLowerCase().trim(), e.word));
 
-Rules:
-- Output ONLY a raw JSON array of objects. No explanation, no markdown.
-- Each object: { "word": "conlang_word", "translation": "english_translation", "part_of_speech": "noun|verb|adjective|adverb", "pronunciation": "phonetic guide" }`;
-
-      const responseText = await aiProviderManager.generateText(
-        `Generate ${genCount} words for topic: ${genTopic}`,
-        systemPrompt
-      );
-
-      let cleanJson = responseText.trim();
-      if (cleanJson.startsWith('```json')) cleanJson = cleanJson.replace(/^```json\s*/, '');
-      if (cleanJson.startsWith('```')) cleanJson = cleanJson.replace(/^```\s*/, '');
-      if (cleanJson.endsWith('```')) cleanJson = cleanJson.replace(/```\s*$/, '');
-
-      const words = JSON.parse(cleanJson);
-      if (Array.isArray(words)) {
-        for (const w of words) {
-          if (w.word && w.translation) {
-            await languageService.createDictionaryEntry(db, languageId, {
-              word: w.word,
-              translation: w.translation,
-              part_of_speech: w.part_of_speech || 'noun',
-              pronunciation: w.pronunciation || '',
-            });
-          }
-        }
+      for (const englishWord of uniqueWords) {
+        // Procedurally generate the conlang equivalent using the offline generator
+        const conlangWord = LanguageGenerator.generateWord(englishWord, cfg, languageId, dictMap);
+        
+        await languageService.createDictionaryEntry(db, languageId, {
+          word: conlangWord,
+          translation: englishWord,
+          part_of_speech: 'noun', // Defaulting to noun as we don't have parts of speech from simple words
+          pronunciation: '', // No pronunciation available
+        });
+        
+        // Add to map so subsequent words in this batch can derive from it
+        dictMap.set(englishWord, conlangWord);
       }
 
       setIsGeneratorOpen(false);
+      setBatchWordsList(''); // Clear out the list
       await loadData();
     } catch (err: any) {
       alert(`Batch generation failed: ${err.message || err}`);
@@ -192,12 +186,12 @@ Rules:
             </button>
           ))}
         </div>
-        
-        <div className="language-dictionary__actions">
-          <Button variant="ghost" size="sm" onClick={() => setIsGeneratorOpen(true)}>
-            <Sparkles size={15} /> AI Batch Generator
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => { setEditingEntry({}); setIsModalOpen(true); }}>
+        <div className="language-dictionary__toolbar-actions">
+            <Button variant="ghost" onClick={() => setIsGeneratorOpen(true)}>
+              <Sparkles size={15} /> Procedural Batch Generator
+            </Button>
+            <Button variant="primary" onClick={() => {
+ setEditingEntry({}); setIsModalOpen(true); }}>
             <Plus size={15} /> Add Word
           </Button>
         </div>
@@ -216,9 +210,11 @@ Rules:
         <div className="language-dictionary__list">
           {paginatedEntries.length === 0 ? (
             <div className="language-dictionary__empty">
-              {entries.length === 0
-                ? 'Your dictionary is empty. Add words manually, use the AI Batch Generator, or use the Translator Engine to invent words dynamically!'
-                : 'No words match your search or filter.'}
+              <p>
+                {search || selectedPos !== 'All' 
+                ? 'No words match your filters.' 
+                : 'Your dictionary is empty. Add words manually, use the Procedural Batch Generator, or use the Translator Engine to invent words dynamically!'}
+              </p>
             </div>
           ) : (
             paginatedEntries.map(entry => (
@@ -349,52 +345,34 @@ Rules:
         </div>
       </Modal>
 
-      {/* AI Batch Word Generator Modal */}
+      {/* Procedural Batch Word Generator Modal */}
       <Modal
         open={isGeneratorOpen}
         onClose={() => setIsGeneratorOpen(false)}
-        title="AI Batch Word Generator"
+        title="Procedural Batch Generator"
         size="md"
       >
         <div className="language-dictionary-form">
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-            Invent multiple words at once tailored to a domain or topic. Words will match the sound vibe of <strong>{language?.name}</strong>.
+            Paste a comma-separated list of English words (e.g., <em>tree, magic, water, fire</em>). The procedural engine will instantly invent translated equivalents tailored to the phonology of <strong>{language?.name}</strong>.
           </p>
 
           <div className="form-group">
-            <label>Topic / Domain</label>
-            <select
+            <label>English Words (Comma-Separated)</label>
+            <textarea
               className="form-input"
-              value={genTopic}
-              onChange={e => setGenTopic(e.target.value)}
-            >
-              <option value="Nature & Weather">Nature & Weather (sun, rain, forest, mountain)</option>
-              <option value="War & Weapons">War & Weapons (sword, shield, battle, victory)</option>
-              <option value="Magic & Cosmology">Magic & Cosmology (spirit, spell, void, star)</option>
-              <option value="Emotion & Family">Emotion & Family (mother, love, honor, fear)</option>
-              <option value="Food & Daily Life">Food & Daily Life (water, bread, house, road)</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Number of Words</label>
-            <select
-              className="form-input"
-              value={genCount}
-              onChange={e => setGenCount(Number(e.target.value))}
-            >
-              <option value={5}>5 words</option>
-              <option value={10}>10 words</option>
-              <option value={15}>15 words</option>
-              <option value={20}>20 words</option>
-            </select>
+              rows={4}
+              placeholder="e.g., sword, shield, king, castle, battle"
+              value={batchWordsList}
+              onChange={e => setBatchWordsList(e.target.value)}
+            />
           </div>
 
           <div className="form-actions">
             <Button variant="ghost" onClick={() => setIsGeneratorOpen(false)} disabled={isGeneratingWords}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleGenerateBatch} disabled={isGeneratingWords}>
+            <Button variant="primary" onClick={handleGenerateBatch} disabled={isGeneratingWords || !batchWordsList.trim()}>
               {isGeneratingWords ? (
                 <><Loader2 size={16} className="spin" /> Inventing Words...</>
               ) : (

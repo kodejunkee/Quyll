@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { ImageUploader } from '@/components/ImageUploader';
 import { useProjectDb } from '@/hooks/useProjectDb';
@@ -48,3 +49,4 @@ export default function OrganizationDetailPage() {
     </div>
   );
 }
+

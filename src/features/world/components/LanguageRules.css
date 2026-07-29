@@ -162,3 +162,61 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-transparent);
 }
+
+.language-rules__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.language-rules__toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.language-rules__affix-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.language-rules__sound-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-rules__sound-rule-arrow {
+  color: var(--color-text-muted);
+  font-weight: bold;
+}
+
+.language-rules__add-rule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: fit-content;
+  margin-top: 8px;
+}
+
+.language-rules__add-rule-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-transparent);
+}

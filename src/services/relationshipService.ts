@@ -43,6 +43,13 @@ export const relationshipService = {
   },
 
   /**
+   * Update a relationship's label.
+   */
+  async update(db: Database, id: string, relationship: string): Promise<void> {
+    await execute(db, `UPDATE relationships SET relationship = $1 WHERE id = $2`, [relationship, id]);
+  },
+
+  /**
    * Delete a relationship by ID.
    */
   async remove(db: Database, id: string): Promise<void> {

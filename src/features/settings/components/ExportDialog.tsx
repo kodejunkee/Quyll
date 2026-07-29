@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Button, Checkbox, Dropdown, type DropdownOption } from '@/components';
+import { Modal, Button, Checkbox, Dropdown, Input, type DropdownOption } from '@/components';
 import { useExport } from '../hooks/useExport';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
@@ -86,6 +86,41 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isLoadingChapters, setIsLoadingChapters] = useState<boolean>(false);
+  const [rangeInput, setRangeInput] = useState<string>('');
+
+  const parseRangeAndSelect = (rangeStr: string) => {
+    setRangeInput(rangeStr);
+    if (!rangeStr.trim()) return;
+
+    const parts = rangeStr.split(',').map(p => p.trim()).filter(Boolean);
+    const toSelect = new Set<string>();
+
+    for (const part of parts) {
+      if (part.includes('-')) {
+        const [startStr, endStr] = part.split('-');
+        const start = parseInt(startStr ?? '', 10);
+        const end = parseInt(endStr ?? '', 10);
+        if (!isNaN(start) && !isNaN(end) && start <= end) {
+          chapters.forEach(c => {
+            if (c.chapter_number >= start && c.chapter_number <= end) {
+              toSelect.add(c.id);
+            }
+          });
+        }
+      } else {
+        const num = parseInt(part, 10);
+        if (!isNaN(num)) {
+          chapters.forEach(c => {
+            if (c.chapter_number === num) {
+              toSelect.add(c.id);
+            }
+          });
+        }
+      }
+    }
+    
+    setSelectedChapterIds(Array.from(toSelect));
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -252,6 +287,14 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
               >
                 {selectedChapterIds.length === chapters.length ? 'Deselect All' : 'Select All'}
               </Button>
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <Input
+                placeholder="e.g. 1-5, 8, 11-15"
+                value={rangeInput}
+                onChange={(e) => parseRangeAndSelect(e.target.value)}
+                disabled={chapters.length === 0}
+              />
             </div>
             {isLoadingChapters ? (
               <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>

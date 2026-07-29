@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { ImageUploader } from '@/components/ImageUploader';
 import { useProjectDb } from '@/hooks/useProjectDb';
@@ -24,3 +25,4 @@ export default function SpeciesDetailPage() {
   const sections = [{ label: 'Appearance', value: entity.appearance }, { label: 'Culture', value: entity.culture }, { label: 'Habitat', value: entity.habitat }, { label: 'History', value: entity.history }, { label: 'Abilities', value: entity.abilities }, { label: 'Weaknesses', value: entity.weaknesses }, { label: 'Notes', value: entity.notes }];
   return (<div className="entity-detail"><header className="entity-detail__header"><Button variant="ghost" size="sm" onClick={() => navigate(`/project/${projectId}/species`)}><ArrowLeft size={16} />Species</Button><div className="entity-detail__header-actions"><Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Edit size={14} />Edit</Button><Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 size={14} /></Button></div></header><div className="entity-detail__content"><div className="entity-detail__sidebar"><ImageUploader imageUrl={imageUrl} onUpload={handleImageUpload} onRemove={handleImageRemove} loading={imageLoading} /></div><div className="entity-detail__main"><h1 className="entity-detail__name">{entity.name}</h1><Card className="entity-detail__card"><h3 className="entity-detail__card-title">General</h3><div className="entity-detail__fields">{sections.map(({ label, value }) => value && value.trim() ? <div key={label} className="entity-detail__field"><h4 className="entity-detail__field-label">{label}</h4><p className="entity-detail__field-value">{value}</p></div> : null)}</div></Card><EntityReferences entityId={entity.id} entityType={EntityType.Species} /></div></div><Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Species" size="lg"><SpeciesForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" /></Modal><Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.name}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" /></div>);
 }
+

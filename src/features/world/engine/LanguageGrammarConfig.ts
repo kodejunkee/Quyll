@@ -13,6 +13,29 @@ export type AdjectivePosition = 'before_noun' | 'after_noun';
 export type PossessionStyle = 'prefix' | 'suffix' | 'separate_particle';
 export type AffixStyle = 'prefix' | 'suffix' | 'separate_particle' | 'none';
 
+// ── V2 Types ────────────────────────────────────────────────────────
+
+export type DerivationType = 'place' | 'agent' | 'adjective' | 'abstractNoun' | 'diminutive' | 'augmentative';
+
+export interface VowelHarmonyConfig {
+  enabled: boolean;
+  groups: string[][]; // e.g. [["a", "o", "u"], ["e", "i"]]
+}
+
+export interface SoundChangeRule {
+  pattern: string;      // literal string to find
+  replacement: string;  // what to replace it with
+}
+
+export interface DerivationalAffixes {
+  place?: string;         // king → kingdom:  "thal" → "thalun"
+  agent?: string;         // fight → fighter: "gor" → "gorar"
+  adjective?: string;     // king → kingly:   "thal" → "thalen"
+  abstractNoun?: string;  // free → freedom:  "vel" → "velith"
+  diminutive?: string;    // house → cottage: "rak" → "rakil"
+  augmentative?: string;  // hill → mountain: "pa" → "parok"
+}
+
 // ── Main Config Interface ───────────────────────────────────────────
 
 export interface LanguageGrammarConfig {
@@ -45,6 +68,34 @@ export interface LanguageGrammarConfig {
   // Negation
   negationStyle: AffixStyle;
   negationAffix: string;        // e.g. "ne-", "-ul"
+
+  // ── V2: Phonotactic Constraints ───────────────────────────────────
+  // Legal consonant clusters at syllable boundaries.
+  // When defined, the generator picks complete clusters from these lists
+  // instead of individual consonants.
+  allowedOnsets?: string[];     // e.g. ["k", "kr", "kl", "t", "tr", "st"]
+  allowedCodas?: string[];      // e.g. ["k", "n", "nt", "nk", "l", "r"]
+
+  // ── V2: Weighted Phoneme Frequency ────────────────────────────────
+  // Relative frequency weights per phoneme. Phonemes with higher weights
+  // are chosen more often. Unweighted phonemes default to weight 1.
+  phonemeWeights?: Record<string, number>;
+
+  // ── V2: Vowel Harmony ─────────────────────────────────────────────
+  // When enabled, all vowels in a generated word must come from the
+  // same harmony group, creating internal consistency.
+  vowelHarmony?: VowelHarmonyConfig;
+
+  // ── V2: Morphological Derivation ──────────────────────────────────
+  // Configurable affixes for word families. When a word is a derivative
+  // of another (e.g., "kingdom" from "king"), the engine reuses the
+  // root and applies these affixes.
+  derivationalAffixes?: DerivationalAffixes;
+
+  // ── V2: Sound Change Rules ────────────────────────────────────────
+  // Post-generation transformations applied in order to smooth out
+  // generated words. e.g., "nn" → "n" simplifies doubled consonants.
+  soundChangeRules?: SoundChangeRule[];
 }
 
 // ── Defaults ────────────────────────────────────────────────────────

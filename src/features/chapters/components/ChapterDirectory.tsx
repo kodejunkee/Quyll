@@ -135,8 +135,8 @@ export function ChapterDirectory({
                     <div className="chapter-book-cover">
                       <div className="chapter-book-cover__spine" />
                       <div className="chapter-book-cover__frame">
-                        <div className="chapter-book-cover__number">Chapter {chapter.chapter_number}</div>
-                        <div className="chapter-book-cover__title">{chapter.title}</div>
+                        <div className="chapter-book-cover__number" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>Chapter {chapter.chapter_number}</div>
+                        <div className="chapter-book-cover__title" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>{chapter.title}</div>
                       </div>
                     </div>
 
@@ -178,6 +178,9 @@ export function ChapterDirectory({
                       <span title="Last updated">
                         <Clock size={14} /> {formatTimeAgo(chapter.updated_at)}
                       </span>
+                      {chapter.is_restored === 1 && (
+                        <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>RESTORED</span>
+                      )}
                     </div>
                   </div>
                 </>
@@ -185,8 +188,8 @@ export function ChapterDirectory({
                 <>
                   <div className="chapter-directory__card-header">
                     <div>
-                      <div className="chapter-directory__card-number">Chapter {chapter.chapter_number}</div>
-                      <h3 className="chapter-directory__card-title">{chapter.title}</h3>
+                      <div className="chapter-directory__card-number" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>Chapter {chapter.chapter_number}</div>
+                      <h3 className="chapter-directory__card-title" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>{chapter.title}</h3>
                     </div>
                     <div className="chapter-directory__card-actions">
                       <button
@@ -224,6 +227,9 @@ export function ChapterDirectory({
                     <span title="Last updated">
                       <Clock size={14} /> {formatTimeAgo(chapter.updated_at)}
                     </span>
+                    {chapter.is_restored === 1 && (
+                      <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>RESTORED</span>
+                    )}
                   </div>
                 </>
               )}

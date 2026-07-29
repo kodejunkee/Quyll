@@ -60,15 +60,13 @@ export const trashService = {
       case 'timeline_event': return timelineEventService.restore(db, id);
       case 'plot_point': return plotPointService.restore(db, id);
       case 'chapter': {
-        // Special logic for chapters: append [Restored] and assign a new chapter_number
         const chapter = await chapterService.getById(db, id);
         if (chapter) {
           const nextNum = await chapterService.getNextChapterNumber(db, projectId);
-          const newTitle = `[Restored] ${chapter.title}`;
           await execute(
             db, 
-            `UPDATE chapters SET deleted_at = NULL, updated_at = datetime('now'), chapter_number = $1, title = $2 WHERE id = $3`,
-            [nextNum, newTitle, id]
+            `UPDATE chapters SET deleted_at = NULL, updated_at = datetime('now'), chapter_number = $1, is_restored = 1 WHERE id = $2`,
+            [nextNum, id]
           );
         }
         return;

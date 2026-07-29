@@ -199,7 +199,7 @@ export function GlossaryDirectoryPage() {
       </div>
 
       {/* Create Modal */}
-      <Modal open={isCreateModalOpen} onClose={() => !isSubmitting && setIsCreateModalOpen(false)} title="Create New Term">
+      <Modal open={isCreateModalOpen} onClose={() => !isSubmitting && setIsCreateModalOpen(false)} title="Create New Term" preventBackdropClose>
         <GlossaryForm 
           onSubmit={handleCreate} 
           onCancel={() => setIsCreateModalOpen(false)} 
@@ -208,7 +208,7 @@ export function GlossaryDirectoryPage() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal open={!!editingTerm} onClose={() => !isSubmitting && setEditingTerm(null)} title="Edit Term">
+      <Modal open={!!editingTerm} onClose={() => !isSubmitting && setEditingTerm(null)} title="Edit Term" preventBackdropClose>
         {editingTerm && (
           <GlossaryForm 
             initialData={editingTerm}

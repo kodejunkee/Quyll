@@ -13,6 +13,7 @@ interface ModalProps {
   footer?: ReactNode;
   subHeader?: ReactNode;
   draggable?: boolean;
+  preventBackdropClose?: boolean;
 }
 
 function Modal({
@@ -25,6 +26,7 @@ function Modal({
   footer,
   subHeader,
   draggable = false,
+  preventBackdropClose = false,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -48,11 +50,11 @@ function Modal({
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent<HTMLDialogElement>) => {
-      if (e.target === e.currentTarget) {
+      if (e.target === e.currentTarget && !preventBackdropClose) {
         onClose();
       }
     },
-    [onClose],
+    [onClose, preventBackdropClose],
   );
 
   const handleCancel = useCallback(

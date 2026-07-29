@@ -158,6 +158,17 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
     graphService.getGraphData(db, projectId).then(setData);
   }, [db, projectId]);
 
+  // Listen for global graph updates
+  useEffect(() => {
+    const handleUpdate = () => {
+      if (db && projectId) {
+        graphService.getGraphData(db, projectId).then(setData);
+      }
+    };
+    window.addEventListener('quyll-graph-update', handleUpdate);
+    return () => window.removeEventListener('quyll-graph-update', handleUpdate);
+  }, [db, projectId]);
+
   // Track the layout key so we know when to re-layout vs just update edges
   const layoutKeyRef = useRef<string>('');
   const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -165,12 +176,20 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
   // Keep nodePositionsRef in sync when the user drags nodes
   const handleNodesChange = useCallback((changes: any[]) => {
     onNodesChange(changes);
+    let changed = false;
     for (const change of changes) {
       if (change.type === 'position' && change.position) {
         nodePositionsRef.current.set(change.id, change.position);
+        changed = true;
       }
     }
-  }, [onNodesChange]);
+    if (changed && projectId) {
+      const currentLayoutKey = `${entityType}::${searchQuery}`;
+      try {
+        localStorage.setItem(`quyll-graph-pos-${projectId}-${currentLayoutKey}`, JSON.stringify(Array.from(nodePositionsRef.current.entries())));
+      } catch {}
+    }
+  }, [onNodesChange, projectId, entityType, searchQuery]);
 
   // Apply Layout, Smart Handles, and Filters
   useEffect(() => {
@@ -200,54 +219,41 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
     // Build position map — either from dagre (initial) or from saved positions (update)
     const positionMap = new Map<string, { x: number; y: number }>();
 
+    let existingPositions = nodePositionsRef.current;
+
     if (needsFullLayout) {
-      // Full dagre layout for initial render or when filters change
+      layoutKeyRef.current = currentLayoutKey;
+      const storageKey = `quyll-graph-pos-${projectId}-${currentLayoutKey}`;
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          existingPositions = new Map(JSON.parse(saved));
+          nodePositionsRef.current = existingPositions;
+        } else {
+          existingPositions = new Map();
+          nodePositionsRef.current = existingPositions;
+        }
+      } catch {
+        existingPositions = new Map();
+        nodePositionsRef.current = existingPositions;
+      }
+    }
+
+    const newNodeIds = rfNodes.filter(n => !existingPositions.has(n.id)).map(n => n.id);
+
+    for (const node of rfNodes) {
+      const saved = existingPositions.get(node.id);
+      if (saved) {
+        positionMap.set(node.id, saved);
+      }
+    }
+
+    if (newNodeIds.length > 0) {
+      // Layout only new nodes
       const dagreGraph = new dagre.graphlib.Graph();
       dagreGraph.setDefaultEdgeLabel(() => ({}));
-      
       const rankdir = entityType === 'location' ? 'LR' : 'TB';
       dagreGraph.setGraph({ rankdir, ranksep: 120, nodesep: 80 });
-
-      rfNodes.forEach((node) => {
-        dagreGraph.setNode(node.id, { width: 150, height: 60 });
-      });
-
-      filteredEdges.forEach((edge) => {
-        dagreGraph.setEdge(edge.source, edge.target);
-      });
-
-      dagre.layout(dagreGraph);
-
-      rfNodes.forEach((node) => {
-        const nodeWithPosition = dagreGraph.node(node.id);
-        const pos = {
-          x: (nodeWithPosition?.x ?? 0) - 75,
-          y: (nodeWithPosition?.y ?? 0) - 30,
-        };
-        positionMap.set(node.id, pos);
-      });
-
-      layoutKeyRef.current = currentLayoutKey;
-      nodePositionsRef.current = new Map(positionMap);
-    } else {
-      // Preserve existing positions, place only brand-new nodes with dagre
-      const existingPositions = nodePositionsRef.current;
-      const newNodeIds = rfNodes.filter(n => !existingPositions.has(n.id)).map(n => n.id);
-
-      // Copy existing positions
-      for (const node of rfNodes) {
-        const saved = existingPositions.get(node.id);
-        if (saved) {
-          positionMap.set(node.id, saved);
-        }
-      }
-
-      // Layout only new nodes if any
-      if (newNodeIds.length > 0) {
-        const dagreGraph = new dagre.graphlib.Graph();
-        dagreGraph.setDefaultEdgeLabel(() => ({}));
-        const rankdir = entityType === 'location' ? 'LR' : 'TB';
-        dagreGraph.setGraph({ rankdir, ranksep: 120, nodesep: 80 });
 
         rfNodes.forEach((node) => {
           dagreGraph.setNode(node.id, { width: 150, height: 60 });
@@ -266,8 +272,12 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
           positionMap.set(id, pos);
           nodePositionsRef.current.set(id, pos);
         }
+        
+        try {
+          const storageKey = `quyll-graph-pos-${projectId}-${currentLayoutKey}`;
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(nodePositionsRef.current.entries())));
+        } catch {}
       }
-    }
 
     const layoutedNodes = rfNodes.map(node => ({
       ...node,
@@ -350,6 +360,42 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
     setData(newData);
   };
 
+  const [editRelDialog, setEditRelDialog] = useState<{
+    open: boolean;
+    edge: any;
+    label: string;
+  }>({ open: false, edge: null, label: '' });
+
+  const onEdgeClick = useCallback((_event: any, edge: any) => {
+    setEditRelDialog({
+      open: true,
+      edge,
+      label: edge.label || '',
+    });
+  }, []);
+
+  const handleUpdateRelationship = async () => {
+    if (!db || !projectId || !editRelDialog.edge || !editRelDialog.label.trim()) return;
+    
+    const edgeId = editRelDialog.edge.id.replace(/^e-/, '');
+    await relationshipService.update(db, edgeId, editRelDialog.label.trim());
+    
+    setEditRelDialog(prev => ({ ...prev, open: false }));
+    const newData = await graphService.getGraphData(db, projectId);
+    setData(newData);
+  };
+
+  const handleDeleteRelationship = async () => {
+    if (!db || !projectId || !editRelDialog.edge) return;
+    
+    const edgeId = editRelDialog.edge.id.replace(/^e-/, '');
+    await relationshipService.remove(db, edgeId);
+    
+    setEditRelDialog(prev => ({ ...prev, open: false }));
+    const newData = await graphService.getGraphData(db, projectId);
+    setData(newData);
+  };
+
   const onNodeClick = useCallback((_event: any, node: any) => {
     setNodes(nds => nds.map(n => ({
       ...n,
@@ -384,6 +430,7 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
+          onEdgeClick={onEdgeClick}
           onConnect={onConnect}
           isValidConnection={isValidConnection}
           nodeTypes={nodeTypes}
@@ -425,6 +472,35 @@ function EntityFlowchartInner({ entityType, searchQuery = '' }: EntityFlowchartP
             if (e.key === 'Enter' && relDialog.label.trim()) {
               e.preventDefault();
               handleCreateRelationship();
+            }
+          }}
+        />
+      </Modal>
+
+      <Modal
+        open={editRelDialog.open}
+        onClose={() => setEditRelDialog(prev => ({ ...prev, open: false }))}
+        title="Edit Relationship"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
+            <Button variant="danger" onClick={handleDeleteRelationship}>Delete</Button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button variant="secondary" onClick={() => setEditRelDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+              <Button variant="primary" onClick={handleUpdateRelationship} disabled={!editRelDialog.label.trim()}>Save</Button>
+            </div>
+          </div>
+        }
+      >
+        <Input
+          label="Relationship Label"
+          value={editRelDialog.label}
+          onChange={(e) => setEditRelDialog(prev => ({ ...prev, label: e.target.value }))}
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && editRelDialog.label.trim()) {
+              e.preventDefault();
+              handleUpdateRelationship();
             }
           }}
         />

@@ -60,6 +60,7 @@ export function useCrud<T, C = Partial<T>, U = Partial<T>>(
       try {
         const item = await service.create(projectId, data as C);
         await refresh();
+        window.dispatchEvent(new Event('quyll-graph-update'));
         return item;
       } catch (err) {
         console.error('[useCrud] create error:', err);
@@ -74,6 +75,7 @@ export function useCrud<T, C = Partial<T>, U = Partial<T>>(
       try {
         await service.update(id, data as U);
         await refresh();
+        window.dispatchEvent(new Event('quyll-graph-update'));
         return true;
       } catch (err) {
         console.error('[useCrud] update error:', err);
@@ -88,6 +90,7 @@ export function useCrud<T, C = Partial<T>, U = Partial<T>>(
       try {
         await service.softDelete(id);
         await refresh();
+        window.dispatchEvent(new Event('quyll-graph-update'));
         return true;
       } catch (err) {
         console.error('[useCrud] softDelete error:', err);
@@ -103,6 +106,7 @@ export function useCrud<T, C = Partial<T>, U = Partial<T>>(
         if (service.restore) {
           await service.restore(id);
           await refresh();
+          window.dispatchEvent(new Event('quyll-graph-update'));
           return true;
         }
         return false;

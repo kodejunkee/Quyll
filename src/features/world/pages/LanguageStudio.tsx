@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Modal, EmptyState, SearchBar } from '@/components';
 import { 
   Plus, BookA, Languages, ArrowLeft, Wand2, FileText, ChevronDown, 
-  Settings, Trash2, Sparkles, Compass, Volume2, Users, Layers, MessageSquare
+  Settings, Trash2, Sparkles, Volume2, Users, Layers, MessageSquare
 } from 'lucide-react';
 import { LanguageWizard } from '../components/LanguageWizard';
 import { LanguageRules } from '../components/LanguageRules';
@@ -331,19 +331,19 @@ export default function LanguageStudio() {
       {/* Main Content Workspace */}
       <main className="language-studio__main">
         {activeTab === 'translator' && (
-          <div style={{ height: '100%' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <LanguageTranslator languageId={entityId} />
           </div>
         )}
 
         {activeTab === 'dictionary' && (
-          <div style={{ height: '100%' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <LanguageDictionary languageId={entityId} />
           </div>
         )}
 
         {activeTab === 'rules' && (
-          <div style={{ height: '100%' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <LanguageRules 
               language={activeLanguage} 
               onUpdate={loadLanguages}
@@ -352,7 +352,7 @@ export default function LanguageStudio() {
         )}
 
         {activeTab === 'wizard' && (
-          <div style={{ height: '100%' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <LanguageWizard 
               language={activeLanguage} 
               onComplete={() => {

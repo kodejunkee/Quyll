@@ -40,6 +40,7 @@ export interface Chapter {
   readonly content: string;
   readonly word_count: number;
   readonly reading_time: number;
+  readonly is_restored: number;
   readonly deleted_at: Timestamp | null;
   readonly created_at: Timestamp;
   readonly updated_at: Timestamp;

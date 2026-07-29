@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings2, Save, Layers, Sparkles, Hash, Volume2, ArrowRight } from 'lucide-react';
+import { Settings2, Save, Layers, Sparkles, Hash, Volume2, ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { languageService } from '@/services/languageService';
 import type { Language } from '@/services/languageService';
@@ -53,7 +53,7 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
 
     // Apply Plural preview if applicable
     if (config.pluralStyle === 'suffix') nO = `land${config.pluralAffix || '-s'}`;
-    else if (config.pluralStyle === 'prefix') nO = `${config.pluralAffix || 's-' }land`;
+    else if (config.pluralStyle === 'prefix') nO = `${config.pluralAffix || 's-'}land`;
 
     // Apply Adjective position preview
     const objPhrase = config.adjectivePosition === 'before_noun' ? `${Adj} ${nO}` : `${nO} ${Adj}`;
@@ -77,7 +77,7 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
 
   return (
     <div className="language-rules">
-      
+
       {/* Dynamic Live Rule Simulator Banner */}
       <div className="language-rules__simulator">
         <div className="language-rules__simulator-top">
@@ -152,7 +152,7 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Card 1: Syntax & Word Order */}
         <div className="language-rules__card">
           <h4 className="language-rules__card-title">
@@ -166,9 +166,9 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
               <option value="SVO">SVO — Subject Verb Object (English: "The king rules the land")</option>
               <option value="SOV">SOV — Subject Object Verb (Japanese: "The king the land rules")</option>
               <option value="VSO">VSO — Verb Subject Object (Welsh: "Rules the king the land")</option>
-              <option value="VOS">VOS — Verb Object Subject (Malagasy)</option>
-              <option value="OVS">OVS — Object Verb Subject (Klingon)</option>
-              <option value="OSV">OSV — Object Subject Verb (Yoda-speak)</option>
+              <option value="VOS">VOS — Verb Object Subject (Rules the land the king)</option>
+              <option value="OVS">OVS — Object Verb Subject (The land rules the king)</option>
+              <option value="OSV">OSV — Object Subject Verb (The land the king rules)</option>
             </select>
           </div>
 
@@ -305,6 +305,181 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Card 5: Phonotactics */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <Layers size={16} /> Phonotactics
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Control which consonant clusters can appear at the start (onset) and end (coda) of syllables. This prevents illegal combinations and makes every word sound like it belongs to the same language.
+          </p>
+          <div className="language-rules__row">
+            <div className="language-rules__field">
+              <label>Allowed Onsets</label>
+              <input
+                type="text"
+                value={(config.allowedOnsets || []).join(', ')}
+                onChange={e => updateField('allowedOnsets', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
+                placeholder="e.g., k, kr, kl, t, tr, st"
+              />
+            </div>
+            <div className="language-rules__field">
+              <label>Allowed Codas</label>
+              <input
+                type="text"
+                value={(config.allowedCodas || []).join(', ')}
+                onChange={e => updateField('allowedCodas', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
+                placeholder="e.g., k, n, nt, nk, l, r"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 6: Vowel Harmony */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <Volume2 size={16} /> Vowel Harmony
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            When enabled, all vowels in a generated word must come from the same harmony group. This creates the internal consistency heard in languages like Turkish and Finnish.
+          </p>
+          <div className="language-rules__field">
+            <label className="language-rules__toggle">
+              <input
+                type="checkbox"
+                checked={config.vowelHarmony?.enabled || false}
+                onChange={() => updateField('vowelHarmony', { ...config.vowelHarmony, enabled: !config.vowelHarmony?.enabled, groups: config.vowelHarmony?.groups || [] })}
+              />
+              Enable Vowel Harmony
+            </label>
+          </div>
+          {config.vowelHarmony?.enabled && (
+            <div className="language-rules__row">
+              <div className="language-rules__field">
+                <label>Group A Vowels</label>
+                <input
+                  type="text"
+                  value={config.vowelHarmony?.groups?.[0]?.join(', ') || ''}
+                  onChange={e => {
+                    const groups = config.vowelHarmony?.groups || [];
+                    const newGroups = [[...e.target.value.split(',').map(v => v.trim()).filter(Boolean)], groups[1] || []];
+                    updateField('vowelHarmony', { ...config.vowelHarmony, enabled: true, groups: newGroups });
+                  }}
+                  placeholder="e.g., a, o, u"
+                />
+              </div>
+              <div className="language-rules__field">
+                <label>Group B Vowels</label>
+                <input
+                  type="text"
+                  value={config.vowelHarmony?.groups?.[1]?.join(', ') || ''}
+                  onChange={e => {
+                    const groups = config.vowelHarmony?.groups || [];
+                    const newGroups = [groups[0] || [], [...e.target.value.split(',').map(v => v.trim()).filter(Boolean)]];
+                    updateField('vowelHarmony', { ...config.vowelHarmony, enabled: true, groups: newGroups });
+                  }}
+                  placeholder="e.g., e, i"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card 7: Derivational Affixes */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <ArrowRight size={16} /> Derivational Affixes
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            When a word is derived from another (e.g., kingdom from king), the engine reuses the root and applies these affixes instead of generating a completely new word.
+          </p>
+          <div className="language-rules__affix-grid">
+            <div className="language-rules__field">
+              <label>Place</label>
+              <input type="text" value={config.derivationalAffixes?.place || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, place: e.target.value })} placeholder="-dor" />
+            </div>
+            <div className="language-rules__field">
+              <label>Agent</label>
+              <input type="text" value={config.derivationalAffixes?.agent || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, agent: e.target.value })} placeholder="-iel" />
+            </div>
+            <div className="language-rules__field">
+              <label>Adjective</label>
+              <input type="text" value={config.derivationalAffixes?.adjective || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, adjective: e.target.value })} placeholder="-wen" />
+            </div>
+            <div className="language-rules__field">
+              <label>Abstract Noun</label>
+              <input type="text" value={config.derivationalAffixes?.abstractNoun || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, abstractNoun: e.target.value })} placeholder="-ath" />
+            </div>
+            <div className="language-rules__field">
+              <label>Diminutive</label>
+              <input type="text" value={config.derivationalAffixes?.diminutive || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, diminutive: e.target.value })} placeholder="-il" />
+            </div>
+            <div className="language-rules__field">
+              <label>Augmentative</label>
+              <input type="text" value={config.derivationalAffixes?.augmentative || ''} onChange={e => updateField('derivationalAffixes', { ...config.derivationalAffixes, augmentative: e.target.value })} placeholder="-nor" />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 8: Sound Changes */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <Hash size={16} /> Sound Changes
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Post-generation rules that smooth out words. Each rule replaces all occurrences of a pattern. For example, 'nn → n' simplifies doubled consonants.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {(config.soundChangeRules || []).map((rule, idx) => (
+              <div key={idx} className="language-rules__sound-rule">
+                <input
+                  type="text"
+                  value={rule.pattern}
+                  onChange={e => {
+                    const updated = [...(config.soundChangeRules || [])];
+                    const existing = updated[idx] || { pattern: '', replacement: '' };
+                    updated[idx] = { pattern: e.target.value, replacement: existing.replacement };
+                    updateField('soundChangeRules', updated);
+                  }}
+                  placeholder="pattern"
+                  style={{ flex: 1 }}
+                />
+                <span className="language-rules__sound-rule-arrow">→</span>
+                <input
+                  type="text"
+                  value={rule.replacement}
+                  onChange={e => {
+                    const updated = [...(config.soundChangeRules || [])];
+                    const existing = updated[idx] || { pattern: '', replacement: '' };
+                    updated[idx] = { pattern: existing.pattern, replacement: e.target.value };
+                    updateField('soundChangeRules', updated);
+                  }}
+                  placeholder="replacement"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...(config.soundChangeRules || [])];
+                    updated.splice(idx, 1);
+                    updateField('soundChangeRules', updated);
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--color-danger, #ef4444)', cursor: 'pointer', padding: '4px' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="language-rules__add-rule-btn"
+            onClick={() => updateField('soundChangeRules', [...(config.soundChangeRules || []), { pattern: '', replacement: '' }])}
+          >
+            <Plus size={14} /> Add Rule
+          </button>
         </div>
 
       </div>

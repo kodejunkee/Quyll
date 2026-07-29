@@ -406,7 +406,7 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
         await execute(db, `
           INSERT INTO languages (id, project_id, name, description, native_speakers, writing_system, grammar_rules, notes, keyword_enabled, deleted_at, created_at, updated_at)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `, [lang.id, newProjectId, lang.name, lang.description, lang.native_speakers, lang.writing_system, lang.grammar_rules, lang.notes, lang.keyword_enabled ? 1 : 0, lang.deleted_at, lang.created_at, lang.updated_at]);
+        `, [lang.id, newProjectId, lang.name, lang.description, lang.native_speakers, lang.writing_system, lang.grammar_rules, lang.notes, lang.keyword_enabled ? 1 : 0, (lang as any).deleted_at || null, lang.created_at, lang.updated_at]);
       }
     }
 

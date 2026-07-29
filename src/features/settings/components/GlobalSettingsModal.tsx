@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useThemeStore } from '@/store/themeStore';
 import { Modal, Dropdown } from '@/components';
-import { Palette, Type, Sparkles, Bell, Cloud, Info, Key } from 'lucide-react';
-import { aiProviderManager } from '@/features/ai/services/AiProviderManager';
+import { Palette, Type, Sparkles, Bell, Cloud, Info } from 'lucide-react';
 import './GlobalSettingsModal.css';
 
 const FONT_OPTIONS = [
@@ -44,38 +43,6 @@ const ACCENT_OPTIONS = [
   export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProps) {
     const { theme, setTheme, accent, setAccent, defaultFont, setDefaultFont } = useThemeStore();
     const [activeTab, setActiveTab] = useState<GlobalTab>('appearance');
-    
-    // AI API Keys state
-    const [groqKey, setGroqKey] = useState('');
-    const [openaiKey, setOpenaiKey] = useState('');
-    const [anthropicKey, setAnthropicKey] = useState('');
-    const [geminiKey, setGeminiKey] = useState('');
-    const [grokKey, setGrokKey] = useState('');
-
-    useEffect(() => {
-      if (isOpen) {
-        aiProviderManager.initStore().then(async () => {
-          setGroqKey(await aiProviderManager.getApiKey('groq') || '');
-          setOpenaiKey(await aiProviderManager.getApiKey('openai') || '');
-          setAnthropicKey(await aiProviderManager.getApiKey('anthropic') || '');
-          setGeminiKey(await aiProviderManager.getApiKey('gemini') || '');
-          setGrokKey(await aiProviderManager.getApiKey('grok') || '');
-        });
-      }
-    }, [isOpen]);
-
-    const handleKeyChange = (provider: string, key: string) => {
-      // Update state first so the input is immediately responsive
-      if (provider === 'groq') setGroqKey(key);
-      if (provider === 'openai') setOpenaiKey(key);
-      if (provider === 'anthropic') setAnthropicKey(key);
-      if (provider === 'gemini') setGeminiKey(key);
-      if (provider === 'grok') setGrokKey(key);
-      // Save in background (fire-and-forget)
-      aiProviderManager.saveApiKey(provider, key).catch(err => {
-        console.error(`Failed to save ${provider} key:`, err);
-      });
-    };
 
     const tabs: { id: GlobalTab; label: string; icon: React.ReactNode }[] = [
       { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },

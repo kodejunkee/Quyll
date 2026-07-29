@@ -119,6 +119,8 @@
   overflow: hidden;
   background: var(--color-background);
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Hub View (Standard Entity Page styles) */
