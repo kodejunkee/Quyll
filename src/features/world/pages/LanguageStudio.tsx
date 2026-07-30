@@ -175,20 +175,20 @@ export default function LanguageStudio() {
                       <div className="language-studio-card__footer">
                         {cfg ? (
                           <>
-                            <span className="language-studio-card__tag">
+                            <span className="language-studio-card__tag language-studio-card__tag--grammar">
                               <Layers size={12} /> {cfg.sentenceOrder}
                             </span>
-                            <span className="language-studio-card__tag">
+                            <span className="language-studio-card__tag language-studio-card__tag--grammar">
                               <Volume2 size={12} /> {cfg.pluralStyle} plural
                             </span>
                           </>
                         ) : (
-                          <span className="language-studio-card__tag">
+                          <span className="language-studio-card__tag language-studio-card__tag--unforged">
                             <Sparkles size={12} /> Unforged
                           </span>
                         )}
                         {lang.native_speakers && (
-                          <span className="language-studio-card__tag" style={{ marginLeft: 'auto' }}>
+                          <span className="language-studio-card__tag language-studio-card__tag--speakers" style={{ marginLeft: 'auto' }}>
                             <Users size={12} /> {lang.native_speakers}
                           </span>
                         )}

@@ -49,7 +49,7 @@ const PRESETS: PresetArchetype[] = [
 
 export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
   const { db } = useProjectDb();
-  
+
   const [config, setConfig] = useState<LanguageGrammarConfig>(() => {
     if (language.grammar_rules) {
       try { return JSON.parse(language.grammar_rules); } catch { return { ...DEFAULT_GRAMMAR_CONFIG }; }
@@ -66,7 +66,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
 
   const applyPreset = (preset: PresetArchetype) => {
     setSelectedPreset(preset.id);
-    
+
     let newConfig = { ...DEFAULT_GRAMMAR_CONFIG };
     switch (preset.id) {
       case 'elvish':
@@ -249,7 +249,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
 
         {/* Grouped Form Cards */}
         <div className="language-wizard__form-grid">
-          
+
           {/* Card 1: Phonetics */}
           <div className="language-wizard__card" style={{ gridColumn: '1 / -1' }}>
             <h3 className="language-wizard__card-title">
@@ -305,9 +305,9 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
                 <option value="SVO">SVO — Subject Verb Object (English: "The king rules the land")</option>
                 <option value="SOV">SOV — Subject Object Verb (Japanese: "The king the land rules")</option>
                 <option value="VSO">VSO — Verb Subject Object (Welsh: "Rules the king the land")</option>
-                <option value="VOS">VOS — Verb Object Subject (Malagasy)</option>
-                <option value="OVS">OVS — Object Verb Subject (Klingon)</option>
-                <option value="OSV">OSV — Object Subject Verb (Yoda-speak)</option>
+                <option value="VOS">VOS — Verb Object Subject (Malagasy: "Rules the land the king")</option>
+                <option value="OVS">OVS — Object Verb Subject (Klingon: "The land rules the king")</option>
+                <option value="OSV">OSV — Object Subject Verb (Yoda-speak: "The land the king rules")</option>
               </select>
             </div>
           </div>
@@ -321,9 +321,9 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
             <div className="language-wizard__field">
               <label>Native Speakers</label>
               <p className="field-hint">Who speaks this language natively? (Affects starter dictionary vocabulary focus)</p>
-              <input 
-                type="text" 
-                value={speakers} 
+              <input
+                type="text"
+                value={speakers}
                 onChange={e => setSpeakers(e.target.value)}
                 placeholder="e.g. Royal Guard, Forest Elves, Desert Nomads"
               />
