@@ -82,6 +82,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.vowelHarmony = { enabled: true, groups: [['a', 'e', 'i', 'ae', 'ea'], ['o', 'ou']] };
         newConfig.derivationalAffixes = { place: '-dor', agent: '-iel', adjective: '-wen', abstractNoun: '-ath', diminutive: '-il', augmentative: '-nor' };
         newConfig.soundChangeRules = [{ pattern: 'll', replacement: 'l' }, { pattern: 'nn', replacement: 'n' }, { pattern: 'thth', replacement: 'th' }];
+        newConfig.sonorityStrictness = 'strict';
         setSpeakers('High Elves');
         break;
       case 'orcish':
@@ -96,6 +97,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.phonemeWeights = { 'k': 4, 'g': 3, 'r': 3, 'z': 2, 'gh': 2, 'a': 3, 'u': 3, 'o': 2 };
         newConfig.derivationalAffixes = { place: '-goth', agent: '-hai', adjective: '-ug', abstractNoun: '-arz', diminutive: '-ik', augmentative: '-thrak' };
         newConfig.soundChangeRules = [{ pattern: 'kk', replacement: 'k' }, { pattern: 'gg', replacement: 'gh' }];
+        newConfig.sonorityStrictness = 'relaxed';
         setSpeakers('Orc Clans');
         break;
       case 'semitic':
@@ -110,6 +112,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.vowelHarmony = { enabled: true, groups: [['a', 'u'], ['i']] };
         newConfig.derivationalAffixes = { place: '-stan', agent: '-im', adjective: '-i', abstractNoun: '-iya', diminutive: '-el', augmentative: '-akh' };
         newConfig.soundChangeRules = [{ pattern: 'hh', replacement: 'h' }];
+        newConfig.sonorityStrictness = 'strict';
         setSpeakers('Ancient Priests');
         break;
       case 'scifi':
@@ -122,6 +125,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.phonemeWeights = { 'x': 4, 'z': 3, 'v': 3, 'k': 2, 'e': 3, 'i': 3, 'y': 2 };
         newConfig.derivationalAffixes = { place: '-xar', agent: '-vex', adjective: '-ik', abstractNoun: '-zyn', diminutive: '-ip', augmentative: '-thex' };
         newConfig.soundChangeRules = [{ pattern: 'xx', replacement: 'x' }, { pattern: 'zz', replacement: 'z' }];
+        newConfig.sonorityStrictness = 'none'; // Alien languages don't need to follow human rules
         setSpeakers('Constructs');
         break;
       case 'trade':
@@ -133,6 +137,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.allowedCodas = ['n', 's', 'l'];
         newConfig.phonemeWeights = { 't': 3, 's': 3, 'l': 2, 'a': 3, 'e': 3, 'o': 2 };
         newConfig.derivationalAffixes = { place: '-ton', agent: '-er', adjective: '-al', abstractNoun: '-ade', diminutive: '-et', augmentative: '-orn' };
+        newConfig.sonorityStrictness = 'strict';
         setSpeakers('Merchants');
         break;
     }

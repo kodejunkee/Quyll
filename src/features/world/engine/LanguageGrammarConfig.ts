@@ -12,6 +12,7 @@ export type SentenceOrder = 'SVO' | 'SOV' | 'VSO' | 'VOS' | 'OVS' | 'OSV';
 export type AdjectivePosition = 'before_noun' | 'after_noun';
 export type PossessionStyle = 'prefix' | 'suffix' | 'separate_particle';
 export type AffixStyle = 'prefix' | 'suffix' | 'separate_particle' | 'none';
+export type SonorityStrictness = 'strict' | 'relaxed' | 'none';
 
 // ── V2 Types ────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export interface LanguageGrammarConfig {
   vowels: string[];
   consonants: string[];
   syllableStructures: string[]; // e.g., ["CV", "CVC", "V"]
+  sonorityStrictness: SonorityStrictness; // Enforce human-like phonology
 
   // Syntax
   sentenceOrder: SentenceOrder;
@@ -104,6 +106,7 @@ export const DEFAULT_GRAMMAR_CONFIG: LanguageGrammarConfig = {
   vowels: ['a', 'e', 'i', 'o', 'u'],
   consonants: ['p', 't', 'k', 's', 'm', 'n', 'l', 'r'],
   syllableStructures: ['CV', 'CVC'],
+  sonorityStrictness: 'strict',
 
   sentenceOrder: 'SVO',
   adjectivePosition: 'before_noun',
