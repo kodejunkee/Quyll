@@ -19,7 +19,7 @@ export function useChapters() {
 
   const refresh = useCallback(async () => {
     if (db && projectId) {
-      await store.initialize(db, projectId);
+      await store.initialize(db, projectId, true);
     }
   }, [db, projectId, store.initialize]);
 

@@ -63,11 +63,20 @@ export const trashService = {
         const chapter = await chapterService.getById(db, id);
         if (chapter) {
           const nextNum = await chapterService.getNextChapterNumber(db, projectId);
-          await execute(
-            db, 
-            `UPDATE chapters SET deleted_at = NULL, updated_at = datetime('now'), chapter_number = $1, is_restored = 1 WHERE id = $2`,
-            [nextNum, id]
-          );
+          try {
+            await execute(
+              db, 
+              `UPDATE chapters SET deleted_at = NULL, updated_at = datetime('now'), chapter_number = $1, is_restored = 1 WHERE id = $2`,
+              [nextNum, id]
+            );
+          } catch (err) {
+            console.error("Failed to restore chapter with is_restored flag, falling back:", err);
+            await execute(
+              db, 
+              `UPDATE chapters SET deleted_at = NULL, updated_at = datetime('now'), chapter_number = $1 WHERE id = $2`,
+              [nextNum, id]
+            );
+          }
         }
         return;
       }

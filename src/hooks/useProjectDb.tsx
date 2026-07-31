@@ -9,8 +9,8 @@ import { openProjectDatabase } from '@/database/projectDatabase';
 import { initAppDatabase, listProjects, touchProject } from '@/database';
 import { useProjectStore } from '@/store/projectStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
-import { Button, LoadingSkeleton } from '@/components';
-
+import { Button } from '@/components/Button';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 interface ProjectDbContextValue {
   db: Database;
   projectId: string;

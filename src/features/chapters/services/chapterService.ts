@@ -20,7 +20,7 @@ export const chapterService = {
   async list(db: Database, projectId: string): Promise<Chapter[]> {
     const rows = await select<Omit<Chapter, 'content'>>(
       db,
-      `SELECT id, project_id, title, chapter_number, word_count, reading_time, deleted_at, created_at, updated_at 
+      `SELECT id, project_id, title, chapter_number, word_count, reading_time, is_restored, deleted_at, created_at, updated_at 
        FROM chapters 
        WHERE project_id = $1 AND deleted_at IS NULL 
        ORDER BY chapter_number ASC, created_at ASC`,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { trashService, TrashedItem } from '@/services/trashService';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Trash2, RotateCcw } from 'lucide-react';
 import { Dialog } from '@/components/Dialog';
 import { Button } from '@/components/Button';
@@ -47,6 +48,7 @@ export function TrashPage() {
     try {
       await trashService.restoreItem(db, projectId, item.id, item.type);
       await loadItems();
+      await useWorkspaceStore.getState().initialize(db, projectId, true);
     } catch (err) {
       console.error("Failed to restore item", err);
     }

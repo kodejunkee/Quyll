@@ -6,6 +6,7 @@ interface SortState<K extends string> {
   sortKey: K;
   sortDirection: SortDirection;
   setSortKey: (key: K) => void;
+  setSortDirection: (dir: SortDirection) => void;
   toggleDirection: () => void;
   sortItems: <T>(items: T[], accessor: (item: T, key: K) => string | number) => T[];
 }
@@ -30,5 +31,5 @@ export function useSort<K extends string>(defaultKey: K, defaultDir: SortDirecti
     [sortKey, sortDirection],
   );
 
-  return { sortKey, sortDirection, setSortKey, toggleDirection, sortItems };
+  return { sortKey, sortDirection, setSortKey, setSortDirection, toggleDirection, sortItems };
 }

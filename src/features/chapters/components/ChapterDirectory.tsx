@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, LayoutGrid, List, Clock, FileText, MoreVertical, Pencil, Copy, Trash2, Plus } from 'lucide-react';
+import { BookOpen, LayoutGrid, List, Clock, FileText, MoreVertical, Pencil, Copy, Trash2, Plus, ArrowUpDown, Check } from 'lucide-react';
 import { formatTimeAgo } from '../utils/writingStats';
 import { EmptyState, Button, SearchBar, Modal, Dialog } from '@/components';
 import { ChapterForm } from './ChapterForm';
-import { useSearch } from '@/hooks';
+import { useSearch, useSort } from '@/hooks';
 import type { Chapter } from '@/types/database';
 import type { ChapterFormData } from '../types/chapter';
 import './ChapterDirectory.css';
@@ -35,6 +35,24 @@ export function ChapterDirectory({
   const [deleteTarget, setDeleteTarget] = useState<Chapter | null>(null);
   
   const { query, setQuery, filterItems } = useSearch();
+  const { sortKey, sortDirection, setSortKey, setSortDirection, sortItems } = useSort<'chapter_number' | 'title' | 'updated_at'>('chapter_number');
+
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setIsSortMenuOpen(false);
+      }
+    }
+    if (isSortMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortMenuOpen]);
 
   useEffect(() => {
     if (!contextMenuId) return;
@@ -46,6 +64,11 @@ export function ChapterDirectory({
   }, [contextMenuId]);
 
   const filtered = filterItems(chapters, (c) => `${c.chapter_number} ${c.title}`);
+  const sorted = sortItems(filtered, (c, key) => {
+    if (key === 'chapter_number') return c.chapter_number;
+    if (key === 'title') return c.title;
+    return c.updated_at;
+  });
 
   async function handleRename(data: ChapterFormData) {
     if (!renameTarget) return;
@@ -96,21 +119,61 @@ export function ChapterDirectory({
         <div className="chapter-directory__search">
           <SearchBar value={query} onChange={setQuery} placeholder="Search chapters..." />
         </div>
-        <div className="chapter-directory__view-toggle">
-          <Button
-            variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            <LayoutGrid size={14} /> Grid
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-          >
-            <List size={14} /> List
-          </Button>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className="chapter-directory__sort-wrap" ref={sortMenuRef}>
+            <button
+              className={`chapter-directory__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+              title="Sort chapters"
+              type="button"
+            >
+              <ArrowUpDown size={14} />
+              <span>Sort</span>
+            </button>
+            <div className={`chapter-directory__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
+              {[
+                { label: 'Number (1 - N)', field: 'chapter_number' as const, order: 'asc' as const },
+                { label: 'Number (N - 1)', field: 'chapter_number' as const, order: 'desc' as const },
+                { label: 'Last Updated (Newest)', field: 'updated_at' as const, order: 'desc' as const },
+                { label: 'Last Updated (Oldest)', field: 'updated_at' as const, order: 'asc' as const },
+                { label: 'Title (A - Z)', field: 'title' as const, order: 'asc' as const },
+                { label: 'Title (Z - A)', field: 'title' as const, order: 'desc' as const },
+              ].map((opt) => {
+                const active = sortKey === opt.field && sortDirection === opt.order;
+                return (
+                  <button
+                    key={`${opt.field}-${opt.order}`}
+                    className={`chapter-directory__sort-item ${active ? 'active' : ''}`}
+                    onClick={() => {
+                      setSortKey(opt.field);
+                      setSortDirection(opt.order);
+                      setIsSortMenuOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span>{opt.label}</span>
+                    {active && <Check size={14} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="chapter-directory__view-toggle">
+            <Button
+              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid size={14} /> Grid
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List size={14} /> List
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -122,7 +185,7 @@ export function ChapterDirectory({
         />
       ) : (
         <div className={`chapter-directory__content chapter-directory__content--${viewMode}`}>
-          {filtered.map((chapter) => (
+          {sorted.map((chapter) => (
             <div 
               key={chapter.id} 
               className={`chapter-directory__card ${viewMode === 'list' ? 'chapter-directory__card--list-view' : ''}`}
@@ -135,8 +198,8 @@ export function ChapterDirectory({
                     <div className="chapter-book-cover">
                       <div className="chapter-book-cover__spine" />
                       <div className="chapter-book-cover__frame">
-                        <div className="chapter-book-cover__number" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>Chapter {chapter.chapter_number}</div>
-                        <div className="chapter-book-cover__title" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>{chapter.title}</div>
+                        <div className="chapter-book-cover__number">Chapter {chapter.chapter_number}</div>
+                        <div className="chapter-book-cover__title">{chapter.title}</div>
                       </div>
                     </div>
 
@@ -188,8 +251,8 @@ export function ChapterDirectory({
                 <>
                   <div className="chapter-directory__card-header">
                     <div>
-                      <div className="chapter-directory__card-number" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>Chapter {chapter.chapter_number}</div>
-                      <h3 className="chapter-directory__card-title" style={chapter.is_restored ? { fontSize: '0.6em' } : undefined}>{chapter.title}</h3>
+                      <div className="chapter-directory__card-number">Chapter {chapter.chapter_number}</div>
+                      <h3 className="chapter-directory__card-title">{chapter.title}</h3>
                     </div>
                     <div className="chapter-directory__card-actions">
                       <button

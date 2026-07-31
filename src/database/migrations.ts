@@ -110,6 +110,13 @@ export async function migrateProjectDatabase(db: Database, dbPath?: string): Pro
         // Ignore if column exists
       }
     }
+    if (current < 12) {
+      try {
+        await execute(db, 'ALTER TABLE chapters ADD COLUMN is_restored INTEGER NOT NULL DEFAULT 0');
+      } catch {
+        // Ignore if column exists
+      }
+    }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 

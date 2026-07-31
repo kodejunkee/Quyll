@@ -141,7 +141,6 @@ export default function ChaptersPage() {
     create,
     update,
     remove,
-    refresh,
 
     getById,
     updateContent,
@@ -223,10 +222,9 @@ export default function ChaptersPage() {
             reading_time: time,
             updated_at: nowIso as Timestamp,
           }
-        : null,
+        : null
     );
-    void refresh();
-  }, [activeChapterId, updateContent, clearDraft, refresh]);
+  }, [activeChapterId, updateContent, clearDraft]);
 
   const { settings } = useSettings();
   const { chapterListCollapsed, showKeywords, setLastActiveChapterId } = useLayoutStore();

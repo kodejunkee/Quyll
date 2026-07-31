@@ -35,7 +35,7 @@ interface WorkspaceState {
   glossary: GlossaryEntry[];
 
   // Initialization
-  initialize: (db: Database, projectId: string) => Promise<void>;
+  initialize: (db: Database, projectId: string, force?: boolean) => Promise<void>;
   
   // Phase 1: Characters CRUD actions
   // Note: These actions immediately update the Zustand state (instant UI),
@@ -121,9 +121,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   plotPoints: [],
   glossary: [],
 
-  initialize: async (db, projectId) => {
-    // If already initialized for this project, skip
-    if (get().isInitialized && get().activeProjectId === projectId) {
+  initialize: async (db, projectId, force = false) => {
+    // If already initialized for this project and not forcing, skip
+    if (!force && get().isInitialized && get().activeProjectId === projectId) {
       return;
     }
 
