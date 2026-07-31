@@ -117,15 +117,18 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
   const titleNode = (
     <div className="flex items-center gap-3">
       <span>{title}</span>
-      <Button 
-        variant="secondary" 
-        size="sm" 
-        onClick={() => setViewMode(v => v === 'details' ? 'graph' : 'details')}
-      >
-        <Network size={14} className="mr-1" />
-        {viewMode === 'details' ? 'See Relationship Graph' : 'Back to Details'}
-      </Button>
     </div>
+  );
+
+  const centerHeaderNode = (
+    <Button 
+      variant="secondary" 
+      size="sm" 
+      onClick={() => setViewMode(v => v === 'details' ? 'graph' : 'details')}
+    >
+      <Network size={14} className="mr-1" />
+      {viewMode === 'details' ? 'See Relationship Graph' : 'Back to Details'}
+    </Button>
   );
 
   return (
@@ -135,6 +138,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
     >
       <DraggableModal
         title={titleNode}
+        centerHeader={centerHeaderNode}
         onClose={handleClose}
         initialX={modalData.initialX}
         initialY={modalData.initialY}

@@ -4,6 +4,7 @@ import './DraggableModal.css';
 
 interface DraggableModalProps {
   title: React.ReactNode;
+  centerHeader?: React.ReactNode;
   onClose: () => void;
   onMinimize?: (x: number, y: number) => void;
   children: React.ReactNode;
@@ -18,6 +19,7 @@ interface DraggableModalProps {
 
 export function DraggableModal({
   title,
+  centerHeader,
   onClose,
   onMinimize,
   children,
@@ -110,6 +112,11 @@ export function DraggableModal({
         onPointerUp={handlePointerUp}
       >
         <div className="draggable-modal__title">{title}</div>
+        {centerHeader && (
+          <div className="draggable-modal__center">
+            {centerHeader}
+          </div>
+        )}
         <div className="draggable-modal__actions">
           {onMinimize && (
             <button 

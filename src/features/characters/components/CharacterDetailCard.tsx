@@ -287,12 +287,12 @@ export function CharacterDetailCard({
               <User size={38} className="text-text-tertiary" />
             )}
             <div className="character-detail-card__avatar-overlay">
-              <Button variant="secondary" size="sm" onClick={handleImageReplace} disabled={imageLoading} style={{ padding: '2px 8px', fontSize: '11px' }}>
-                <Upload size={11} /> Replace
+              <Button variant="secondary" size="sm" onClick={handleImageReplace} disabled={imageLoading}>
+                <Upload size={14} /> Replace
               </Button>
               {imageUrl && (
-                <Button variant="danger" size="sm" onClick={handleImageRemove} disabled={imageLoading} style={{ padding: '2px 8px', fontSize: '11px' }}>
-                  <X size={11} /> Remove
+                <Button variant="danger" size="sm" onClick={handleImageRemove} disabled={imageLoading}>
+                  <X size={14} /> Remove
                 </Button>
               )}
             </div>
