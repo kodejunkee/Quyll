@@ -10,7 +10,8 @@ const APP_DB_PATH = 'sqlite:app.db';
 
 let appDb: Database | null = null;
 
-import { remove } from '@tauri-apps/plugin-fs';
+import { remove, copyFile, mkdir, exists } from '@tauri-apps/plugin-fs';
+import { appDataDir, join } from '@tauri-apps/api/path';
 
 export interface ProjectRow {
   id: string;
@@ -19,6 +20,7 @@ export interface ProjectRow {
   description: string;
   author: string;
   genre: string;
+  cover_image: string | null;
   last_opened_at: string | null;
   deleted_at: string | null;
   created_at: string;
@@ -37,6 +39,14 @@ export async function initAppDatabase(): Promise<Database> {
   }
   appDb = await openDatabase(APP_DB_PATH);
   await migrateAppDatabase(appDb);
+  
+  // Failsafe: forcefully ensure column exists due to HMR edge cases
+  try {
+    await execute(appDb, 'ALTER TABLE projects ADD COLUMN cover_image TEXT');
+  } catch {
+    // Ignore if column already exists
+  }
+  
   return appDb;
 }
 
@@ -71,10 +81,18 @@ export async function registerProject(project: {
 /** Get all registered active projects, most recently opened first. */
 export async function listProjects(): Promise<ProjectRow[]> {
   const db = await initAppDatabase();
-  return select<ProjectRow>(
+  const rows = await select<ProjectRow>(
     db,
     'SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY datetime(COALESCE(last_opened_at, created_at)) DESC, datetime(created_at) DESC',
   );
+  const appData = await appDataDir();
+  
+  for (const row of rows) {
+    if (row.cover_image && !row.cover_image.includes(':\\') && !row.cover_image.startsWith('/')) {
+      row.cover_image = await join(appData, row.cover_image);
+    }
+  }
+  return rows;
 }
 
 /** Get all soft-deleted projects. */
@@ -162,4 +180,28 @@ export async function autoDeleteOldProjects(): Promise<void> {
     }
     await execute(db, 'DELETE FROM projects WHERE id = $1', [row.id]);
   }
+}
+
+/** Sets a custom cover image for a project by copying it to the app data dir. */
+export async function setProjectCover(projectId: string, sourcePath: string): Promise<string> {
+  const db = await initAppDatabase();
+  const appData = await appDataDir();
+  const coversDir = await join(appData, 'covers');
+  
+  if (!(await exists(coversDir))) {
+    await mkdir(coversDir, { recursive: true });
+  }
+
+  // Get extension from source
+  const ext = sourcePath.split('.').pop() || 'png';
+  const destName = `${projectId}_cover.${ext}`;
+  const destPath = await join(coversDir, destName);
+
+  await copyFile(sourcePath, destPath);
+
+  // Store relative path in DB
+  const relativePath = `covers/${destName}`;
+  await execute(db, 'UPDATE projects SET cover_image = $1, updated_at = datetime("now") WHERE id = $2', [relativePath, projectId]);
+
+  return destPath;
 }

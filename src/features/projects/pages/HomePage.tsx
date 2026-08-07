@@ -23,6 +23,7 @@ import {
   ArrowUpDown,
   Check,
   Download,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Button, Modal, Input, TextArea, Dialog, Dropdown, ThemeToggle } from '@/components';
 import { GlobalSettingsModal } from '@/features/settings';
@@ -40,12 +41,15 @@ import {
   initializeProjectDatabase,
   openProjectDatabase,
   touchProject,
+  setProjectCover,
 } from '@/database';
 import { select } from '@/database/databaseService';
 import { formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import { generateId } from '@/utils/uuid';
 import { pickAndImportQuyllProject } from '@/services/importService';
 import { Clock as ClockIcon } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import './HomePage.css';
 import '@/styles/redesign.css';
 
@@ -236,6 +240,7 @@ export default function HomePage() {
         description: r.description ?? '',
         author: r.author ?? '',
         genre: r.genre ?? '',
+        cover_image: r.cover_image ?? null,
         last_opened_at: r.last_opened_at,
         deleted_at: r.deleted_at,
         created_at: r.created_at,
@@ -251,6 +256,7 @@ export default function HomePage() {
         description: r.description ?? '',
         author: r.author ?? '',
         genre: r.genre ?? '',
+        cover_image: r.cover_image ?? null,
         last_opened_at: r.last_opened_at,
         deleted_at: r.deleted_at,
         created_at: r.created_at,
@@ -358,6 +364,21 @@ export default function HomePage() {
       setRenameTarget(null);
     } catch (err) {
       console.error('Failed to rename project:', err);
+    }
+  }
+
+  async function handleChangeCover(projectId: string) {
+    try {
+      const selectedPath = await open({
+        multiple: false,
+        filters: [{ name: 'Image', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+      });
+      if (selectedPath && typeof selectedPath === 'string') {
+        await setProjectCover(projectId, selectedPath);
+        await loadProjects();
+      }
+    } catch (err) {
+      console.error('Failed to change cover art:', err);
     }
   }
 
@@ -701,15 +722,26 @@ export default function HomePage() {
                   >
                     {/* Realistic Book Cover Header */}
                     <div className="home-project-card__cover-wrap">
-                      <div className="book-cover" style={{ background: theme.gradient }}>
-                        <div className="book-cover__spine" />
-                        <div className="book-cover__frame">
-                          <div className="book-cover__emblem">
-                            <CoverIcon size={24} />
-                          </div>
+                      {project.cover_image ? (
+                        <div className="book-cover custom-cover" style={{ position: 'relative', overflow: 'hidden' }}>
+                          <img 
+                            src={convertFileSrc(project.cover_image)} 
+                            alt="Project Cover"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={() => console.error("Image failed to load:", convertFileSrc(project.cover_image!))}
+                          />
                         </div>
-                        <div className="book-cover__ribbon" style={{ background: theme.ribbonColor }} />
-                      </div>
+                      ) : (
+                        <div className="book-cover" style={{ background: theme.gradient }}>
+                          <div className="book-cover__spine" />
+                          <div className="book-cover__frame">
+                            <div className="book-cover__emblem">
+                              <CoverIcon size={24} />
+                            </div>
+                          </div>
+                          <div className="book-cover__ribbon" style={{ background: theme.ribbonColor }} />
+                        </div>
+                      )}
 
                       <button
                         className="home-project-card__more-btn"
@@ -731,6 +763,16 @@ export default function HomePage() {
                       <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`}>
                         {viewTab === 'active' ? (
                           <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                handleChangeCover(project.id);
+                              }}
+                              type="button"
+                            >
+                              <ImageIcon size={14} /> Change Cover Art
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

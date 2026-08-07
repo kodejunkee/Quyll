@@ -438,7 +438,7 @@ export function EditorToolbar() {
 
         {highlightOpen && (
           <div className="editor-toolbar__page-setup-popover" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', padding: '8px', width: 'max-content' }}>
-            {['#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff0000', '#0000ff', '#ff8800', '#888888', '#ffffff', 'transparent'].map(color => (
+            {['#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff0000', '#0000ff', '#ff8800', '#888888', 'transparent'].map(color => (
               <button
                 key={color}
                 type="button"

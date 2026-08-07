@@ -81,28 +81,44 @@ export class LanguageGenerator {
     config: LanguageGrammarConfig,
     languageId: string,
     dictionary?: Map<string, string>,
+    wordClass?: 'function' | 'pronoun' | 'common_verb' | 'common_noun' | 'adjective' | 'abstract' | 'rare',
   ): string {
     const normalizedWord = englishWord.toLowerCase().trim();
 
-    const derived = this.tryDerivation(normalizedWord, config, languageId, dictionary);
-    if (derived !== null) {
-      if (/^[A-Z]/.test(englishWord)) {
-        return derived.charAt(0).toUpperCase() + derived.slice(1);
-      }
-      return derived;
+    let word = this.tryDerivation(normalizedWord, config, languageId, dictionary);
+    const seed = `${languageId}-${normalizedWord}`;
+    
+    if (word === null) {
+      const rng = new SeededRandom(seed);
+      word = this.buildWord(rng, config, wordClass);
+      word = this.applySoundChanges(word, config);
     }
 
-    const seed = `${languageId}-${normalizedWord}`;
-    const rng = new SeededRandom(seed);
-    let word = this.buildWord(rng, config);
-
-    word = this.applySoundChanges(word, config);
+    // Enhancement 2: Phonetic Distinctiveness
+    if (dictionary) {
+      const existingValues = new Set(dictionary.values());
+      let attempt = 1;
+      while (existingValues.has(word!)) {
+        attempt++;
+        const retryRng = new SeededRandom(`${seed}-${attempt}`);
+        let newWord = this.buildWord(retryRng, config, wordClass);
+        
+        // Add entropy by appending an extra syllable if it continues to collide
+        if (attempt > 3) {
+          const vowels = config.vowels?.length > 0 ? config.vowels : ['a', 'e', 'i', 'o', 'u'];
+          const consonants = config.consonants?.length > 0 ? config.consonants : ['p', 't', 'k'];
+          newWord += this.buildSyllable(retryRng, 'CV', vowels, consonants, config, null);
+        }
+        
+        word = this.applySoundChanges(newWord, config);
+      }
+    }
 
     if (/^[A-Z]/.test(englishWord)) {
-      word = word.charAt(0).toUpperCase() + word.slice(1);
+      word = word!.charAt(0).toUpperCase() + word!.slice(1);
     }
 
-    return word;
+    return word!;
   }
 
   private static tryDerivation(
@@ -140,29 +156,44 @@ export class LanguageGenerator {
 
   // ── Stage 2: Advanced Word Building ────────────────────────────────
 
-  private static buildWord(rng: SeededRandom, config: LanguageGrammarConfig): string {
+  private static buildWord(rng: SeededRandom, config: LanguageGrammarConfig, wordClass?: string): string {
     const vowels = config.vowels?.length > 0 ? config.vowels : ['a', 'e', 'i', 'o', 'u'];
     const consonants = config.consonants?.length > 0 ? config.consonants : ['p', 't', 'k', 'm', 'n', 'l'];
     const structures = config.syllableStructures?.length > 0 ? config.syllableStructures : ['CV', 'CVC'];
 
-    const syllableRoll = rng.next();
+    // Enhancement 1: Word-Class-Aware Syllable Counts
     let numSyllables = 2;
-    if (syllableRoll < 0.2) numSyllables = 1;
-    else if (syllableRoll < 0.7) numSyllables = 2;
-    else if (syllableRoll < 0.95) numSyllables = 3;
-    else numSyllables = 4;
+    const syllableRoll = rng.next();
+    
+    if (wordClass === 'function' || wordClass === 'pronoun') {
+      numSyllables = 1;
+    } else if (wordClass === 'common_verb' || wordClass === 'common_noun') {
+      numSyllables = syllableRoll < 0.7 ? 1 : 2;
+    } else if (wordClass === 'adjective') {
+      numSyllables = syllableRoll < 0.5 ? 1 : 2;
+    } else if (wordClass === 'abstract' || wordClass === 'rare') {
+      numSyllables = syllableRoll < 0.5 ? 2 : 3;
+    } else {
+      // Default (backward compatible)
+      if (syllableRoll < 0.2) numSyllables = 1;
+      else if (syllableRoll < 0.7) numSyllables = 2;
+      else if (syllableRoll < 0.95) numSyllables = 3;
+      else numSyllables = 4;
+    }
 
-    const harmonyEnabled = config.vowelHarmony?.enabled && config.vowelHarmony.groups?.length > 0;
+    const harmonyEnabled = config.vowelHarmony?.enabled && config.vowelHarmony.groups && config.vowelHarmony.groups.length > 0;
     let harmonyGroup: string[] | null = null;
+    
+    // Bug 1 Fix: Pre-select the harmony group BEFORE building any syllables
+    if (harmonyEnabled) {
+      harmonyGroup = rng.pick(config.vowelHarmony!.groups!);
+    }
+
     let word = '';
 
     for (let i = 0; i < numSyllables; i++) {
       const structure = rng.pick(structures);
       word += this.buildSyllable(rng, structure, vowels, consonants, config, harmonyGroup);
-
-      if (harmonyEnabled && !harmonyGroup && word.length > 0) {
-        harmonyGroup = this.findHarmonyGroup(word, config);
-      }
     }
 
     return word;
@@ -232,7 +263,9 @@ export class LanguageGenerator {
     let currentSonority = startSonority;
     let lastPhoneme = '';
 
-    for (let i = 0; i < length; i++) {
+    // Bug 2 Fix: In the fallback path, count characters so multi-char phonemes 
+    // don't create unexpectedly long clusters compared to the structure.
+    for (let i = 0; i < length; ) {
       let candidates = consonants;
 
       // Apply Sonority Sequencing Principle
@@ -272,6 +305,8 @@ export class LanguageGenerator {
       cluster += picked;
       currentSonority = getSonority(picked, false);
       lastPhoneme = picked;
+      
+      i += picked.length;
     }
 
     return cluster;
@@ -286,23 +321,6 @@ export class LanguageGenerator {
       return rng.pick(phonemes);
     }
     return rng.weightedPick(phonemes, (p) => weights[p] ?? 1);
-  }
-
-  private static findHarmonyGroup(word: string, config: LanguageGrammarConfig): string[] | null {
-    if (!config.vowelHarmony?.enabled || !config.vowelHarmony.groups) return null;
-    const allVowels = new Set(config.vowels || []);
-    const sortedVowels = [...allVowels].sort((a, b) => b.length - a.length);
-
-    for (let pos = 0; pos < word.length; pos++) {
-      for (const vowel of sortedVowels) {
-        if (word.substring(pos, pos + vowel.length) === vowel) {
-          for (const group of config.vowelHarmony.groups) {
-            if (group.includes(vowel)) return group;
-          }
-        }
-      }
-    }
-    return null;
   }
 
   // ── Stage 3: Sound Changes (Sandhi) ───────────────────────────────

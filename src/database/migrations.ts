@@ -144,6 +144,14 @@ export async function migrateAppDatabase(db: Database): Promise<void> {
       }
     }
     
+    if (current < 15) {
+      try {
+        await execute(db, 'ALTER TABLE projects ADD COLUMN cover_image TEXT');
+      } catch {
+        // Column might already exist
+      }
+    }
+
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 }

@@ -482,6 +482,209 @@ export function LanguageRules({ language, onUpdate }: LanguageRulesProps) {
           </button>
         </div>
 
+        {/* ── V3: Deep Morphology ────────────────────────────────── */}
+
+        {/* Card 9: Noun Cases */}
+        <div className="language-rules__card" style={{ gridColumn: '1 / -1' }}>
+          <h4 className="language-rules__card-title">
+            <Layers size={16} /> Noun Case System
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Automatically adds case suffixes to nouns based on their grammatical role in the sentence (subject, object, possession, etc.).
+          </p>
+          <div className="language-rules__field">
+            <label className="language-rules__toggle">
+              <input
+                type="checkbox"
+                checked={config.nounCases?.enabled || false}
+                onChange={() => updateField('nounCases', { ...config.nounCases!, enabled: !config.nounCases?.enabled })}
+              />
+              Enable Noun Cases
+            </label>
+          </div>
+          {config.nounCases?.enabled && (
+            <div className="language-rules__affix-grid" style={{ marginTop: '12px' }}>
+              <div className="language-rules__field">
+                <label>Nominative (Subject)</label>
+                <p className="field-hint">Added to the subject — leave blank for zero-marked</p>
+                <input type="text" value={config.nounCases?.nominative || ''} onChange={e => updateField('nounCases', { ...config.nounCases!, nominative: e.target.value })} placeholder="(none)" />
+              </div>
+              <div className="language-rules__field">
+                <label>Accusative (Object)</label>
+                <p className="field-hint">Added to the direct object</p>
+                <input type="text" value={config.nounCases?.accusative || ''} onChange={e => updateField('nounCases', { ...config.nounCases!, accusative: e.target.value })} placeholder="-un" />
+              </div>
+              <div className="language-rules__field">
+                <label>Genitive (Possessor)</label>
+                <p className="field-hint">Added to the possessor / "of"</p>
+                <input type="text" value={config.nounCases?.genitive || ''} onChange={e => updateField('nounCases', { ...config.nounCases!, genitive: e.target.value })} placeholder="-va" />
+              </div>
+              <div className="language-rules__field">
+                <label>Dative (Recipient)</label>
+                <p className="field-hint">Added to the indirect object / "to"</p>
+                <input type="text" value={config.nounCases?.dative || ''} onChange={e => updateField('nounCases', { ...config.nounCases!, dative: e.target.value })} placeholder="-em" />
+              </div>
+              <div className="language-rules__field">
+                <label>Locative (Location)</label>
+                <p className="field-hint">Added after location prepositions (in, on, at, etc.)</p>
+                <input type="text" value={config.nounCases?.locative || ''} onChange={e => updateField('nounCases', { ...config.nounCases!, locative: e.target.value })} placeholder="-il" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card 10: Verb Conjugation */}
+        <div className="language-rules__card" style={{ gridColumn: '1 / -1' }}>
+          <h4 className="language-rules__card-title">
+            <Settings2 size={16} /> Verb Person / Number Conjugation
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Adds person/number suffixes to verbs based on who the subject is (I, you, he/she, we, they).
+          </p>
+          <div className="language-rules__field">
+            <label className="language-rules__toggle">
+              <input
+                type="checkbox"
+                checked={config.verbConjugation?.enabled || false}
+                onChange={() => updateField('verbConjugation', { ...config.verbConjugation!, enabled: !config.verbConjugation?.enabled })}
+              />
+              Enable Verb Conjugation
+            </label>
+          </div>
+          {config.verbConjugation?.enabled && (
+            <div className="language-rules__affix-grid" style={{ marginTop: '12px' }}>
+              <div className="language-rules__field">
+                <label>1st Singular (I)</label>
+                <input type="text" value={config.verbConjugation?.firstSingular || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, firstSingular: e.target.value })} placeholder="-mi" />
+              </div>
+              <div className="language-rules__field">
+                <label>2nd Singular (you)</label>
+                <input type="text" value={config.verbConjugation?.secondSingular || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, secondSingular: e.target.value })} placeholder="-ti" />
+              </div>
+              <div className="language-rules__field">
+                <label>3rd Singular (he/she/it)</label>
+                <input type="text" value={config.verbConjugation?.thirdSingular || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, thirdSingular: e.target.value })} placeholder="-su" />
+              </div>
+              <div className="language-rules__field">
+                <label>1st Plural (we)</label>
+                <input type="text" value={config.verbConjugation?.firstPlural || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, firstPlural: e.target.value })} placeholder="-men" />
+              </div>
+              <div className="language-rules__field">
+                <label>2nd Plural (you all)</label>
+                <input type="text" value={config.verbConjugation?.secondPlural || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, secondPlural: e.target.value })} placeholder="-ten" />
+              </div>
+              <div className="language-rules__field">
+                <label>3rd Plural (they)</label>
+                <input type="text" value={config.verbConjugation?.thirdPlural || ''} onChange={e => updateField('verbConjugation', { ...config.verbConjugation!, thirdPlural: e.target.value })} placeholder="-sun" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card 11: Verb Mood */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <Hash size={16} /> Verb Mood
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Adds affixes for commands (imperative: "Seize!") and hypotheticals (subjunctive: "If he were...").
+          </p>
+          <div className="language-rules__field">
+            <label className="language-rules__toggle">
+              <input
+                type="checkbox"
+                checked={config.verbMood?.enabled || false}
+                onChange={() => updateField('verbMood', { ...config.verbMood!, enabled: !config.verbMood?.enabled })}
+              />
+              Enable Verb Mood
+            </label>
+          </div>
+          {config.verbMood?.enabled && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+              <div className="language-rules__row">
+                <div className="language-rules__field">
+                  <label>Imperative Style</label>
+                  <select value={config.verbMood?.imperativeStyle || 'suffix'} onChange={e => updateField('verbMood', { ...config.verbMood!, imperativeStyle: e.target.value as AffixStyle })}>
+                    <option value="suffix">Suffix</option>
+                    <option value="prefix">Prefix</option>
+                    <option value="separate_particle">Separate particle</option>
+                  </select>
+                </div>
+                <div className="language-rules__field">
+                  <label>Imperative Affix</label>
+                  <input type="text" value={config.verbMood?.imperativeAffix || ''} onChange={e => updateField('verbMood', { ...config.verbMood!, imperativeAffix: e.target.value })} placeholder="-ka" />
+                </div>
+              </div>
+              <div className="language-rules__row">
+                <div className="language-rules__field">
+                  <label>Subjunctive Style</label>
+                  <select value={config.verbMood?.subjunctiveStyle || 'prefix'} onChange={e => updateField('verbMood', { ...config.verbMood!, subjunctiveStyle: e.target.value as AffixStyle })}>
+                    <option value="suffix">Suffix</option>
+                    <option value="prefix">Prefix</option>
+                    <option value="separate_particle">Separate particle</option>
+                  </select>
+                </div>
+                <div className="language-rules__field">
+                  <label>Subjunctive Affix</label>
+                  <input type="text" value={config.verbMood?.subjunctiveAffix || ''} onChange={e => updateField('verbMood', { ...config.verbMood!, subjunctiveAffix: e.target.value })} placeholder="il-" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card 12: Verb Aspect */}
+        <div className="language-rules__card">
+          <h4 className="language-rules__card-title">
+            <ArrowRight size={16} /> Verb Aspect
+          </h4>
+          <p className="field-hint" style={{ marginBottom: '16px' }}>
+            Marks whether an action is completed (perfective: "I ate") or ongoing (imperfective: "I was eating").
+          </p>
+          <div className="language-rules__field">
+            <label className="language-rules__toggle">
+              <input
+                type="checkbox"
+                checked={config.verbAspect?.enabled || false}
+                onChange={() => updateField('verbAspect', { ...config.verbAspect!, enabled: !config.verbAspect?.enabled })}
+              />
+              Enable Verb Aspect
+            </label>
+          </div>
+          {config.verbAspect?.enabled && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+              <div className="language-rules__row">
+                <div className="language-rules__field">
+                  <label>Perfective Style</label>
+                  <select value={config.verbAspect?.perfectiveStyle || 'suffix'} onChange={e => updateField('verbAspect', { ...config.verbAspect!, perfectiveStyle: e.target.value as AffixStyle })}>
+                    <option value="suffix">Suffix</option>
+                    <option value="prefix">Prefix</option>
+                    <option value="separate_particle">Separate particle</option>
+                  </select>
+                </div>
+                <div className="language-rules__field">
+                  <label>Perfective Affix</label>
+                  <input type="text" value={config.verbAspect?.perfectiveAffix || ''} onChange={e => updateField('verbAspect', { ...config.verbAspect!, perfectiveAffix: e.target.value })} placeholder="-ash" />
+                </div>
+              </div>
+              <div className="language-rules__row">
+                <div className="language-rules__field">
+                  <label>Imperfective Style</label>
+                  <select value={config.verbAspect?.imperfectiveStyle || 'suffix'} onChange={e => updateField('verbAspect', { ...config.verbAspect!, imperfectiveStyle: e.target.value as AffixStyle })}>
+                    <option value="suffix">Suffix</option>
+                    <option value="prefix">Prefix</option>
+                    <option value="separate_particle">Separate particle</option>
+                  </select>
+                </div>
+                <div className="language-rules__field">
+                  <label>Imperfective Affix</label>
+                  <input type="text" value={config.verbAspect?.imperfectiveAffix || ''} onChange={e => updateField('verbAspect', { ...config.verbAspect!, imperfectiveAffix: e.target.value })} placeholder="-en" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

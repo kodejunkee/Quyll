@@ -1,6 +1,6 @@
 // Removed unused Button import
 import { type GrammarIssue } from '@/services/grammarService';
-import { SpellCheck, CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { SpellCheck, CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import './GrammarCheckerPanel.css';
 
 interface GrammarCheckerPanelProps {
@@ -8,6 +8,9 @@ interface GrammarCheckerPanelProps {
   onToggle: () => void;
   issues: GrammarIssue[];
   isSelection: boolean;
+  hasScannedGrammar: boolean;
+  isCheckingGrammar: boolean;
+  onGrammarCheck?: () => void;
   onApplySuggestion: (issue: GrammarIssue) => void;
   onLocateIssue: (issue: GrammarIssue) => void;
   onDismissIssue: (issueId: string) => void;
@@ -18,6 +21,9 @@ export function GrammarCheckerPanel({
   onToggle,
   issues,
   isSelection,
+  hasScannedGrammar,
+  isCheckingGrammar,
+  onGrammarCheck,
   onApplySuggestion,
   onLocateIssue,
   onDismissIssue,
@@ -70,7 +76,31 @@ export function GrammarCheckerPanel({
             </span>
           </div>
 
-          {issues.length === 0 ? (
+          {isCheckingGrammar ? (
+            <div className="grammar-panel__empty">
+              <Loader2 size={36} className="grammar-panel__empty-icon grammar-panel__icon--spin" />
+              <h4 className="grammar-panel__empty-title">Scanning...</h4>
+              <p className="grammar-panel__empty-text">
+                Analyzing grammar and writing style.
+              </p>
+            </div>
+          ) : !hasScannedGrammar ? (
+            <div className="grammar-panel__empty">
+              <SpellCheck size={36} className="grammar-panel__empty-icon" style={{ opacity: 0.5, color: 'var(--color-text-secondary, #94a3b8)' }} />
+              <h4 className="grammar-panel__empty-title">Grammar Checker</h4>
+              <p className="grammar-panel__empty-text" style={{ marginBottom: '16px' }}>
+                Scan this document to find spelling and grammar issues.
+              </p>
+              <button 
+                type="button"
+                className="grammar-panel__action-btn grammar-panel__action-btn--apply"
+                onClick={onGrammarCheck}
+                style={{ padding: '8px 16px', fontSize: '14px', borderRadius: '4px' }}
+              >
+                Scan Chapter
+              </button>
+            </div>
+          ) : issues.length === 0 ? (
             <div className="grammar-panel__empty">
               <CheckCircle2 size={36} className="grammar-panel__empty-icon" />
               <h4 className="grammar-panel__empty-title">All Clear!</h4>

@@ -2,7 +2,7 @@ import { readTextFile, readFile, writeFile, mkdir } from '@tauri-apps/plugin-fs'
 import { appDataDir, join, dirname } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/plugin-dialog';
 import { execute, select } from '@/database/databaseService';
-import { initializeProjectDatabase, openProjectDatabase, registerProject } from '@/database';
+import { initializeProjectDatabase, openProjectDatabase, registerProject, initAppDatabase } from '@/database';
 import { generateId } from '@/utils/uuid';
 import { htmlToLexicalJson } from './htmlToMarkdown';
 import type Database from '@tauri-apps/plugin-sql';
@@ -285,6 +285,35 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
       path: projectPath,
       description: 'Imported project'
     });
+
+    if (data.projectCoverBase64) {
+      try {
+        const appData = await appDataDir();
+        const coversDir = await join(appData, 'covers');
+        
+        try {
+          await mkdir(coversDir, { recursive: true });
+        } catch {
+          // might already exist
+        }
+
+        const destName = `${newProjectId}_cover.png`;
+        const destPath = await join(coversDir, destName);
+        
+        const binaryString = atob(data.projectCoverBase64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        await writeFile(destPath, bytes);
+        const appDb = await initAppDatabase();
+        await execute(appDb, 'UPDATE projects SET cover_image = $1 WHERE id = $2', [`covers/${destName}`, newProjectId]);
+      } catch (err) {
+        console.error('Failed to import project cover:', err);
+      }
+    }
 
     // Initialize the project DB
     await initializeProjectDatabase(projectPath, {

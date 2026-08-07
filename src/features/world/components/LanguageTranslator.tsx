@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Wand2, Cpu, Sparkles, Copy, Check, RotateCcw, Layers } from 'lucide-react';
+import { Wand2, Cpu, Copy, Check, RotateCcw, Layers } from 'lucide-react';
 import { Button } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { languageService } from '@/services/languageService';
@@ -62,7 +62,7 @@ export function LanguageTranslator({ languageId }: LanguageTranslatorProps) {
         part_of_speech: e.part_of_speech,
       }));
 
-      const engine = new LanguageEngine(grammarConfig, dictWords);
+      const engine = new LanguageEngine(grammarConfig, dictWords, language.name);
       let result = engine.translate(translateSentence);
       let savedNewWords: LanguageDictionaryEntry[] = [];
 
@@ -74,18 +74,36 @@ export function LanguageTranslator({ languageId }: LanguageTranslatorProps) {
         entries.forEach(e => dictMap.set(e.translation.toLowerCase().trim(), e.word));
 
         for (const missing of result.missingWords) {
-          const generatedWord = LanguageGenerator.generateWord(missing, grammarConfig, language.id, dictMap);
+          // Auto-detect POS using compromise for proper tagging
+          let detectedPos = '';
+          let wordClass: 'function' | 'pronoun' | 'common_verb' | 'common_noun' | 'adjective' | undefined;
+          try {
+            const { default: nlp } = await import('compromise');
+            const doc = nlp(missing);
+            if (doc.verbs().found) { detectedPos = 'verb'; wordClass = 'common_verb'; }
+            else if (doc.adjectives().found) { detectedPos = 'adjective'; wordClass = 'adjective'; }
+            else if (doc.nouns().found) { detectedPos = 'noun'; wordClass = 'common_noun'; }
+            else if (doc.adverbs().found) { detectedPos = 'adverb'; wordClass = 'function'; }
+          } catch { /* compromise not available, leave blank */ }
+
+          // Check if it's a function word
+          const funcWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'from', 'by', 'of', 'not', 'no', 'if', 'so', 'yet']);
+          const pronouns = new Set(['i', 'me', 'my', 'you', 'your', 'he', 'him', 'his', 'she', 'her', 'it', 'its', 'we', 'us', 'our', 'they', 'them', 'their']);
+          if (funcWords.has(missing.toLowerCase())) { wordClass = 'function'; }
+          else if (pronouns.has(missing.toLowerCase())) { wordClass = 'pronoun'; detectedPos = 'pronoun'; }
+
+          const generatedWord = LanguageGenerator.generateWord(missing, grammarConfig, language.id, dictMap, wordClass);
           const entry = await languageService.createDictionaryEntry(db, languageId, {
             word: generatedWord,
             translation: missing,
-            part_of_speech: '', // Can be guessed later or left blank
+            part_of_speech: detectedPos,
             pronunciation: '',
           });
           savedNewWords.push(entry);
           additionalDictWords.push({
             word: generatedWord,
             translation: missing,
-            part_of_speech: '',
+            part_of_speech: detectedPos,
           });
           // Add to map so subsequent missing words in the same sentence can derive from it
           dictMap.set(missing.toLowerCase().trim(), generatedWord);
@@ -286,21 +304,39 @@ export function LanguageTranslator({ languageId }: LanguageTranslatorProps) {
                 key={h.id} 
                 className="language-translator__history-item"
                 onClick={() => {
+                  if (!language) return;
                   setTranslateSentence(h.input_text);
+                  
+                  const grammarConfig = parseGrammarConfig(language.grammar_rules);
+                  const dictWords: DictionaryWord[] = entries.map(e => ({
+                    word: e.word,
+                    translation: e.translation,
+                    part_of_speech: e.part_of_speech,
+                  }));
+                  
+                  const engine = new LanguageEngine(grammarConfig, dictWords, language.name);
+                  const result = engine.translate(h.input_text);
+
                   setTranslationResult({
                     translatedSentence: h.output_text,
-                    literalBreakdown: '',
+                    literalBreakdown: result.literalBreakdown,
                     missingWords: [],
-                    tokensUsed: [],
+                    tokensUsed: result.tokensUsed,
                   });
-                  setTranslationMode(h.mode as 'offline' | 'ai-assist');
+                  setTranslationMode('');
+                  
+                  // Scroll to top to see it
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <div className="language-translator__history-input">{h.input_text}</div>
-                <div className="language-translator__history-output">{h.output_text}</div>
-                <span className={`badge badge--${h.mode === 'offline' ? 'offline' : 'ai'}`} style={{ fontSize: '0.6875rem' }}>
-                  {h.mode === 'offline' ? <><Cpu size={10} /> Offline</> : <><Sparkles size={10} /> AI</>}
-                </span>
+                <div className="language-translator__history-content">
+                  <div className="language-translator__history-input">{h.input_text}</div>
+                  <div className="language-translator__history-output">{h.output_text}</div>
+                </div>
+                <button className="language-translator__history-breakdown-btn" title="View Breakdown">
+                  <Layers size={12} />
+                  <span>Breakdown</span>
+                </button>
               </div>
             ))}
           </div>

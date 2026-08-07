@@ -12,8 +12,9 @@ export {
   softDeleteProject,
   restoreProject,
   hardDeleteProject,
-  autoDeleteOldProjects,
   getProject,
+  setProjectCover,
+  autoDeleteOldProjects,
 } from './appDatabase';
 export {
   openProjectDatabase,

@@ -72,6 +72,64 @@ export function LanguageDictionary({ languageId }: LanguageDictionaryProps) {
     await loadData();
   };
 
+  const [isSeeding, setIsSeeding] = useState(false);
+  const handleSeedVocabulary = async () => {
+    if (!db || !language || !languageId) return;
+    setIsSeeding(true);
+
+    try {
+      const cfg = parseGrammarConfig(language.grammar_rules);
+      
+      const { getSeedVocabulary, ARCHETYPE_VOCAB } = await import('../engine/CulturalVocabLists');
+      
+      // Determine archetype from native_speakers if possible
+      let matchedArchetype: string | null = null;
+      if (language.native_speakers) {
+        const speakers = language.native_speakers.toLowerCase();
+        for (const archetype of Object.keys(ARCHETYPE_VOCAB)) {
+          if (speakers.includes(archetype) || (archetype === 'elvish' && speakers.includes('elf')) || (archetype === 'orcish' && speakers.includes('orc'))) {
+            matchedArchetype = archetype;
+            break;
+          }
+        }
+      }
+
+      const wordsToGenerate = getSeedVocabulary(matchedArchetype);
+      
+      // Deduplicate against existing dictionary
+      const existingWords = new Set(entries.map(e => e.translation.toLowerCase().trim()));
+      const newWords = wordsToGenerate.filter(w => !existingWords.has(w.toLowerCase().trim()));
+
+      if (newWords.length === 0) {
+        alert("The base vocabulary has already been seeded!");
+        return;
+      }
+
+      // Build map for derivation lookups
+      const dictMap = new Map<string, string>();
+      entries.forEach(e => dictMap.set(e.translation.toLowerCase().trim(), e.word));
+
+      for (const englishWord of newWords) {
+        const conlangWord = LanguageGenerator.generateWord(englishWord, cfg, languageId, dictMap);
+        
+        await languageService.createDictionaryEntry(db, languageId, {
+          word: conlangWord,
+          translation: englishWord,
+          part_of_speech: 'noun',
+          pronunciation: '',
+        });
+        
+        dictMap.set(englishWord, conlangWord);
+      }
+
+      await loadData();
+    } catch (err: any) {
+      alert(`Seeding failed: ${err.message || err}`);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const handleGenerateBatch = async () => {
     if (!db || !language || !languageId || !batchWordsList.trim()) return;
     setIsGeneratingWords(true);
@@ -187,6 +245,10 @@ export function LanguageDictionary({ languageId }: LanguageDictionaryProps) {
           ))}
         </div>
         <div className="language-dictionary__toolbar-actions">
+            <Button variant="ghost" onClick={handleSeedVocabulary} disabled={isSeeding}>
+              {isSeeding ? <Loader2 size={15} className="spin" /> : <BookA size={15} />}
+              {isSeeding ? 'Seeding...' : 'Seed Base Vocabulary'}
+            </Button>
             <Button variant="ghost" onClick={() => setIsGeneratorOpen(true)}>
               <Sparkles size={15} /> Procedural Batch Generator
             </Button>

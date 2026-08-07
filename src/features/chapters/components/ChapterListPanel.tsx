@@ -28,6 +28,9 @@ interface ChapterListPanelProps {
   onGrammarToggle: () => void;
   grammarIssues: GrammarIssue[];
   isGrammarSelection: boolean;
+  hasScannedGrammar: boolean;
+  isCheckingGrammar: boolean;
+  onGrammarCheck?: () => void;
   onApplyGrammarSuggestion: (issue: GrammarIssue) => void;
   onLocateGrammarIssue: (issue: GrammarIssue) => void;
   onDismissGrammarIssue: (issueId: string) => void;
@@ -46,6 +49,9 @@ export function ChapterListPanel({
   onGrammarToggle,
   grammarIssues,
   isGrammarSelection,
+  hasScannedGrammar,
+  isCheckingGrammar,
+  onGrammarCheck,
   onApplyGrammarSuggestion,
   onLocateGrammarIssue,
   onDismissGrammarIssue,
@@ -192,6 +198,9 @@ export function ChapterListPanel({
             onToggle={onGrammarToggle}
             issues={grammarIssues}
             isSelection={isGrammarSelection}
+            hasScannedGrammar={hasScannedGrammar}
+            isCheckingGrammar={isCheckingGrammar}
+            onGrammarCheck={onGrammarCheck}
             onApplySuggestion={onApplyGrammarSuggestion}
             onLocateIssue={onLocateGrammarIssue}
             onDismissIssue={onDismissGrammarIssue}

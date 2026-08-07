@@ -122,6 +122,16 @@
 .grammar-panel__icon--warning { color: #f59e0b; }
 .grammar-panel__icon--style { color: #8b5cf6; }
 
+.grammar-panel__icon--spin {
+  animation: grammar-spin 1s linear infinite;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+@keyframes grammar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .grammar-panel__badge {
   font-size: 0.65rem;
   font-weight: 700;

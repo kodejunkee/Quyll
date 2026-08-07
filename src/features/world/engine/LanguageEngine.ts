@@ -1,45 +1,16 @@
-/**
- * LanguageEngine — The Offline Translation Machine
- * 
- * This engine translates English sentences into a constructed language
- * entirely offline, using:
- *   1. compromise.js for English NLP parsing
- *   2. A local dictionary lookup
- *   3. Mechanical grammar rules (LanguageGrammarConfig)
- * 
- * The AI is ONLY invoked to invent missing words. Everything else is local.
- */
-
 import nlp from 'compromise';
 import type { LanguageGrammarConfig } from './LanguageGrammarConfig';
 
-// ── Types ───────────────────────────────────────────────────────────
-
 export interface DictionaryWord {
-  word: string;           // The conlang word (e.g. "Vaelor")
-  translation: string;    // The English meaning (e.g. "king")
-  part_of_speech: string; // e.g. "noun", "verb", "adjective"
-}
-
-export interface ParsedToken {
-  text: string;            // Original English word
-  root: string;            // Lemmatized root (e.g. "returned" → "return")
-  pos: string;             // Part of speech: noun, verb, adjective, adverb, etc.
-  tense?: string;          // past, present, future
-  isPlural?: boolean;
-  isPossessive?: boolean;
-  isNegated?: boolean;
-  isArticle?: boolean;     // "the", "a", "an"
-  isPreposition?: boolean; // "in", "on", "at", etc.
-  isConjunction?: boolean; // "and", "but", "or"
-  isPronoun?: boolean;     // "he", "she", "it"
-  role?: 'subject' | 'verb' | 'object'; // Syntactic role for reordering
+  word: string;
+  translation: string;
+  part_of_speech: string;
 }
 
 export interface TranslationResult {
   translatedSentence: string;
   literalBreakdown: string;
-  missingWords: string[];              // English words not found in dictionary
+  missingWords: string[];
   tokensUsed: TranslatedToken[];
 }
 
@@ -47,388 +18,474 @@ export interface TranslatedToken {
   english: string;
   conlang: string;
   wasInDictionary: boolean;
-  morphologyApplied: string[];  // e.g. ["plural suffix: -ri", "past prefix: na-"]
+  morphologyApplied: string[];
 }
 
-// ── Stopwords (functional words the engine handles mechanically) ─────
+interface ParsedToken {
+  text: string;
+  normal: string;
+  tags: Set<string>;
+  punctuationBefore: string;
+  punctuationAfter: string;
+}
 
-const ARTICLES = new Set(['the', 'a', 'an']);
-const PREPOSITIONS = new Set([
-  'in', 'on', 'at', 'to', 'for', 'with', 'from', 'by', 'of',
-  'into', 'through', 'during', 'before', 'after', 'above', 'below',
-  'between', 'under', 'over', 'about', 'against', 'among',
-]);
-const CONJUNCTIONS = new Set(['and', 'but', 'or', 'nor', 'yet', 'so', 'for']);
-const PRONOUNS = new Set([
-  'i', 'me', 'my', 'mine', 'myself',
-  'you', 'your', 'yours', 'yourself',
-  'he', 'him', 'his', 'himself',
-  'she', 'her', 'hers', 'herself',
-  'it', 'its', 'itself',
-  'we', 'us', 'our', 'ours', 'ourselves',
-  'they', 'them', 'their', 'theirs', 'themselves',
-]);
-const AUXILIARIES = new Set(['has', 'have', 'had', 'is', 'am', 'are', 'was', 'were', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must']);
-const NEGATION_WORDS = new Set(['not', "n't", 'never', 'no']);
-
-// ── The Engine ──────────────────────────────────────────────────────
+interface Phrase {
+  type: 'NP' | 'VP' | 'PP' | 'CONJ' | 'OTHER';
+  role: 'subject' | 'object' | 'verb' | 'prep' | 'conj' | 'none';
+  tokens: ParsedToken[];
+}
 
 export class LanguageEngine {
   private config: LanguageGrammarConfig;
-  private dictionary: Map<string, DictionaryWord>; // keyed by lowercase English
+  private dictionary: Map<string, DictionaryWord>;
+  // @ts-ignore — reserved for future use (language name preservation in output)
+  private _languageName: string;
+  private missingWordsSet: Set<string>;
 
-  constructor(config: LanguageGrammarConfig, dictionaryEntries: DictionaryWord[]) {
+  constructor(config: LanguageGrammarConfig, dictionaryEntries: DictionaryWord[], languageName: string = 'Conlang') {
     this.config = config;
+    this._languageName = languageName;
     this.dictionary = new Map();
-    for (const entry of dictionaryEntries) {
-      this.dictionary.set(entry.translation.toLowerCase().trim(), entry);
-    }
-  }
+    this.missingWordsSet = new Set();
 
-  /**
-   * STEP 1: Parse the English sentence into tagged tokens
-   */
-  parseEnglish(sentence: string): ParsedToken[] {
-    const doc = nlp(sentence);
-    const tokens: ParsedToken[] = [];
-
-    // Check for sentence-level negation
-    const hasNegation = doc.has('#Negative') || NEGATION_WORDS.has(sentence.split(' ').find(w => NEGATION_WORDS.has(w.toLowerCase().replace(/[^a-z']/g, ''))) || '');
-
-    doc.terms().forEach((term: any) => {
-      const text = term.text('text').trim();
-      if (!text) return;
-
-      const lower = text.toLowerCase().replace(/[^a-z']/g, '');
-
-      // Skip auxiliary verbs (tense is captured on the main verb)
-      if (AUXILIARIES.has(lower)) return;
-
-      // Skip negation words (handled as a flag)
-      if (NEGATION_WORDS.has(lower)) return;
-
-      const token: ParsedToken = {
-        text,
-        root: lower,
-        pos: 'unknown',
-      };
-
-      // Detect articles
-      if (ARTICLES.has(lower)) {
-        token.isArticle = true;
-        token.pos = 'article';
-        tokens.push(token);
-        return;
-      }
-
-      // Detect prepositions
-      if (PREPOSITIONS.has(lower)) {
-        token.isPreposition = true;
-        token.pos = 'preposition';
-        tokens.push(token);
-        return;
-      }
-
-      // Detect conjunctions
-      if (CONJUNCTIONS.has(lower)) {
-        token.isConjunction = true;
-        token.pos = 'conjunction';
-        tokens.push(token);
-        return;
-      }
-
-      // Detect pronouns
-      if (PRONOUNS.has(lower)) {
-        token.isPronoun = true;
-        token.pos = 'pronoun';
-        token.root = lower;
-        tokens.push(token);
-        return;
-      }
-
-      // Use compromise for POS tagging
-      const termDoc = nlp(text);
-      
-      if (termDoc.verbs().found) {
-        token.pos = 'verb';
-        // Get root form
-        const conjugations = termDoc.verbs().conjugate();
-        if (conjugations.length > 0) {
-          token.root = (conjugations[0] as any).Infinitive || lower;
-        }
-        // Detect tense
-        if (termDoc.has('#PastTense') || termDoc.has('#PastParticiple')) {
-          token.tense = 'past';
-        } else if (termDoc.has('#FutureTense')) {
-          token.tense = 'future';
-        } else {
-          token.tense = 'present';
-        }
-      } else if (termDoc.nouns().found) {
-        token.pos = 'noun';
-        // Check plural
-        if (termDoc.has('#Plural')) {
-          token.isPlural = true;
-          const singular = termDoc.nouns().toSingular().text('text').toLowerCase().replace(/[^a-z']/g, '');
-          token.root = singular || lower;
-        }
-        // Check possessive
-        if (text.includes("'s") || text.includes("'")) {
-          token.isPossessive = true;
-          token.root = lower.replace(/'s?$/, '');
-        }
-      } else if (termDoc.adjectives().found) {
-        token.pos = 'adjective';
-      } else if (termDoc.adverbs().found) {
-        token.pos = 'adverb';
-      }
-
-      // Apply sentence-level negation to the verb
-      if (hasNegation && token.pos === 'verb') {
-        token.isNegated = true;
-      }
-
-      tokens.push(token);
+    dictionaryEntries.forEach(entry => {
+      const key = (entry.translation || '').toLowerCase().trim();
+      if (key) this.dictionary.set(key, entry);
     });
-
-    // Assign syntactic roles for reordering
-    this.assignRoles(tokens);
-
-    return tokens;
   }
 
-  /**
-   * Assigns Subject / Verb / Object roles to tokens for sentence reordering.
-   */
-  private assignRoles(tokens: ParsedToken[]): void {
-    let foundVerb = false;
-    let foundSubject = false;
-
-    for (const token of tokens) {
-      if (token.isArticle || token.isPreposition || token.isConjunction) continue;
-
-      if (!foundSubject && (token.pos === 'noun' || token.isPronoun)) {
-        token.role = 'subject';
-        foundSubject = true;
-      } else if (!foundVerb && token.pos === 'verb') {
-        token.role = 'verb';
-        foundVerb = true;
-      } else if (foundVerb && (token.pos === 'noun' || token.isPronoun)) {
-        token.role = 'object';
-      }
-    }
-  }
-
-  /**
-   * STEP 2: Look up each token in the dictionary and identify missing words.
-   */
-  lookupTokens(tokens: ParsedToken[]): { found: Map<string, DictionaryWord>; missing: string[] } {
-    const found = new Map<string, DictionaryWord>();
-    const missing: string[] = [];
-
-    for (const token of tokens) {
-      if (token.isArticle || token.isPreposition || token.isConjunction) continue;
-      
-      const key = token.root.toLowerCase();
-      
-      if (this.dictionary.has(key)) {
-        found.set(key, this.dictionary.get(key)!);
-      } else if (!missing.includes(key)) {
-        missing.push(key);
-      }
-    }
-
-    return { found, missing };
-  }
-
-  /**
-   * STEP 3: Apply morphological rules (affixes) to a conlang word.
-   */
-  applyMorphology(conlangWord: string, token: ParsedToken): { result: string; applied: string[] } {
-    let result = conlangWord;
-    const applied: string[] = [];
-
-    // Apply plural
-    if (token.isPlural && this.config.pluralStyle !== 'none') {
-      const affix = this.config.pluralAffix.replace(/^-/, '').replace(/-$/, '');
-      if (this.config.pluralStyle === 'suffix') {
-        result = result + affix;
-        applied.push(`plural suffix: -${affix}`);
-      } else if (this.config.pluralStyle === 'prefix') {
-        result = affix + result;
-        applied.push(`plural prefix: ${affix}-`);
-      }
-    }
-
-    // Apply tense
-    if (token.pos === 'verb' && token.tense) {
-      const tenseConfig = {
-        past: { style: this.config.pastTenseStyle, affix: this.config.pastTenseAffix },
-        present: { style: this.config.presentTenseStyle, affix: this.config.presentTenseAffix },
-        future: { style: this.config.futureTenseStyle, affix: this.config.futureTenseAffix },
-      }[token.tense];
-
-      if (tenseConfig && tenseConfig.style !== 'none' && tenseConfig.affix) {
-        const affix = tenseConfig.affix.replace(/^-/, '').replace(/-$/, '');
-        if (tenseConfig.style === 'suffix') {
-          result = result + affix;
-          applied.push(`${token.tense} tense suffix: -${affix}`);
-        } else if (tenseConfig.style === 'prefix') {
-          result = affix + result;
-          applied.push(`${token.tense} tense prefix: ${affix}-`);
-        }
-      }
-    }
-
-    // Apply possession
-    if (token.isPossessive) {
-      const affix = this.config.possessionAffix.replace(/^-/, '').replace(/-$/, '');
-      if (this.config.possessionStyle === 'suffix') {
-        result = result + affix;
-        applied.push(`possessive suffix: -${affix}`);
-      } else if (this.config.possessionStyle === 'prefix') {
-        result = affix + result;
-        applied.push(`possessive prefix: ${affix}-`);
-      }
-    }
-
-    // Apply negation
-    if (token.isNegated && this.config.negationStyle !== 'none') {
-      const affix = this.config.negationAffix.replace(/^-/, '').replace(/-$/, '');
-      if (this.config.negationStyle === 'suffix') {
-        result = result + affix;
-        applied.push(`negation suffix: -${affix}`);
-      } else if (this.config.negationStyle === 'prefix') {
-        result = affix + result;
-        applied.push(`negation prefix: ${affix}-`);
-      }
-    }
-
-    return { result, applied };
-  }
-
-  /**
-   * STEP 4: Reorder translated tokens according to the sentence order rule.
-   */
-  reorderSentence(translatedTokens: TranslatedToken[], parsedTokens: ParsedToken[]): TranslatedToken[] {
-    // Group tokens by role
-    const subjectTokens: TranslatedToken[] = [];
-    const verbTokens: TranslatedToken[] = [];
-    const objectTokens: TranslatedToken[] = [];
-    const otherTokens: TranslatedToken[] = [];
-
-    for (let i = 0; i < translatedTokens.length; i++) {
-      const parsed = parsedTokens[i];
-      const translated = translatedTokens[i];
-
-      if (!parsed || !translated) continue;
-
-      if (parsed.role === 'subject') subjectTokens.push(translated);
-      else if (parsed.role === 'verb') verbTokens.push(translated);
-      else if (parsed.role === 'object') objectTokens.push(translated);
-      else otherTokens.push(translated);
-    }
-
-    // Apply sentence order
-    const S = subjectTokens;
-    const V = verbTokens;
-    const O = objectTokens;
-
-    let ordered: TranslatedToken[];
-    switch (this.config.sentenceOrder) {
-      case 'SOV': ordered = [...S, ...O, ...V]; break;
-      case 'VSO': ordered = [...V, ...S, ...O]; break;
-      case 'VOS': ordered = [...V, ...O, ...S]; break;
-      case 'OVS': ordered = [...O, ...V, ...S]; break;
-      case 'OSV': ordered = [...O, ...S, ...V]; break;
-      case 'SVO': default: ordered = [...S, ...V, ...O]; break;
-    }
-
-    // Append other tokens (prepositions, conjunctions, etc.) at the end
-    return [...ordered, ...otherTokens];
-  }
-
-  /**
-   * STEP 5: The full translation pipeline.
-   * 
-   * Returns a TranslationResult. If there are missing words, 
-   * the caller is responsible for asking the AI to invent them
-   * and then calling translate() again.
-   */
-  translate(sentence: string, additionalWords?: DictionaryWord[]): TranslationResult {
-    // Register any additional words (e.g. freshly invented by AI)
+  public translate(sentence: string, additionalWords?: DictionaryWord[]): TranslationResult {
+    this.missingWordsSet.clear();
+    const tempDictionary = new Map(this.dictionary);
     if (additionalWords) {
-      for (const w of additionalWords) {
-        this.dictionary.set(w.translation.toLowerCase().trim(), w);
-      }
+      additionalWords.forEach(entry => {
+        const key = (entry.translation || '').toLowerCase().trim();
+        if (key) tempDictionary.set(key, entry);
+      });
     }
 
-    // Step 1: Parse English
-    const tokens = this.parseEnglish(sentence);
+    const doc = nlp(sentence);
+    // Split by clauses based on conjunctions and punctuation
+    // Compromise .clauses() can do this, but we'll do a simple split keeping conjunctions
+    const clauses: Phrase[][] = this.parseClauses(doc);
 
-    // Step 2: Dictionary lookup
-    const { found, missing } = this.lookupTokens(tokens);
+    let finalConlangTokens: string[] = [];
+    let literalBreakdown: string[] = [];
+    let tokensUsed: TranslatedToken[] = [];
 
-    // If words are missing, return early so the caller can ask AI
-    if (missing.length > 0) {
-      return {
-        translatedSentence: '',
-        literalBreakdown: '',
-        missingWords: missing,
-        tokensUsed: [],
-      };
-    }
+    for (const clause of clauses) {
+      // Reorder phrase
+      const reordered = this.reorderPhrases(clause);
 
-    // Step 3: Translate each token
-    const translatedTokens: TranslatedToken[] = [];
-    const literalParts: string[] = [];
-
-    for (const token of tokens) {
-      // Skip articles if the language doesn't use them
-      if (token.isArticle && !this.config.articles) {
-        continue;
-      }
-
-      const key = token.root.toLowerCase();
-      const dictEntry = found.get(key) || this.dictionary.get(key);
-
-      if (dictEntry) {
-        const { result, applied } = this.applyMorphology(dictEntry.word, token);
-        translatedTokens.push({
-          english: token.text,
-          conlang: result,
-          wasInDictionary: true,
-          morphologyApplied: applied,
+      for (const phrase of reordered) {
+        // Within phrase, handle adjective positions and morphology
+        const translatedPhrase = this.translatePhrase(phrase, tempDictionary);
+        
+        translatedPhrase.forEach(tp => {
+          finalConlangTokens.push(tp.conlangWithPunctuation);
+          literalBreakdown.push(tp.literal);
+          if (tp.tokenUsed) {
+            tokensUsed.push(tp.tokenUsed);
+          }
         });
-        literalParts.push(`${token.text}→${result}`);
-      } else if (token.isArticle || token.isPreposition || token.isConjunction) {
-        // Functional words: check dictionary, otherwise skip or transliterate
-        const funcEntry = this.dictionary.get(key);
-        if (funcEntry) {
-          translatedTokens.push({
-            english: token.text,
-            conlang: funcEntry.word,
-            wasInDictionary: true,
-            morphologyApplied: [],
-          });
-          literalParts.push(`${token.text}→${funcEntry.word}`);
-        }
-        // If not in dictionary, silently skip (functional words are optional in many conlangs)
       }
     }
 
-    // Step 4: Reorder
-    const reordered = this.reorderSentence(translatedTokens, tokens);
-
-    // Step 5: Build final sentence
-    const translatedSentence = reordered.map(t => t.conlang).join(' ');
-    const literalBreakdown = literalParts.join(' | ');
+    // Capitalize first letter of sentence and after ending punctuation
+    const translatedSentence = this.formatSentence(finalConlangTokens);
 
     return {
       translatedSentence,
-      literalBreakdown,
-      missingWords: [],
-      tokensUsed: reordered,
+      literalBreakdown: literalBreakdown.join(' '),
+      missingWords: Array.from(this.missingWordsSet),
+      tokensUsed
     };
+  }
+
+  private parseClauses(doc: any): Phrase[][] {
+    const rawTerms = doc.terms().json();
+    // Compromise v14 nests term data: each element has { text, terms: [{ text, normal, tags, pre, post }] }
+    // Flatten to get the actual term objects
+    const terms: any[] = [];
+    for (const wrapper of rawTerms) {
+      if (wrapper.terms && Array.isArray(wrapper.terms)) {
+        for (const t of wrapper.terms) {
+          terms.push(t);
+        }
+      } else {
+        // Fallback: treat the wrapper itself as a term
+        terms.push(wrapper);
+      }
+    }
+
+    let currentClause: ParsedToken[] = [];
+    const clauses: ParsedToken[][] = [];
+
+    for (let i = 0; i < terms.length; i++) {
+      const t = terms[i];
+      const text = t.text || '';
+      const normal = t.normal || text.toLowerCase();
+      const tags = new Set<string>(Array.isArray(t.tags) ? t.tags : []);
+      const prePunct = t.pre || '';
+      const postPunct = t.post || '';
+
+      const token: ParsedToken = { text, normal, tags, punctuationBefore: prePunct, punctuationAfter: postPunct };
+      
+      if (tags.has('Conjunction') && currentClause.length > 0) {
+        // Conjunction starts a new clause or sits between
+        clauses.push(currentClause);
+        currentClause = [token];
+      } else {
+        currentClause.push(token);
+        // If punctuation implies clause end
+        if (postPunct.includes(',') || postPunct.includes(';') || postPunct.includes('.') || postPunct.includes('!') || postPunct.includes('?')) {
+          if (i < terms.length - 1 && currentClause.length > 0) {
+             clauses.push(currentClause);
+             currentClause = [];
+          }
+        }
+      }
+    }
+    if (currentClause.length > 0) {
+      clauses.push(currentClause);
+    }
+
+    return clauses.map(c => this.chunkIntoPhrases(c));
+  }
+
+  private chunkIntoPhrases(clause: ParsedToken[]): Phrase[] {
+    const phrases: Phrase[] = [];
+    let currentPhrase: ParsedToken[] = [];
+    let currentType: 'NP' | 'VP' | 'PP' | 'CONJ' | 'OTHER' | null = null;
+
+    let hasSeenVerb = false;
+
+    const flush = (type: 'NP' | 'VP' | 'PP' | 'CONJ' | 'OTHER', role: 'subject' | 'object' | 'verb' | 'prep' | 'conj' | 'none') => {
+      if (currentPhrase.length > 0) {
+        phrases.push({ type, role, tokens: [...currentPhrase] });
+        currentPhrase = [];
+      }
+    };
+
+    for (let i = 0; i < clause.length; i++) {
+      const token = clause[i]!;
+      const tags = token.tags;
+
+      if (tags.has('Conjunction')) {
+        flush(currentType || 'OTHER', currentType === 'VP' ? 'verb' : 'none');
+        phrases.push({ type: 'CONJ', role: 'conj', tokens: [token] });
+        currentType = null;
+        continue;
+      }
+
+      if (tags.has('Preposition')) {
+        flush(currentType || 'OTHER', currentType === 'VP' ? 'verb' : (hasSeenVerb ? 'object' : 'subject'));
+        currentType = 'PP';
+        currentPhrase.push(token);
+        continue;
+      }
+
+      if (tags.has('Verb') || tags.has('Adverb') || tags.has('Auxiliary')) {
+        if (currentType !== 'VP') {
+           flush(currentType || 'OTHER', currentType === 'PP' ? 'prep' : (hasSeenVerb ? 'object' : 'subject'));
+           currentType = 'VP';
+        }
+        currentPhrase.push(token);
+        if (tags.has('Verb')) hasSeenVerb = true;
+        continue;
+      }
+
+      if (tags.has('Noun') || tags.has('Pronoun') || tags.has('Determiner') || tags.has('Adjective')) {
+        if (currentType !== 'NP' && currentType !== 'PP') {
+           flush(currentType || 'OTHER', currentType === 'VP' ? 'verb' : 'none');
+           currentType = 'NP';
+        }
+        currentPhrase.push(token);
+        continue;
+      }
+
+      // Other
+      if (currentType === null) currentType = 'OTHER';
+      currentPhrase.push(token);
+    }
+
+    if (currentPhrase.length > 0) {
+      let role: any = 'none';
+      if (currentType === 'VP') role = 'verb';
+      else if (currentType === 'PP') role = 'prep';
+      else if (currentType === 'NP') role = hasSeenVerb ? 'object' : 'subject';
+      flush(currentType || 'OTHER', role);
+    }
+
+    return phrases;
+  }
+
+  private reorderPhrases(phrases: Phrase[]): Phrase[] {
+    const subjects = phrases.filter(p => p.role === 'subject');
+    const objects = phrases.filter(p => p.role === 'object');
+    const verbs = phrases.filter(p => p.role === 'verb');
+    const others = phrases.filter(p => p.role !== 'subject' && p.role !== 'object' && p.role !== 'verb');
+
+    const order = this.config.sentenceOrder || 'SVO';
+    let reordered: Phrase[] = [];
+
+    // Simple implementation of SOV, SVO, etc.
+    const place = (char: string) => {
+      if (char === 'S') reordered.push(...subjects);
+      if (char === 'V') reordered.push(...verbs);
+      if (char === 'O') reordered.push(...objects);
+    };
+
+    if (order.includes('S') && order.includes('V') && order.includes('O')) {
+      for (const char of order) {
+        place(char);
+      }
+    } else {
+      reordered.push(...subjects, ...verbs, ...objects);
+    }
+
+    // Mix in others (Conjunctions at start usually, PPs at end)
+    const conjs = others.filter(p => p.type === 'CONJ');
+    const rest = others.filter(p => p.type !== 'CONJ');
+
+    return [...conjs, ...reordered, ...rest];
+  }
+
+  private translatePhrase(phrase: Phrase, dictionary: Map<string, DictionaryWord>): any[] {
+    let result: any[] = [];
+    const tokens = phrase.tokens;
+
+    // Phrase-level analysis
+    let mainNoun: ParsedToken | null = null;
+    
+    for (const t of tokens) {
+      if (t.tags.has('Noun') || t.tags.has('Pronoun')) mainNoun = t;
+    }
+
+    let subjectPerson = '3sg';
+    if (phrase.role === 'subject' && mainNoun) {
+      if (mainNoun.normal === 'i') subjectPerson = '1sg';
+      else if (mainNoun.normal === 'you') subjectPerson = '2sg';
+      else if (mainNoun.normal === 'we') subjectPerson = '1pl';
+      else if (mainNoun.normal === 'they') subjectPerson = '3pl';
+      else if (mainNoun.tags.has('Plural')) subjectPerson = '3pl';
+    }
+
+    // Adjective reordering
+    let adjectives: ParsedToken[] = [];
+    let determiners: ParsedToken[] = [];
+    let nouns: ParsedToken[] = [];
+    let restTokens: ParsedToken[] = [];
+
+    if (phrase.type === 'NP' || phrase.type === 'PP') {
+      tokens.forEach(t => {
+        if (t.tags.has('Adjective')) adjectives.push(t);
+        else if (t.tags.has('Determiner')) determiners.push(t);
+        else if (t.tags.has('Noun') || t.tags.has('Pronoun')) nouns.push(t);
+        else restTokens.push(t);
+      });
+    }
+
+    const reorderedTokens: ParsedToken[] = [];
+    if ((phrase.type === 'NP' || phrase.type === 'PP') && nouns.length > 0) {
+      reorderedTokens.push(...restTokens);
+      if (!this.config.articles) {
+        determiners = determiners.filter(d => !['the', 'a', 'an'].includes(d.normal));
+      }
+      reorderedTokens.push(...determiners);
+      if (this.config.adjectivePosition === 'after_noun') {
+        reorderedTokens.push(...nouns, ...adjectives);
+      } else {
+        reorderedTokens.push(...adjectives, ...nouns);
+      }
+    } else {
+      reorderedTokens.push(...tokens);
+    }
+
+    for (let i = 0; i < reorderedTokens.length; i++) {
+      const t = reorderedTokens[i]!;
+      let wordToLookUp = t.normal;
+
+      let dictEntry = dictionary.get(wordToLookUp);
+      let translatedWord = wordToLookUp;
+      let wasInDictionary = false;
+
+      if (dictEntry) {
+        translatedWord = dictEntry.word;
+        wasInDictionary = true;
+      } else {
+        // Stemming fallback
+        if (t.tags.has('Plural') && wordToLookUp.endsWith('s')) {
+          let singular = wordToLookUp.slice(0, -1);
+          dictEntry = dictionary.get(singular);
+          if (dictEntry) {
+            translatedWord = dictEntry.word;
+            wasInDictionary = true;
+          }
+        }
+        // Past tense fallback
+        if (t.tags.has('PastTense') && wordToLookUp.endsWith('ed')) {
+          let present = wordToLookUp.slice(0, -2);
+          dictEntry = dictionary.get(present);
+          if (!dictEntry) dictEntry = dictionary.get(present + 'e');
+          if (dictEntry) {
+            translatedWord = dictEntry.word;
+            wasInDictionary = true;
+          }
+        }
+
+        if (!wasInDictionary) {
+          // Check for functional words that should be logged
+          if (['Preposition', 'Conjunction', 'Pronoun', 'Modal'].some(tag => t.tags.has(tag)) || !this.isIgnorable(t)) {
+            this.missingWordsSet.add(wordToLookUp);
+          }
+          // Pass-through unrecognized words
+          translatedWord = wordToLookUp;
+        }
+      }
+
+      // Morphology
+      let morphsApplied: string[] = [];
+      let prefix = '';
+      let suffix = '';
+      let separateParticlesBefore: string[] = [];
+      let separateParticlesAfter: string[] = [];
+
+      // Noun Cases
+      if (this.config.nounCases?.enabled && (t.tags.has('Noun') || t.tags.has('Pronoun'))) {
+        if (phrase.role === 'subject') {
+          suffix += this.config.nounCases.nominative;
+          morphsApplied.push('nominative');
+        } else if (phrase.role === 'object') {
+          suffix += this.config.nounCases.accusative;
+          morphsApplied.push('accusative');
+        } else if (phrase.role === 'prep') { // Approximating locative for PP objects
+          suffix += this.config.nounCases.locative;
+          morphsApplied.push('locative');
+        }
+      }
+
+      // Plural
+      if (t.tags.has('Plural') && !t.tags.has('Pronoun')) { // Avoid double-pluralizing pronouns if not intended
+        this.applyAffix(this.config.pluralStyle, this.config.pluralAffix, 
+          (p) => prefix = p + prefix, (s) => suffix += s, 
+          (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+        morphsApplied.push('plural');
+      }
+
+      // Verb Conjugation and Aspect
+      if (t.tags.has('Verb') && !t.tags.has('Auxiliary')) {
+        // Conjugation
+        if (this.config.verbConjugation?.enabled) {
+          let conj = '';
+          switch (subjectPerson) {
+            case '1sg': conj = this.config.verbConjugation.firstSingular; break;
+            case '2sg': conj = this.config.verbConjugation.secondSingular; break;
+            case '3sg': conj = this.config.verbConjugation.thirdSingular; break;
+            case '1pl': conj = this.config.verbConjugation.firstPlural; break;
+            case '3pl': conj = this.config.verbConjugation.thirdPlural; break;
+          }
+          suffix += conj;
+          morphsApplied.push('conjugation');
+        }
+
+        // Tense/Aspect
+        if (t.tags.has('PastTense')) {
+          this.applyAffix(this.config.pastTenseStyle, this.config.pastTenseAffix,
+             (p) => prefix = p + prefix, (s) => suffix += s,
+             (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+          morphsApplied.push('past');
+          
+          if (this.config.verbAspect?.enabled) {
+            this.applyAffix(this.config.verbAspect.perfectiveStyle as any, this.config.verbAspect.perfectiveAffix,
+              (p) => prefix = p + prefix, (s) => suffix += s,
+              (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+            morphsApplied.push('perfective');
+          }
+        } else if (t.tags.has('PresentTense')) {
+          this.applyAffix(this.config.presentTenseStyle, this.config.presentTenseAffix,
+             (p) => prefix = p + prefix, (s) => suffix += s,
+             (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+          morphsApplied.push('present');
+        } else if (t.tags.has('Gerund')) { // continuous
+          if (this.config.verbAspect?.enabled) {
+            this.applyAffix(this.config.verbAspect.imperfectiveStyle as any, this.config.verbAspect.imperfectiveAffix,
+              (p) => prefix = p + prefix, (s) => suffix += s,
+              (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+            morphsApplied.push('imperfective');
+          }
+        }
+
+        // Mood
+        if (this.config.verbMood?.enabled) {
+          // Heuristics for mood
+          if (phrase.role === 'verb' && !phrase.tokens.some(pt => pt.tags.has('Subject'))) {
+             // Imperative heuristic
+             this.applyAffix(this.config.verbMood.imperativeStyle as any, this.config.verbMood.imperativeAffix,
+              (p) => prefix = p + prefix, (s) => suffix += s,
+              (p) => separateParticlesBefore.push(p), (p) => separateParticlesAfter.push(p));
+             morphsApplied.push('imperative');
+          }
+        }
+      }
+
+      const finalWord = `${prefix}${translatedWord}${suffix}`;
+      
+      let outTokens = [];
+      if (separateParticlesBefore.length > 0) outTokens.push(...separateParticlesBefore);
+      outTokens.push(finalWord);
+      if (separateParticlesAfter.length > 0) outTokens.push(...separateParticlesAfter);
+
+      let conlangStr = outTokens.join(' ');
+      
+      const conlangWithPunctuation = `${t.punctuationBefore}${conlangStr}${t.punctuationAfter}`;
+      
+      result.push({
+        conlangWithPunctuation,
+        literal: `${t.text}[${finalWord}]`,
+        tokenUsed: {
+          english: t.text,
+          conlang: conlangStr,
+          wasInDictionary,
+          morphologyApplied: morphsApplied
+        }
+      });
+    }
+
+    return result;
+  }
+
+  private isIgnorable(t: ParsedToken): boolean {
+    if (t.tags.has('Punctuation')) return true;
+    if (['a', 'an', 'the'].includes(t.normal) && !this.config.articles) return true;
+    return false;
+  }
+
+  private applyAffix(style: string, affix: string, addPrefix: (s:string)=>void, addSuffix: (s:string)=>void, addSepBefore: (s:string)=>void, _addSepAfter: (s:string)=>void) {
+    if (!affix) return;
+    switch(style) {
+      case 'prefix': addPrefix(affix); break;
+      case 'suffix': addSuffix(affix); break;
+      case 'separate_particle': addSepBefore(affix); break; // Defaulting to before for particles, can be enhanced
+    }
+  }
+
+  private formatSentence(tokens: string[]): string {
+    let result = '';
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i]!;
+      if (i > 0 && !t.match(/^[.,!?;:]/)) {
+        // Only add space if previous didn't end with spacing punctuation, though compromise pre/post mostly handles it.
+        // Actually compromise's postPunct often includes the space.
+        // Let's just concatenate them as pre/post has spaces if they were in the original string.
+      }
+      result += t;
+    }
+    // Clean up multiple spaces and capitalize
+    result = result.replace(/\s+/g, ' ').trim();
+    if (result.length > 0) {
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+    }
+    return result;
   }
 }

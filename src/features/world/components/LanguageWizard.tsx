@@ -75,7 +75,9 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.syllableStructures = ['CV', 'CVC', 'V', 'VC'];
         newConfig.pluralAffix = '-ri';
         newConfig.pastTenseAffix = 'na-';
+        newConfig.pastTenseStyle = 'prefix';
         newConfig.futureTenseAffix = 'el-';
+        newConfig.futureTenseStyle = 'prefix';
         newConfig.allowedOnsets = ['l', 'r', 'th', 'fl', 'gl', 'sl', 'n', 'v', 'f'];
         newConfig.allowedCodas = ['n', 'l', 'r', 'th', 's'];
         newConfig.phonemeWeights = { 'l': 4, 'r': 3, 'th': 3, 's': 2, 'a': 3, 'e': 4, 'i': 3, 'ae': 2, 'ea': 2 };
@@ -83,21 +85,33 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.derivationalAffixes = { place: '-dor', agent: '-iel', adjective: '-wen', abstractNoun: '-ath', diminutive: '-il', augmentative: '-nor' };
         newConfig.soundChangeRules = [{ pattern: 'll', replacement: 'l' }, { pattern: 'nn', replacement: 'n' }, { pattern: 'thth', replacement: 'th' }];
         newConfig.sonorityStrictness = 'strict';
+        // V3: Deep morphology — elegant elvish inflection
+        newConfig.nounCases = { enabled: true, nominative: '', accusative: '-en', genitive: '-va', dative: '-ar', locative: '-il' };
+        newConfig.verbConjugation = { enabled: true, firstSingular: '-ni', secondSingular: '-li', thirdSingular: '-se', firstPlural: '-nir', secondPlural: '-lir', thirdPlural: '-sir' };
+        newConfig.verbMood = { enabled: true, imperativeAffix: '-a', imperativeStyle: 'suffix', subjunctiveAffix: 'ae-', subjunctiveStyle: 'prefix' };
+        newConfig.verbAspect = { enabled: true, perfectiveAffix: '-eth', perfectiveStyle: 'suffix', imperfectiveAffix: '-iel', imperfectiveStyle: 'suffix' };
         setSpeakers('High Elves');
         break;
       case 'orcish':
         newConfig.vowels = ['a', 'u', 'o'];
         newConfig.consonants = ['k', 'g', 'r', 't', 'd', 'z', 'gh', 'kh'];
         newConfig.syllableStructures = ['CVC', 'CCVC', 'CVCC'];
+        newConfig.sentenceOrder = 'SOV';
         newConfig.pluralAffix = '-hai';
         newConfig.pastTenseAffix = '-ug';
         newConfig.futureTenseAffix = 'g-';
+        newConfig.futureTenseStyle = 'prefix';
         newConfig.allowedOnsets = ['k', 'kr', 'gr', 'dr', 'zg', 'gh', 'g', 'r', 't', 'd', 'z'];
         newConfig.allowedCodas = ['k', 'g', 'rk', 'zg', 'r', 'gh'];
         newConfig.phonemeWeights = { 'k': 4, 'g': 3, 'r': 3, 'z': 2, 'gh': 2, 'a': 3, 'u': 3, 'o': 2 };
         newConfig.derivationalAffixes = { place: '-goth', agent: '-hai', adjective: '-ug', abstractNoun: '-arz', diminutive: '-ik', augmentative: '-thrak' };
         newConfig.soundChangeRules = [{ pattern: 'kk', replacement: 'k' }, { pattern: 'gg', replacement: 'gh' }];
         newConfig.sonorityStrictness = 'relaxed';
+        newConfig.articles = false;
+        // V3: Harsh orcish morphology — agglutinative with cases
+        newConfig.nounCases = { enabled: true, nominative: '', accusative: '-uk', genitive: '-az', dative: '-gor', locative: '-goth' };
+        newConfig.verbConjugation = { enabled: true, firstSingular: '-agh', secondSingular: '-urg', thirdSingular: '-ok', firstPlural: '-aght', secondPlural: '-urgt', thirdPlural: '-okt' };
+        newConfig.verbMood = { enabled: true, imperativeAffix: '-kra', imperativeStyle: 'suffix', subjunctiveAffix: 'zul-', subjunctiveStyle: 'prefix' };
         setSpeakers('Orc Clans');
         break;
       case 'semitic':
@@ -106,6 +120,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.syllableStructures = ['CVC', 'CV'];
         newConfig.pluralAffix = '-im';
         newConfig.pastTenseAffix = 'ya-';
+        newConfig.pastTenseStyle = 'prefix';
         newConfig.allowedOnsets = ['q', 'k', 'sh', 'm', 'n', 'l', 't', 's', 'h'];
         newConfig.allowedCodas = ['m', 'n', 'l', 'sh', 'q', 's'];
         newConfig.phonemeWeights = { 'q': 3, 'sh': 3, 'm': 2, 'a': 4, 'i': 3, 'u': 2 };
@@ -113,6 +128,9 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.derivationalAffixes = { place: '-stan', agent: '-im', adjective: '-i', abstractNoun: '-iya', diminutive: '-el', augmentative: '-akh' };
         newConfig.soundChangeRules = [{ pattern: 'hh', replacement: 'h' }];
         newConfig.sonorityStrictness = 'strict';
+        // V3: Semitic-style conjugation
+        newConfig.nounCases = { enabled: true, nominative: '-u', accusative: '-a', genitive: '-i', dative: '-am', locative: '-in' };
+        newConfig.verbConjugation = { enabled: true, firstSingular: '-tu', secondSingular: '-ta', thirdSingular: '-a', firstPlural: '-na', secondPlural: '-tum', thirdPlural: '-u' };
         setSpeakers('Ancient Priests');
         break;
       case 'scifi':
@@ -125,7 +143,9 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.phonemeWeights = { 'x': 4, 'z': 3, 'v': 3, 'k': 2, 'e': 3, 'i': 3, 'y': 2 };
         newConfig.derivationalAffixes = { place: '-xar', agent: '-vex', adjective: '-ik', abstractNoun: '-zyn', diminutive: '-ip', augmentative: '-thex' };
         newConfig.soundChangeRules = [{ pattern: 'xx', replacement: 'x' }, { pattern: 'zz', replacement: 'z' }];
-        newConfig.sonorityStrictness = 'none'; // Alien languages don't need to follow human rules
+        newConfig.sonorityStrictness = 'none';
+        // V3: Precise alien inflection
+        newConfig.verbConjugation = { enabled: true, firstSingular: '-ix', secondSingular: '-ex', thirdSingular: '-vx', firstPlural: '-ixe', secondPlural: '-exe', thirdPlural: '-vxe' };
         setSpeakers('Constructs');
         break;
       case 'trade':
@@ -138,6 +158,7 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         newConfig.phonemeWeights = { 't': 3, 's': 3, 'l': 2, 'a': 3, 'e': 3, 'o': 2 };
         newConfig.derivationalAffixes = { place: '-ton', agent: '-er', adjective: '-al', abstractNoun: '-ade', diminutive: '-et', augmentative: '-orn' };
         newConfig.sonorityStrictness = 'strict';
+        // Trade cant is simple — no cases, no conjugation
         setSpeakers('Merchants');
         break;
     }
@@ -171,19 +192,32 @@ export function LanguageWizard({ language, onComplete }: LanguageWizardProps) {
         native_speakers: speakers,
       });
 
-      // Basic starter vocabulary to seed the dictionary
-      const starterWords = ['hello', 'goodbye', 'yes', 'no', 'I', 'you'];
+      // Procedural Dictionary Seeding (V2 — with word classes and POS tagging)
+      const { getSeedVocabularyV2 } = await import('../engine/CulturalVocabLists');
+      const seedWords = getSeedVocabularyV2(selectedPreset);
       const dictMap = new Map<string, string>();
-      for (const word of starterWords) {
-        // Just mock generate some words
-        const conlangWord = await import('../engine/LanguageGenerator').then(m => m.LanguageGenerator.generateWord(word, config, language.id, dictMap));
+
+      // Pre-load existing dictionary for re-forge deduplication
+      const existingEntries = await languageService.listDictionaryEntries(db, language.id);
+      const existingTranslations = new Set(existingEntries.map(e => e.translation.toLowerCase().trim()));
+      for (const e of existingEntries) {
+        dictMap.set(e.translation.toLowerCase().trim(), e.word);
+      }
+
+      for (const seed of seedWords) {
+        // Skip words that already exist in the dictionary (re-forge dedup)
+        if (existingTranslations.has(seed.word.toLowerCase())) continue;
+
+        const conlangWord = await import('../engine/LanguageGenerator').then(m =>
+          m.LanguageGenerator.generateWord(seed.word, config, language.id, dictMap, seed.wordClass)
+        );
         await languageService.createDictionaryEntry(db, language.id, {
           word: conlangWord,
-          translation: word,
-          part_of_speech: '',
+          translation: seed.word,
+          part_of_speech: seed.partOfSpeech,
           pronunciation: '',
         });
-        dictMap.set(word, conlangWord);
+        dictMap.set(seed.word.toLowerCase(), conlangWord);
       }
 
       onComplete();

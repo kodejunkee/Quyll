@@ -258,20 +258,47 @@
   border-color: var(--color-primary);
 }
 
+.language-translator__history-content {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  align-items: center;
+}
+
 .language-translator__history-input {
   color: var(--color-text-secondary);
   flex: 1;
 }
 
 .language-translator__history-output {
+  color: var(--color-primary);
   font-weight: 600;
-  color: var(--color-text);
   flex: 1;
 }
 
+.language-translator__history-breakdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.language-translator__history-breakdown-btn:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
 .language-translator__history-empty {
-  padding: 24px;
   text-align: center;
+  padding: 40px 0;
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }

@@ -378,6 +378,7 @@ CREATE TABLE IF NOT EXISTS projects (
   description    TEXT NOT NULL DEFAULT '',
   author         TEXT NOT NULL DEFAULT '',
   genre          TEXT NOT NULL DEFAULT '',
+  cover_image    TEXT,
   last_opened_at TEXT,
   deleted_at     TEXT,
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
@@ -395,4 +396,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 12;
+export const CURRENT_SCHEMA_VERSION = 15;

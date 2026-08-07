@@ -196,6 +196,7 @@ export default function ChaptersPage() {
   // Grammar check
   const [grammarModalOpen, setGrammarModalOpen] = useState(false);
   const [grammarIssues, setGrammarIssues] = useState<GrammarIssue[]>([]);
+  const [hasScannedGrammar, setHasScannedGrammar] = useState(false);
   const [isGrammarSelection, setIsGrammarSelection] = useState(false);
 
   // Autosave
@@ -422,6 +423,8 @@ export default function ChaptersPage() {
     if (urlChapterId) {
       if (urlChapterId !== activeChapterId) {
         setActiveChapterId(urlChapterId);
+        setHasScannedGrammar(false);
+        setGrammarIssues([]);
         // Do not clear activeChapter here, so the editor remains mounted and seamlessly transitions content
         void loadChapter(urlChapterId);
       } else if (!activeChapter) {
@@ -432,6 +435,8 @@ export default function ChaptersPage() {
       if (isDirectoryRoute && activeChapterId) {
         setActiveChapterId(null);
         setActiveChapter(null);
+        setHasScannedGrammar(false);
+        setGrammarIssues([]);
       }
     }
   }, [urlChapterId, activeChapterId, activeChapter, loadChapter, location.pathname]);
@@ -631,6 +636,7 @@ export default function ChaptersPage() {
       setGrammarIssues(found);
       setIsGrammarSelection(isSelectionCheck);
       setIsCheckingGrammar(false);
+      setHasScannedGrammar(true);
       
       const { chapterListCollapsed, setChapterListCollapsed } = useLayoutStore.getState();
       if (chapterListCollapsed) {
@@ -817,6 +823,9 @@ export default function ChaptersPage() {
           }}
           grammarIssues={grammarIssues}
           isGrammarSelection={isGrammarSelection}
+          hasScannedGrammar={hasScannedGrammar}
+          isCheckingGrammar={isCheckingGrammar}
+          onGrammarCheck={activeChapter ? handleOpenGrammarCheck : undefined}
           onApplyGrammarSuggestion={handleApplyGrammarSuggestion}
           onLocateGrammarIssue={handleLocateGrammarIssue}
           onDismissGrammarIssue={handleDismissGrammarIssue}
@@ -831,8 +840,6 @@ export default function ChaptersPage() {
         readingTime={readingTime}
         saveStatus={activeChapter ? saveStatus : 'saved'}
         lastSavedAt={lastSavedAt}
-        onGrammarCheck={activeChapter ? handleOpenGrammarCheck : undefined}
-        isCheckingGrammar={isCheckingGrammar}
       />
 
       {/* Draft recovery dialog */}

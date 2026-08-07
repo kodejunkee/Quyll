@@ -133,6 +133,7 @@ export interface QuyllExportData {
   languages?: Language[];
   languageDictionary?: LanguageDictionaryEntry[];
   languageTranslations?: LanguageTranslationHistory[];
+  projectCoverBase64?: string;
 }
 
 export async function buildQuyllExport(
@@ -140,6 +141,9 @@ export async function buildQuyllExport(
   projectId: string,
   projectName: string
 ): Promise<string> {
+  const { getProject } = await import('@/database');
+  const projectInfo = await getProject(projectId);
+
   const chapters = await select<Chapter>(db, 'SELECT * FROM chapters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const characters = await select<Character>(db, 'SELECT * FROM characters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const lore = await select<LoreEntry>(db, 'SELECT * FROM lore WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
@@ -187,6 +191,22 @@ export async function buildQuyllExport(
     }
   }
 
+  let projectCoverBase64: string | undefined = undefined;
+  if (projectInfo?.cover_image) {
+    try {
+      const fullPath = await join(appData, projectInfo.cover_image);
+      const buffer = await readFile(fullPath);
+      let binary = '';
+      const len = buffer.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(buffer[i]!);
+      }
+      projectCoverBase64 = btoa(binary);
+    } catch (e) {
+      console.error('Failed to encode project cover image', e);
+    }
+  }
+
   const data: QuyllExportData = {
     projectName,
     version: 1,
@@ -212,6 +232,7 @@ export async function buildQuyllExport(
     languages,
     languageDictionary,
     languageTranslations,
+    projectCoverBase64,
   };
   return JSON.stringify(data);
 }

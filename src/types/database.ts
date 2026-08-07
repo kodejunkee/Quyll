@@ -22,6 +22,7 @@ export interface Project {
   readonly description: string;
   readonly author: string;
   readonly genre: string;
+  readonly cover_image: string | null;
   readonly last_opened_at: Timestamp | null;
   readonly created_at: Timestamp;
   readonly updated_at: Timestamp;
