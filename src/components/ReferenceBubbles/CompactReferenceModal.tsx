@@ -8,8 +8,7 @@ import {
   Globe, 
   ScrollText, 
   Clock, 
-  Maximize2,
-  Languages 
+  Maximize2
 } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
@@ -39,7 +38,6 @@ const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
   world_system: { icon: Globe, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
   timeline_event: { icon: Clock, colorKey: 'timeline_event' },
-  language: { icon: Languages, colorKey: 'language' },
 };
 
 export function CompactReferenceModal({

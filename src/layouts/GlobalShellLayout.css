@@ -1,0 +1,159 @@
+.global-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.global-top-bar {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  background-color: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Left: Brand */
+.global-top-bar__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 100%;
+  cursor: pointer;
+  color: #E2E8F0;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  margin-right: 16px;
+  transition: all 0.2s ease;
+}
+
+.global-top-bar__brand:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.global-top-bar__logo {
+  color: #A855F7; /* Accent color */
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
+}
+
+/* Center: Tabs */
+.global-top-bar__tabs {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  gap: 8px;
+  /* Allow dragging anywhere in this empty area */
+  -webkit-app-region: drag;
+}
+
+.global-tab {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  background-color: transparent;
+  color: #94A3B8;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag; /* Buttons shouldn't drag */
+}
+
+.global-tab:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #E2E8F0;
+}
+
+.global-tab.active {
+  background-color: #1E1E24;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.global-tab-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #94A3B8;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+.global-tab-new:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+/* Right: Actions */
+.global-top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.global-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: transparent;
+  color: #94A3B8;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+.global-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.global-window-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 32px;
+  background-color: transparent;
+  color: #94A3B8;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+.global-window-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+/* Main Area */
+.global-shell__main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}

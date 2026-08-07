@@ -8,13 +8,11 @@ import {
   Edit2,
   Trash2,
   Search,
-  Settings,
   BookOpen,
   Clock,
   ArrowRight,
   LayoutGrid,
   List,
-  Lightbulb,
   Compass,
   CircleDot,
   Flame,
@@ -22,11 +20,9 @@ import {
   Sparkles,
   ArrowUpDown,
   Check,
-  Download,
   Image as ImageIcon,
 } from 'lucide-react';
-import { Button, Modal, Input, TextArea, Dialog, Dropdown, ThemeToggle } from '@/components';
-import { GlobalSettingsModal } from '@/features/settings';
+import { Button, Modal, Input, TextArea, Dialog, Dropdown } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import {
   initAppDatabase,
@@ -47,7 +43,7 @@ import { select } from '@/database/databaseService';
 import { formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import { generateId } from '@/utils/uuid';
 import { pickAndImportQuyllProject } from '@/services/importService';
-import { Clock as ClockIcon } from 'lucide-react';
+// Removed unused ClockIcon import
 import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import './HomePage.css';
@@ -153,6 +149,7 @@ export default function HomePage() {
   const { projects, setProjects, deletedProjects } = useProjectStore();
   const [statsMap, setStatsMap] = useState<Record<string, ProjectStats>>({});
   const [searchQuery, setSearchQuery] = useState('');
+
   const [viewTab, setViewTab] = useState<'active' | 'trash'>('active');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('quyll_home_view_mode') as 'grid' | 'list') || 'grid';
@@ -202,8 +199,6 @@ export default function HomePage() {
   const [newGenre, setNewGenre] = useState('');
   const [isOtherGenre, setIsOtherGenre] = useState(false);
   const [renameName, setRenameName] = useState('');
-
-  // Track which project's action menu is open
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const fetchProjectStats = useCallback(async (projectList: typeof projects) => {
@@ -221,7 +216,6 @@ export default function HomePage() {
           wordCount: rows[0]?.w ?? 0,
         };
       } catch (err) {
-        // Fallback stats if project db is inaccessible
         map[p.id] = { chapterCount: 0, wordCount: 0 };
       }
     }
@@ -274,7 +268,6 @@ export default function HomePage() {
     void loadProjects();
   }, [loadProjects]);
 
-  // Listen for Ctrl+K to focus search input, Ctrl+N to create new project
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -312,14 +305,6 @@ export default function HomePage() {
     const titleInput = document.getElementById('new-project-title-input');
     if (titleInput) titleInput.focus();
   }
-
-  const handleImportProject = async () => {
-    const importedProjectId = await pickAndImportQuyllProject();
-    if (importedProjectId) {
-      // Reload projects to show the new one
-      await loadProjects();
-    }
-  };
 
   async function handleCreate() {
     if (!newTitle.trim()) return;
@@ -439,221 +424,131 @@ export default function HomePage() {
     return sortOrder === 'asc' ? comp : -comp;
   });
 
-  const heroProject = [...projects].sort((a, b) => {
+  const recentProjects = [...projects].sort((a, b) => {
     const timeA = new Date(a.last_opened_at || a.updated_at || a.created_at || 0).getTime();
     const timeB = new Date(b.last_opened_at || b.updated_at || b.created_at || 0).getTime();
     return timeB - timeA;
-  })[0];
-  const heroStats = heroProject
-    ? statsMap[heroProject.id] ?? { chapterCount: 0, wordCount: 0 }
-    : { chapterCount: 0, wordCount: 0 };
-  const heroTheme = heroProject ? getBookTheme(0, heroProject.genre) : BOOK_COVER_THEMES[0]!;
-  const HeroIcon = heroTheme.icon;
+  }).slice(0, 5);
 
   return (
     <div className="home-page">
       <div className="home-page__container">
-        {/* Top Header / Navigation Bar */}
-        <header className="home-nav">
-          <div className="home-nav__left">
-            <h1 className="home-nav__brand">Quyll</h1>
-            <p className="home-nav__subtitle">Professional Writing Workspace</p>
+        {/* Top Search Section */}
+        <section className="home-search-section">
+          <div className="home-search-bar">
+            <Search size={18} className="home-search-icon" />
+            <input
+              id="home-search-input"
+              type="text"
+              placeholder="Search your projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="home-search-input"
+            />
+            <kbd className="home-search-kbd">Ctrl K</kbd>
           </div>
+        </section>
 
-          <div className="home-nav__right">
-            <div className="home-nav__top-actions">
-              <div className="home-nav__search-box">
-                <Search size={15} className="home-nav__search-icon" />
-                <input
-                  id="home-search-input"
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="home-nav__search-input"
-                />
-                <kbd className="home-nav__kbd">Ctrl + K</kbd>
-              </div>
-
-              <ThemeToggle />
-              <button
-                className="home-nav__icon-btn"
-                onClick={() => setSettingsOpen(true)}
-                title="Settings"
-                type="button"
+        {/* Recent Projects */}
+        {!searchQuery && (
+          <section className="home-section">
+            <h3 className="home-section__title">Recent Projects</h3>
+            <div className="home-recent-row">
+              {/* Create New Project Card */}
+              <div
+                className="home-project-card create-new"
+                onClick={openCreateDialog}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && openCreateDialog()}
               >
-                <Settings size={18} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <button 
-                className="home-nav__new-btn" 
-                onClick={handleImportProject} 
-                type="button" 
-                style={{ background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
-              >
-                <Download size={16} />
-                <span>Import Project</span>
-              </button>
-              <button className="home-nav__new-btn" onClick={openCreateDialog} type="button">
-                <Plus size={16} />
-                <span>New Project</span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Tabs */}
-        <div className="home-tabs-container">
-          <button 
-            className={`home-tab ${viewTab === 'active' ? 'active' : ''}`}
-            onClick={() => setViewTab('active')}
-            type="button"
-          >
-            <FolderOpen size={16} />
-            <span>Projects</span>
-          </button>
-          <button 
-            className={`home-tab home-tab--trash ${viewTab === 'trash' ? 'active' : ''}`}
-            onClick={() => setViewTab('trash')}
-            type="button"
-          >
-            <Trash2 size={16} />
-            <span>Trash</span>
-          </button>
-        </div>
-
-        {/* Hero Section: Continue Writing Card */}
-        {heroProject && !searchQuery && viewTab === 'active' && (
-          <section className="home-hero">
-            <div className="home-hero__card">
-              <div className="home-hero__label">
-                <Feather size={14} className="home-hero__label-icon" />
-                <span>Continue Writing</span>
+                <div className="create-new__icon">
+                  <Plus size={32} />
+                </div>
+                <span className="create-new__text">Start a new project</span>
               </div>
 
-              <div className="home-hero__body">
-                <div className="home-hero__book-wrapper">
-                  <div className="hero-book-cover" style={{ background: heroTheme.gradient }}>
-                    <div className="hero-book-cover__spine" />
-                    <div className="hero-book-cover__emblem">
-                      <HeroIcon size={26} />
+              {recentProjects.map((project, idx) => {
+                const theme = getBookTheme(idx, project.genre);
+                
+                return (
+                  <div
+                    key={project.id}
+                    className="home-project-card recent-card"
+                    onClick={() => openProject(project.id)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="recent-card__cover" style={{ background: theme.gradient }}>
+                      {project.cover_image && (
+                        <img 
+                          src={convertFileSrc(project.cover_image)} 
+                          alt="" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                      )}
+                    </div>
+                    <div className="recent-card__info">
+                      <h4 className="recent-card__title">{project.name}</h4>
+                      <p className="recent-card__time">
+                        {project.last_opened_at ? formatTimeAgo(project.last_opened_at) : 'Not opened yet'}
+                      </p>
+                    </div>
+                    <div className="recent-card__overlay">
+                      <button className="recent-card__continue" onClick={(e) => { e.stopPropagation(); openProject(project.id); }}>
+                        Continue <ArrowRight size={14} />
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                <div className="home-hero__info">
-                  <h2 className="home-hero__title" onClick={() => openProject(heroProject.id)}>
-                    {heroProject.name}
-                  </h2>
-                  <p className="home-hero__excerpt">
-                    {heroProject.description && heroProject.description.trim()
-                      ? heroProject.description
-                      : 'No description specified'}
-                  </p>
-                </div>
-
-                <div className="home-hero__stats">
-                  <div className="home-hero__stat">
-                    <BookOpen size={16} className="home-hero__stat-icon" />
-                    <div className="home-hero__stat-text">
-                      <span className="home-hero__stat-val">{heroStats.chapterCount}</span>
-                      <span className="home-hero__stat-lbl">
-                        {heroStats.chapterCount === 1 ? 'Chapter' : 'Chapters'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="home-hero__stat">
-                    <Feather size={16} className="home-hero__stat-icon" />
-                    <div className="home-hero__stat-text">
-                      <span className="home-hero__stat-val">{heroStats.wordCount.toLocaleString()}</span>
-                      <span className="home-hero__stat-lbl">Words</span>
-                    </div>
-                  </div>
-
-                  <div className="home-hero__stat">
-                    <Clock size={16} className="home-hero__stat-icon" />
-                    <div className="home-hero__stat-text">
-                      <span className="home-hero__stat-val">
-                        {heroProject.last_opened_at ? formatTimeAgo(heroProject.last_opened_at) : 'Not opened yet'}
-                      </span>
-                      <span className="home-hero__stat-lbl">Last opened</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="home-hero__action">
-                  <button className="home-hero__continue-btn" onClick={() => openProject(heroProject.id)} type="button">
-                    <span>Continue</span>
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* Section: Recent Projects */}
+        {/* All Projects */}
         <section className="home-section">
           <div className="home-section__header">
-            <h3 className="home-section__title">
-              {viewTab === 'trash' ? 'Deleted Projects' : 'All Projects'}
-            </h3>
+            <h3 className="home-section__title">All Projects</h3>
             <div className="home-section__controls">
-              {viewTab === 'active' ? (
-                <div className="home-section__sort-wrap" ref={sortMenuRef}>
-                  <button
-                    className={`home-section__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
-                    onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                    title="Sort projects"
-                    type="button"
-                  >
-                    <ArrowUpDown size={14} />
-                    <span>Sort</span>
-                  </button>
-                  <div className={`home-section__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
-                    {[
-                      { label: 'Last Edited (Newest)', field: 'opened' as const, order: 'desc' as const },
-                      { label: 'Last Edited (Oldest)', field: 'opened' as const, order: 'asc' as const },
-                      { label: 'Date Created (Newest)', field: 'date' as const, order: 'desc' as const },
-                      { label: 'Date Created (Oldest)', field: 'date' as const, order: 'asc' as const },
-                      { label: 'Name (A - Z)', field: 'name' as const, order: 'asc' as const },
-                      { label: 'Name (Z - A)', field: 'name' as const, order: 'desc' as const },
-                    ].map((opt) => {
-                      const active = sortField === opt.field && sortOrder === opt.order;
-                      return (
-                        <button
-                          key={`${opt.field}-${opt.order}`}
-                          className={`home-section__sort-item ${active ? 'active' : ''}`}
-                          onClick={() => {
-                            setSortField(opt.field);
-                            setSortOrder(opt.order);
-                            setIsSortMenuOpen(false);
-                          }}
-                          type="button"
-                        >
-                          <span>{opt.label}</span>
-                          {active && <Check size={14} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
+              <div className="home-section__sort-wrap" ref={sortMenuRef}>
                 <button
-                  className="home-section__sort-btn home-tab--trash"
-                  onClick={() => setDeleteTarget({ id: 'empty_trash', name: 'All Trash' })}
-                  title="Empty Trash"
+                  className={`home-section__sort-btn ${isSortMenuOpen ? 'active' : ''}`}
+                  onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                  title="Sort projects"
                   type="button"
-                  disabled={deletedProjects.length === 0}
-                  style={{ opacity: deletedProjects.length === 0 ? 0.5 : 1, borderColor: 'transparent' }}
                 >
-                  <Trash2 size={14} />
-                  <span>Empty Trash</span>
+                  <ArrowUpDown size={14} />
+                  <span>Sort</span>
                 </button>
-              )}
+                <div className={`home-section__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
+                  {[
+                    { label: 'Last Edited (Newest)', field: 'opened' as const, order: 'desc' as const },
+                    { label: 'Last Edited (Oldest)', field: 'opened' as const, order: 'asc' as const },
+                    { label: 'Date Created (Newest)', field: 'date' as const, order: 'desc' as const },
+                    { label: 'Date Created (Oldest)', field: 'date' as const, order: 'asc' as const },
+                    { label: 'Name (A - Z)', field: 'name' as const, order: 'asc' as const },
+                    { label: 'Name (Z - A)', field: 'name' as const, order: 'desc' as const },
+                  ].map((opt) => {
+                    const active = sortField === opt.field && sortOrder === opt.order;
+                    return (
+                      <button
+                        key={`${opt.field}-${opt.order}`}
+                        className={`home-section__sort-item ${active ? 'active' : ''}`}
+                        onClick={() => {
+                          setSortField(opt.field);
+                          setSortOrder(opt.order);
+                          setIsSortMenuOpen(false);
+                        }}
+                        type="button"
+                      >
+                        <span>{opt.label}</span>
+                        {active && <Check size={14} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="home-section__view-toggles">
                 <button
@@ -676,33 +571,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          {viewTab === 'trash' && (
-            <div className="home-trash-view">
-              <p className="home-trash-notice">
-                Projects in the trash are automatically deleted after 60 days.
-              </p>
-            </div>
-          )}
-
           {sortedProjects.length === 0 ? (
             <div className="home-empty">
               <FolderOpen size={48} className="home-empty__icon" />
               <h4 className="home-empty__title">
-                {viewTab === 'trash' ? 'Trash is empty' : (searchQuery ? 'No matching projects found' : 'Create your first world')}
+                {searchQuery ? 'No matching projects found' : 'Create your first world'}
               </h4>
               <p className="home-empty__desc">
-                {viewTab === 'trash' 
-                  ? 'There are no deleted projects.'
-                  : (searchQuery
-                    ? `We couldn't find any projects matching "${searchQuery}".`
-                    : 'Build your story, chapters, characters and world in one connected workspace.')}
+                {searchQuery
+                  ? `We couldn't find any projects matching "${searchQuery}".`
+                  : 'Build your story, chapters, characters and world in one connected workspace.'}
               </p>
-              {!searchQuery && viewTab === 'active' && (
-                <Button variant="primary" onClick={openCreateDialog}>
-                  <Plus size={16} />
-                  Create project
-                </Button>
-              )}
             </div>
           ) : viewMode === 'grid' ? (
             <div className="recent-projects-grid">
@@ -720,7 +599,6 @@ export default function HomePage() {
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && openProject(project.id)}
                   >
-                    {/* Realistic Book Cover Header */}
                     <div className="home-project-card__cover-wrap">
                       {project.cover_image ? (
                         <div className="book-cover custom-cover" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -761,97 +639,48 @@ export default function HomePage() {
                       </button>
 
                       <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`}>
-                        {viewTab === 'active' ? (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                                handleChangeCover(project.id);
-                              }}
-                              type="button"
-                            >
-                              <ImageIcon size={14} /> Change Cover Art
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                                setRenameTarget({ id: project.id, name: project.name });
-                                setRenameName(project.name);
-                              }}
-                              type="button"
-                            >
-                              <Edit2 size={14} /> Rename
-                            </button>
-                            <button
-                              className="danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                                setDeleteTarget({ id: project.id, name: project.name });
-                              }}
-                              type="button"
-                            >
-                              <Trash2 size={14} /> Delete
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                                handleRestore(project.id);
-                              }}
-                              type="button"
-                            >
-                              <ClockIcon size={14} /> Restore
-                            </button>
-                            <button
-                              className="danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                                setDeleteTarget({ id: project.id, name: project.name });
-                              }}
-                              type="button"
-                            >
-                              <Trash2 size={14} /> Permanently Delete
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            handleChangeCover(project.id);
+                          }}
+                          type="button"
+                        >
+                          <ImageIcon size={14} /> Change Cover Art
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            setRenameTarget({ id: project.id, name: project.name });
+                            setRenameName(project.name);
+                          }}
+                          type="button"
+                        >
+                          <Edit2 size={14} /> Rename
+                        </button>
+                        <button
+                          className="danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            setDeleteTarget({ id: project.id, name: project.name });
+                          }}
+                          type="button"
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
                       </div>
                     </div>
 
-                    {/* Card Body & Details */}
                     <div className="home-project-card__content">
                       <h4 className="home-project-card__title">{project.name}</h4>
                       <p className="home-project-card__genre">
                         {project.genre && project.genre.trim() ? project.genre : 'No genre specified'}
                       </p>
 
-                      <div className="home-project-card__stats">
-                        {stats.chapterCount === 0 && stats.wordCount === 0 ? (
-                          <div className="home-project-card__stat-item">
-                            <BookOpen size={13} />
-                            <span>No chapters or words yet</span>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="home-project-card__stat-item">
-                              <BookOpen size={13} />
-                              <span>
-                                {stats.chapterCount} {stats.chapterCount === 1 ? 'Chapter' : 'Chapters'}
-                              </span>
-                            </div>
-                            <div className="home-project-card__stat-item">
-                              <Feather size={13} />
-                              <span>{stats.wordCount.toLocaleString()} Words</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      {/* Stats removed */}
 
                       <div className="home-project-card__footer">
                         <Clock size={12} />
@@ -865,7 +694,6 @@ export default function HomePage() {
               })}
             </div>
           ) : (
-            /* List View mode */
             <div className="recent-projects-list">
               {sortedProjects.map((project, idx) => {
                 const stats = statsMap[project.id] ?? { chapterCount: 0, wordCount: 0 };
@@ -893,19 +721,7 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="home-project-list-row__stats">
-                      {stats.chapterCount === 0 && stats.wordCount === 0 ? (
-                        <span>No chapters or words yet</span>
-                      ) : (
-                        <>
-                          <span>
-                            {stats.chapterCount} {stats.chapterCount === 1 ? 'Chapter' : 'Chapters'}
-                          </span>
-                          <span>•</span>
-                          <span>{stats.wordCount.toLocaleString()} Words</span>
-                        </>
-                      )}
-                    </div>
+                    {/* Stats removed */}
 
                     <div className="home-project-list-row__right">
                       <span className="home-project-list-row__time">
@@ -929,56 +745,28 @@ export default function HomePage() {
                         </button>
                         
                         <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`} style={{ top: '32px', right: 0 }}>
-                          {viewTab === 'active' ? (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(null);
-                                  setRenameTarget({ id: project.id, name: project.name });
-                                  setRenameName(project.name);
-                                }}
-                                type="button"
-                              >
-                                <Edit2 size={14} /> Rename
-                              </button>
-                              <button
-                                className="danger"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(null);
-                                  setDeleteTarget({ id: project.id, name: project.name });
-                                }}
-                                type="button"
-                              >
-                                <Trash2 size={14} /> Delete
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(null);
-                                  handleRestore(project.id);
-                                }}
-                                type="button"
-                              >
-                                <ClockIcon size={14} /> Restore
-                              </button>
-                              <button
-                                className="danger"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(null);
-                                  setDeleteTarget({ id: project.id, name: project.name });
-                                }}
-                                type="button"
-                              >
-                                <Trash2 size={14} /> Permanently Delete
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(null);
+                              setRenameTarget({ id: project.id, name: project.name });
+                              setRenameName(project.name);
+                            }}
+                            type="button"
+                          >
+                            <Edit2 size={14} /> Rename
+                          </button>
+                          <button
+                            className="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(null);
+                              setDeleteTarget({ id: project.id, name: project.name });
+                            }}
+                            type="button"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -988,14 +776,6 @@ export default function HomePage() {
             </div>
           )}
         </section>
-
-        {/* Bottom Tip Bar */}
-        {viewTab !== 'trash' && (
-          <footer className="home-footer-tip">
-            <Lightbulb size={14} className="home-footer-tip__icon" />
-            <span>Tip: Press Ctrl + K anywhere to quickly search your projects, characters, and more.</span>
-          </footer>
-        )}
       </div>
 
       {/* Create Project Modal */}
@@ -1092,22 +872,13 @@ export default function HomePage() {
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title={deleteTarget?.id === 'empty_trash' ? "Empty Trash" : (viewTab === 'trash' ? "Permanently Delete Project" : "Move to Trash")}
-        description={
-          deleteTarget?.id === 'empty_trash' 
-            ? "Are you sure you want to permanently delete all projects in the trash? This cannot be undone."
-            : (viewTab === 'trash'
-              ? `Are you sure you want to permanently delete "${deleteTarget?.name}"? This cannot be undone.`
-              : `Are you sure you want to move "${deleteTarget?.name}" to the Trash? It can be restored within 60 days.`)
-        }
-        confirmLabel={deleteTarget?.id === 'empty_trash' ? "Empty Trash" : (viewTab === 'trash' ? "Delete Permanently" : "Move to Trash")}
+        title="Move to Trash"
+        description={`Are you sure you want to move "${deleteTarget?.name}" to the Trash? It can be restored within 60 days.`}
+        confirmLabel="Move to Trash"
         cancelLabel="Cancel"
         onConfirm={handleDelete}
         variant="danger"
       />
-
-      {/* Global Settings Modal */}
-      <GlobalSettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

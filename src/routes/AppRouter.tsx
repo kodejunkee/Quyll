@@ -2,7 +2,9 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react';
 import { AppLayout } from '@/layouts/AppLayout';
 import { HomeLayout } from '@/layouts/HomeLayout';
+import { GlobalShellLayout } from '@/layouts/GlobalShellLayout';
 import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
+import { PlaceholderPage } from '@/features/app-tools/pages/PlaceholderPage';
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
@@ -27,7 +29,6 @@ const TimelinePage = lazy(() => import('@/features/timeline/pages/TimelinePage')
 const TimelineEventDetailPage = lazy(() => import('@/features/timeline/pages/TimelineEventDetailPage'));
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
-const LanguageStudioPage = lazy(() => import('@/features/world/pages/LanguageStudio'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 const TrashPage = lazy(() => import('@/features/trash/pages/TrashPage').then(m => ({ default: m.TrashPage })));
 
@@ -45,69 +46,76 @@ function SuspenseWrap({ children }: { children: React.ReactNode }) {
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <HomeLayout />,
+    element: <GlobalShellLayout />,
     errorElement: <GlobalErrorBoundary />,
     children: [
-      { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
-    ],
-  },
-  {
-    path: '/project/:projectId',
-    element: <AppLayout />,
-    errorElement: <GlobalErrorBoundary />,
-    children: [
-      { index: true, element: <Navigate to="dashboard" replace /> },
-      { path: 'dashboard', element: <SuspenseWrap><DashboardPage /></SuspenseWrap> },
-      { path: 'chapters', element: null },
-      { path: 'chapters/:chapterId', element: null },
+      {
+        path: '/',
+        element: <HomeLayout />,
+        children: [
+          { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
+          { path: 'settings', element: <PlaceholderPage title="Settings" icon="settings" /> },
+          { path: 'import-export', element: <PlaceholderPage title="Import & Export" icon="download" /> },
+          { path: 'trash', element: <PlaceholderPage title="Global Trash" icon="trash" /> },
+          { path: 'updates', element: <PlaceholderPage title="Updates" icon="updates" /> },
+          { path: 'about', element: <PlaceholderPage title="About" icon="about" /> },
+          { path: 'support', element: <PlaceholderPage title="Support" icon="support" /> },
+        ],
+      },
+      {
+        path: '/project/:projectId',
+        element: <AppLayout />,
+        children: [
+          { index: true, element: <Navigate to="dashboard" replace /> },
+          { path: 'dashboard', element: <SuspenseWrap><DashboardPage /></SuspenseWrap> },
+          { path: 'chapters', element: null },
+          { path: 'chapters/:chapterId', element: null },
 
-      // Knowledge Graph removed
-      // Characters
-      { path: 'characters', element: <SuspenseWrap><CharactersPage /></SuspenseWrap> },
-      { path: 'characters/:entityId', element: <SuspenseWrap><CharacterDetailPage /></SuspenseWrap> },
+          // Characters
+          { path: 'characters', element: <SuspenseWrap><CharactersPage /></SuspenseWrap> },
+          { path: 'characters/:entityId', element: <SuspenseWrap><CharacterDetailPage /></SuspenseWrap> },
 
-      // Locations
-      { path: 'locations', element: <SuspenseWrap><LocationsPage /></SuspenseWrap> },
-      { path: 'locations/:entityId', element: <SuspenseWrap><LocationDetailPage /></SuspenseWrap> },
+          // Locations
+          { path: 'locations', element: <SuspenseWrap><LocationsPage /></SuspenseWrap> },
+          { path: 'locations/:entityId', element: <SuspenseWrap><LocationDetailPage /></SuspenseWrap> },
 
-      // Organizations
-      { path: 'organizations', element: <SuspenseWrap><OrganizationsPage /></SuspenseWrap> },
-      { path: 'organizations/:entityId', element: <SuspenseWrap><OrganizationDetailPage /></SuspenseWrap> },
+          // Organizations
+          { path: 'organizations', element: <SuspenseWrap><OrganizationsPage /></SuspenseWrap> },
+          { path: 'organizations/:entityId', element: <SuspenseWrap><OrganizationDetailPage /></SuspenseWrap> },
 
-      // Species
-      { path: 'species', element: <SuspenseWrap><SpeciesPage /></SuspenseWrap> },
-      { path: 'species/:entityId', element: <SuspenseWrap><SpeciesDetailPage /></SuspenseWrap> },
+          // Species
+          { path: 'species', element: <SuspenseWrap><SpeciesPage /></SuspenseWrap> },
+          { path: 'species/:entityId', element: <SuspenseWrap><SpeciesDetailPage /></SuspenseWrap> },
 
-      // Items
-      { path: 'items', element: <SuspenseWrap><ItemsPage /></SuspenseWrap> },
-      { path: 'items/:entityId', element: <SuspenseWrap><ItemDetailPage /></SuspenseWrap> },
+          // Items
+          { path: 'items', element: <SuspenseWrap><ItemsPage /></SuspenseWrap> },
+          { path: 'items/:entityId', element: <SuspenseWrap><ItemDetailPage /></SuspenseWrap> },
 
-      // Magic Systems
-      { path: 'world-systems', element: <SuspenseWrap><WorldSystemsPage /></SuspenseWrap> },
-      { path: 'world-systems/:entityId', element: <SuspenseWrap><WorldSystemDetailPage /></SuspenseWrap> },
+          // Magic Systems
+          { path: 'world-systems', element: <SuspenseWrap><WorldSystemsPage /></SuspenseWrap> },
+          { path: 'world-systems/:entityId', element: <SuspenseWrap><WorldSystemDetailPage /></SuspenseWrap> },
 
-      // Lore
-      { path: 'lore', element: <SuspenseWrap><LorePage /></SuspenseWrap> },
-      { path: 'lore/:entityId', element: <SuspenseWrap><LoreDetailPage /></SuspenseWrap> },
+          // Lore
+          { path: 'lore', element: <SuspenseWrap><LorePage /></SuspenseWrap> },
+          { path: 'lore/:entityId', element: <SuspenseWrap><LoreDetailPage /></SuspenseWrap> },
 
-      // Glossary
-      { path: 'glossary', element: <SuspenseWrap><GlossaryDirectoryPage /></SuspenseWrap> },
+          // Glossary
+          { path: 'glossary', element: <SuspenseWrap><GlossaryDirectoryPage /></SuspenseWrap> },
 
-      // Timeline
-      { path: 'timeline', element: <SuspenseWrap><TimelinePage /></SuspenseWrap> },
-      { path: 'timeline/:entityId', element: <SuspenseWrap><TimelineEventDetailPage /></SuspenseWrap> },
+          // Timeline
+          { path: 'timeline', element: <SuspenseWrap><TimelinePage /></SuspenseWrap> },
+          { path: 'timeline/:entityId', element: <SuspenseWrap><TimelineEventDetailPage /></SuspenseWrap> },
 
-      // Plot Planner
-      { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
-      { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
-      { path: 'language-studio', element: <SuspenseWrap><LanguageStudioPage /></SuspenseWrap> },
-      { path: 'language-studio/:entityId', element: <SuspenseWrap><LanguageStudioPage /></SuspenseWrap> },
+          // Plot Planner
+          { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
+          { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
 
-      { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
-      { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
-    ],
-  },
+          { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
+          { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
+        ],
+      },
+    ]
+  }
 ]);
 
 export function AppRouter() {

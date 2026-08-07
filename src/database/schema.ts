@@ -146,49 +146,6 @@ CREATE TABLE IF NOT EXISTS items (
 );
 CREATE INDEX IF NOT EXISTS idx_items_project ON items(project_id);
 
--- Languages
-CREATE TABLE IF NOT EXISTS languages (
-  id               TEXT PRIMARY KEY,
-  project_id       TEXT NOT NULL,
-  name             TEXT NOT NULL DEFAULT '',
-  description      TEXT NOT NULL DEFAULT '',
-  native_speakers  TEXT NOT NULL DEFAULT '',
-  writing_system   TEXT NOT NULL DEFAULT '',
-  grammar_rules    TEXT NOT NULL DEFAULT '',
-  notes            TEXT NOT NULL DEFAULT '',
-  keyword_enabled  INTEGER NOT NULL DEFAULT 0,
-  deleted_at       TEXT,
-  created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_languages_project ON languages(project_id);
-
--- Language Dictionary
-CREATE TABLE IF NOT EXISTS language_dictionary (
-  id               TEXT PRIMARY KEY,
-  language_id      TEXT NOT NULL,
-  word             TEXT NOT NULL,
-  translation      TEXT NOT NULL,
-  part_of_speech   TEXT NOT NULL DEFAULT '',
-  pronunciation    TEXT NOT NULL DEFAULT '',
-  example_usage    TEXT NOT NULL DEFAULT '',
-  notes            TEXT NOT NULL DEFAULT '',
-  created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_dict_language ON language_dictionary(language_id);
-
--- Language Translations History
-CREATE TABLE IF NOT EXISTS language_translations (
-  id               TEXT PRIMARY KEY,
-  language_id      TEXT NOT NULL,
-  input_text       TEXT NOT NULL,
-  output_text      TEXT NOT NULL,
-  mode             TEXT NOT NULL DEFAULT 'offline',
-  created_at       TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_translations_language ON language_translations(language_id);
-
 -- World Systems
 CREATE TABLE IF NOT EXISTS world_systems (
   id               TEXT PRIMARY KEY,
