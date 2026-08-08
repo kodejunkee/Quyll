@@ -50,8 +50,7 @@
 }
 
 .global-top-bar__home-icon {
-  color: var(--color-primary, #A855F7);
-  filter: drop-shadow(0 0 8px rgba(var(--color-primary-rgb, 168, 85, 247), 0.4));
+  transition: all 0.2s ease;
 }
 
 /* Center: Tabs */
@@ -118,6 +117,8 @@
 
 /* Tab close button */
 .global-tab__close {
+  position: absolute;
+  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;

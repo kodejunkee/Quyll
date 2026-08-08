@@ -8,6 +8,7 @@ import { PlaceholderPage } from '@/features/app-tools/pages/PlaceholderPage';
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
+const GlobalTrashPage = lazy(() => import('@/features/projects/pages/GlobalTrashPage').then(m => ({ default: m.GlobalTrashPage })));
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
 // KnowledgeGraphPage removed
 const CharactersPage = lazy(() => import('@/features/characters/pages/CharactersPage'));
@@ -56,7 +57,7 @@ const router = createBrowserRouter([
           { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
           { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
           { path: 'import-export', element: <PlaceholderPage title="Import & Export" icon="download" /> },
-          { path: 'trash', element: <PlaceholderPage title="Global Trash" icon="trash" /> },
+          { path: 'trash', element: <SuspenseWrap><GlobalTrashPage /></SuspenseWrap> },
           { path: 'updates', element: <PlaceholderPage title="Updates" icon="updates" /> },
           { path: 'about', element: <PlaceholderPage title="About" icon="about" /> },
           { path: 'support', element: <PlaceholderPage title="Support" icon="support" /> },

@@ -89,7 +89,7 @@ export function GlobalShellLayout() {
           {openTabs.map((tab) => (
             <button
               key={tab.projectId}
-              className={`global-tab${tab.projectId === activeTabId ? ' active' : ''}`}
+              className={`global-tab${(!isHome && tab.projectId === activeTabId) ? ' active' : ''}`}
               type="button"
               style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               onClick={() => {
@@ -113,7 +113,17 @@ export function GlobalShellLayout() {
             </button>
           ))}
 
-          <button className="global-tab-new" title="New Project" type="button" onClick={() => navigate('/')}>
+          <button 
+            className="global-tab-new" 
+            title="New Project" 
+            type="button" 
+            onClick={() => {
+              navigate('/');
+              setTimeout(() => {
+                window.dispatchEvent(new Event('open-create-project'));
+              }, 50);
+            }}
+          >
             <Plus size={14} />
           </button>
         </div>

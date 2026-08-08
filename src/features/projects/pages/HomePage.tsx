@@ -27,10 +27,8 @@ import {
   initAppDatabase,
   registerProject,
   listProjects,
-  listDeletedProjects,
   editProject as dbEdit,
   softDeleteProject,
-  hardDeleteProject,
   autoDeleteOldProjects,
   initializeProjectDatabase,
   touchProject,
@@ -136,10 +134,8 @@ function getBookTheme(index: number, genre?: string) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { projects, setProjects, deletedProjects, openTab, openTabs } = useProjectStore();
+  const { projects, setProjects, openTab, openTabs, closeTab } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const viewTab = 'active';
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('quyll_home_view_mode') as 'grid' | 'list') || 'grid';
   });
@@ -216,6 +212,12 @@ export default function HomePage() {
     }
   }, [createOpen]);
 
+  useEffect(() => {
+    const handleOpenCreate = () => setCreateOpen(true);
+    window.addEventListener('open-create-project', handleOpenCreate);
+    return () => window.removeEventListener('open-create-project', handleOpenCreate);
+  }, []);
+
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [newTitle, setNewTitle] = useState('');
@@ -253,23 +255,6 @@ export default function HomePage() {
         updated_at: r.updated_at,
       }));
       setProjects(mapped);
-
-      const deletedRows = await listDeletedProjects();
-      const mappedDeleted = deletedRows.map((r) => ({
-        id: r.id,
-        name: r.name,
-        path: r.path,
-        description: r.description ?? '',
-        author: r.author ?? '',
-        genre: r.genre ?? '',
-        tags: r.tags ? JSON.parse(r.tags) : [],
-        cover_image: r.cover_image ?? null,
-        last_opened_at: r.last_opened_at,
-        deleted_at: r.deleted_at,
-        created_at: r.created_at,
-        updated_at: r.updated_at,
-      }));
-      useProjectStore.getState().setDeletedProjects(mappedDeleted);
     } catch (err) {
       console.error('Failed to load projects:', err);
     }
@@ -407,15 +392,8 @@ export default function HomePage() {
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      if (deleteTarget.id === 'empty_trash') {
-        for (const project of deletedProjects) {
-          await hardDeleteProject(project.id);
-        }
-      } else if (viewTab === 'active') {
-        await softDeleteProject(deleteTarget.id);
-      } else {
-        await hardDeleteProject(deleteTarget.id);
-      }
+      await softDeleteProject(deleteTarget.id);
+      closeTab(deleteTarget.id);
       await loadProjects();
       setDeleteTarget(null);
     } catch (err) {
@@ -438,8 +416,7 @@ export default function HomePage() {
     navigate(`/project/${id}/dashboard`);
   }
 
-  const activeList = viewTab === 'active' ? projects : deletedProjects;
-  const filteredProjects = activeList.filter(
+  const filteredProjects = projects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.genre && p.genre.toLowerCase().includes(searchQuery.toLowerCase())) ||
