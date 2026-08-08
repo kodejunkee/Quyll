@@ -2,15 +2,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 .home-page {
-  height: 100vh;
-  overflow-y: scroll;
+  min-height: 100%;
   background-color: var(--color-bg, #0A0910);
   background-image: var(--home-bg-image, none);
   color: var(--color-text, #F3F4F6);
-  padding: 24px 24px;
+  padding: var(--space-6) var(--space-8);
   box-sizing: border-box;
-  display: flex;
-  justify-content: center;
   font-family: 'Inter', var(--font-family-sans, system-ui, -apple-system, sans-serif);
 }
 
@@ -19,7 +16,7 @@
   max-width: 1200px; /* Reduced width for a more focused layout like the sketch */
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 20px;
 }
 
 /* ================= Top Search Section ================= */
@@ -99,6 +96,10 @@
   gap: 16px;
 }
 
+.all-projects-section .home-section__title {
+  font-size: 29px;
+}
+
 .home-section__header {
   display: flex;
   justify-content: space-between;
@@ -109,19 +110,33 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text, #F3F4F6);
   margin: 0;
   letter-spacing: -0.3px;
 }
 
 .home-section__title--gradient {
-  font-size: 1.5rem;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #A855F7 50%, #EC4899 100%);
+  background: linear-gradient(-45deg, var(--color-primary) 0%, var(--color-text, #F3F4F6) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.home-section__title--gradient-reverse {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-text, #F3F4F6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.home-section__icon--gradient * {
+  fill: url(#forwardGrad) !important;
+}
+
+.home-section__icon--gradient-reverse * {
+  fill: url(#reverseGrad) !important;
 }
 
 /* ================= Recent Projects Horizontal ================= */
@@ -307,6 +322,7 @@
 
 .recent-card__continue:hover {
   background: var(--color-primary-hover) !important;
+  color: #FFF !important;
 }
 
 

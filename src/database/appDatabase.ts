@@ -20,6 +20,7 @@ export interface ProjectRow {
   description: string;
   author: string;
   genre: string;
+  tags: string;
   cover_image: string | null;
   last_opened_at: string | null;
   deleted_at: string | null;
@@ -58,13 +59,14 @@ export async function registerProject(project: {
   description?: string;
   author?: string;
   genre?: string;
+  tags?: string[];
 }): Promise<void> {
   const db = await initAppDatabase();
   const now = new Date().toISOString();
   await execute(
     db,
-    `INSERT INTO projects (id, name, path, description, author, genre, last_opened_at, deleted_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, $7, $8)`,
+    `INSERT INTO projects (id, name, path, description, author, genre, tags, last_opened_at, deleted_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL, $8, $9)`,
     [
       project.id,
       project.name,
@@ -72,6 +74,7 @@ export async function registerProject(project: {
       project.description ?? '',
       project.author ?? '',
       project.genre ?? '',
+      JSON.stringify(project.tags ?? []),
       now,
       now,
     ],
@@ -115,13 +118,44 @@ export async function touchProject(projectId: string): Promise<void> {
   );
 }
 
-/** Rename a project in the app registry. */
-export async function renameProject(projectId: string, newName: string): Promise<void> {
+/** Edit a project in the app registry. */
+export async function editProject(projectId: string, updates: {
+  name?: string;
+  description?: string;
+  genre?: string;
+  tags?: string[];
+}): Promise<void> {
   const db = await initAppDatabase();
+  const setClauses: string[] = [];
+  const values: any[] = [];
+  let paramIdx = 1;
+
+  if (updates.name !== undefined) {
+    setClauses.push(`name = $${paramIdx++}`);
+    values.push(updates.name);
+  }
+  if (updates.description !== undefined) {
+    setClauses.push(`description = $${paramIdx++}`);
+    values.push(updates.description);
+  }
+  if (updates.genre !== undefined) {
+    setClauses.push(`genre = $${paramIdx++}`);
+    values.push(updates.genre);
+  }
+  if (updates.tags !== undefined) {
+    setClauses.push(`tags = $${paramIdx++}`);
+    values.push(JSON.stringify(updates.tags));
+  }
+
+  if (setClauses.length === 0) return;
+
+  setClauses.push(`updated_at = datetime('now')`);
+  values.push(projectId);
+
   await execute(
     db,
-    `UPDATE projects SET name = $1, updated_at = datetime('now') WHERE id = $2`,
-    [newName, projectId],
+    `UPDATE projects SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
+    values,
   );
 }
 

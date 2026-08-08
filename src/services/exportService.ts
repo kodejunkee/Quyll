@@ -111,6 +111,10 @@ export async function exportProject(
 export interface QuyllExportData {
   projectName: string;
   version: number;
+  author?: string;
+  description?: string;
+  genre?: string;
+  tags?: string[];
   chapters: Chapter[];
   characters: Character[];
   lore: LoreEntry[];
@@ -206,6 +210,10 @@ export async function buildQuyllExport(
   const data: QuyllExportData = {
     projectName,
     version: 1,
+    author: projectInfo?.author,
+    description: projectInfo?.description,
+    genre: projectInfo?.genre,
+    tags: projectInfo?.tags ? JSON.parse(projectInfo.tags) : [],
     chapters,
     characters,
     lore,

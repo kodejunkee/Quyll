@@ -283,7 +283,10 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
       id: newProjectId,
       name: data.projectName,
       path: projectPath,
-      description: 'Imported project'
+      description: data.description ?? 'Imported project',
+      author: data.author ?? '',
+      genre: data.genre ?? '',
+      tags: data.tags ?? [],
     });
 
     if (data.projectCoverBase64) {
@@ -319,7 +322,10 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
     await initializeProjectDatabase(projectPath, {
       id: newProjectId,
       title: data.projectName,
-      description: 'Imported project'
+      description: data.description ?? 'Imported project',
+      author: data.author ?? '',
+      genre: data.genre ?? '',
+      tags: data.tags ?? [],
     });
     const db = await openProjectDatabase(projectPath);
 

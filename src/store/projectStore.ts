@@ -7,6 +7,7 @@ interface ProjectInfo {
   description: string;
   author: string;
   genre: string;
+  tags: string[];
   cover_image: string | null;
   last_opened_at: string | null;
   deleted_at: string | null;

@@ -31,7 +31,7 @@ export async function closeProjectDatabase(projectFolderPath: string): Promise<v
 /** Initialize a brand-new project database with metadata. */
 export async function initializeProjectDatabase(
   projectFolderPath: string,
-  meta: { id: string; title: string; description?: string; author?: string; genre?: string },
+  meta: { id: string; title: string; description?: string; author?: string; genre?: string; tags?: string[] },
 ): Promise<Database> {
   const dataDir = await appDataDir();
   const fullPath = await join(dataDir, projectFolderPath);
@@ -45,9 +45,9 @@ export async function initializeProjectDatabase(
 
   await execute(
     db,
-    `INSERT INTO project_meta (id, title, description, author, genre)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [meta.id, meta.title, meta.description ?? '', meta.author ?? '', meta.genre ?? ''],
+    `INSERT INTO project_meta (id, title, description, author, genre, tags)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [meta.id, meta.title, meta.description ?? '', meta.author ?? '', meta.genre ?? '', JSON.stringify(meta.tags ?? [])],
   );
 
   // Insert default settings

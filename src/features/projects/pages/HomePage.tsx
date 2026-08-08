@@ -21,14 +21,14 @@ import {
   Pencil2Icon,
   TrashIcon
 } from '@radix-ui/react-icons';
-import { Button, Modal, Input, TextArea, Dialog, Dropdown } from '@/components';
+import { Button, Modal, Input, TextArea, TagInput, Dialog, Dropdown } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import {
   initAppDatabase,
   registerProject,
   listProjects,
   listDeletedProjects,
-  renameProject as dbRename,
+  editProject as dbEdit,
   softDeleteProject,
   hardDeleteProject,
   autoDeleteOldProjects,
@@ -216,14 +216,21 @@ export default function HomePage() {
     }
   }, [createOpen]);
 
-  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
+
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newAuthor, setNewAuthor] = useState('');
   const [newGenre, setNewGenre] = useState('');
+  const [newTags, setNewTags] = useState<string[]>([]);
   const [isOtherGenre, setIsOtherGenre] = useState(false);
-  const [renameName, setRenameName] = useState('');
+  const [editTarget, setEditTarget] = useState<{ id: string; name: string; description: string; author: string; genre: string; tags: string[] } | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAuthor, setEditAuthor] = useState('');
+  const [editGenre, setEditGenre] = useState('');
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [isEditOtherGenre, setIsEditOtherGenre] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
@@ -238,6 +245,7 @@ export default function HomePage() {
         description: r.description ?? '',
         author: r.author ?? '',
         genre: r.genre ?? '',
+        tags: r.tags ? JSON.parse(r.tags) : [],
         cover_image: r.cover_image ?? null,
         last_opened_at: r.last_opened_at,
         deleted_at: r.deleted_at,
@@ -254,6 +262,7 @@ export default function HomePage() {
         description: r.description ?? '',
         author: r.author ?? '',
         genre: r.genre ?? '',
+        tags: r.tags ? JSON.parse(r.tags) : [],
         cover_image: r.cover_image ?? null,
         last_opened_at: r.last_opened_at,
         deleted_at: r.deleted_at,
@@ -302,6 +311,7 @@ export default function HomePage() {
     setNewDescription('');
     setNewAuthor('');
     setNewGenre('');
+    setNewTags([]);
     setIsOtherGenre(false);
     setCreateOpen(true);
     const titleInput = document.getElementById('new-project-title-input');
@@ -319,6 +329,7 @@ export default function HomePage() {
         description: newDescription,
         author: newAuthor,
         genre: newGenre,
+        tags: newTags,
       });
 
       await registerProject({
@@ -328,6 +339,7 @@ export default function HomePage() {
         description: newDescription,
         author: newAuthor,
         genre: newGenre,
+        tags: newTags,
       });
       setCreateOpen(false);
       setIsOtherGenre(false);
@@ -335,6 +347,7 @@ export default function HomePage() {
       setNewDescription('');
       setNewAuthor('');
       setNewGenre('');
+      setNewTags([]);
       await touchProject(id);
       await loadProjects();
       navigate(`/project/${id}/dashboard`);
@@ -343,12 +356,17 @@ export default function HomePage() {
     }
   }
 
-  async function handleRename() {
-    if (!renameTarget || !renameName.trim()) return;
+  async function handleEdit() {
+    if (!editTarget || !editName.trim()) return;
     try {
-      await dbRename(renameTarget.id, renameName.trim());
+      await dbEdit(editTarget.id, {
+        name: editName.trim(),
+        description: editDescription,
+        genre: editGenre,
+        tags: editTags,
+      });
       await loadProjects();
-      setRenameTarget(null);
+      setEditTarget(null);
     } catch (err) {
       console.error('Failed to rename project:', err);
     }
@@ -444,8 +462,20 @@ export default function HomePage() {
         {/* Recent Projects */}
         {!searchQuery && (
           <section className="home-section">
-            <h3 className="home-section__title home-section__title--gradient">
-              <ClockIcon width={18} height={18} />
+            <h3 className="home-section__title home-section__title--gradient-reverse">
+              <svg width="0" height="0" style={{ position: 'absolute' }}>
+                <defs>
+                  <linearGradient id="forwardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="var(--color-primary)" />
+                    <stop offset="100%" stopColor="var(--color-text, #F3F4F6)" />
+                  </linearGradient>
+                  <linearGradient id="reverseGrad" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="var(--color-primary)" />
+                    <stop offset="100%" stopColor="var(--color-text, #F3F4F6)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <ClockIcon width={24} height={24} className="home-section__icon--gradient-reverse" />
               Recent Projects
             </h3>
             <div className="home-recent-carousel">
@@ -517,9 +547,12 @@ export default function HomePage() {
         )}
 
         {/* All Projects */}
-        <section className="home-section">
+        <section className="home-section all-projects-section">
           <div className="home-section__header">
-            <h3 className="home-section__title">All Projects</h3>
+            <h3 className="home-section__title home-section__title--gradient">
+              <LayersIcon width={29} height={29} className="home-section__icon--gradient" />
+              All Projects
+            </h3>
             <div className="home-section__controls">
               <div className="home-section__sort-wrap" ref={sortMenuRef}>
                 <button
@@ -623,7 +656,7 @@ export default function HomePage() {
                           <div className="book-cover__spine" />
                           <div className="book-cover__frame">
                             <div className="book-cover__emblem">
-                              <CoverIcon size={24} />
+                              <CoverIcon width={24} height={24} />
                             </div>
                           </div>
                           <div className="book-cover__ribbon" style={{ background: theme.ribbonColor }} />
@@ -661,13 +694,16 @@ export default function HomePage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(null);
-                            setRenameTarget({ id: project.id, name: project.name });
-                            setRenameName(project.name);
+                            setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre, tags: project.tags });
+                            setEditName(project.name);
+                            setEditDescription(project.description);
+                            setEditAuthor(project.author);
+                            setEditGenre(project.genre);
+                            setEditTags(project.tags);
                           }}
                           type="button"
                         >
-                          <Pencil2Icon width={14} height={14} /> Rename
+                          <Pencil2Icon width={14} height={14} /> Edit Project
                         </button>
                         <button
                           className="danger"
@@ -719,7 +755,7 @@ export default function HomePage() {
                   >
                     <div className="home-project-list-row__left">
                       <div className="list-book-thumb" style={{ background: theme.gradient }}>
-                        <CoverIcon size={16} />
+                        <CoverIcon width={16} height={16} />
                       </div>
                       <div>
                         <h4 className="home-project-list-row__title">{project.name}</h4>
@@ -756,13 +792,16 @@ export default function HomePage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenMenuId(null);
-                              setRenameTarget({ id: project.id, name: project.name });
-                              setRenameName(project.name);
+                              setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre, tags: project.tags });
+                              setEditName(project.name);
+                              setEditDescription(project.description);
+                              setEditAuthor(project.author);
+                              setEditGenre(project.genre);
+                              setEditTags(project.tags);
                             }}
                             type="button"
                           >
-                            <Pencil2Icon width={14} height={14} /> Rename
+                            <Pencil2Icon width={14} height={14} /> Edit Project
                           </button>
                           <button
                             className="danger"
@@ -846,6 +885,12 @@ export default function HomePage() {
               </div>
             );
           })()}
+          <TagInput
+            label="Tags"
+            placeholder="e.g. Sci-Fi, Magic, Drama"
+            tags={newTags}
+            onChange={setNewTags}
+          />
           <div className="home-modal-actions">
             <Button variant="primary" type="submit" disabled={!newTitle.trim()}>
               Create Project
@@ -854,23 +899,77 @@ export default function HomePage() {
         </form>
       </Modal>
 
-      {/* Rename Dialog */}
-      <Modal open={!!renameTarget} onClose={() => setRenameTarget(null)} title="Rename Project" size="sm">
-        <form className="home-modal-form" onSubmit={(e) => { e.preventDefault(); if (renameName.trim()) handleRename(); }}>
+      {/* Edit Project Modal */}
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Project" size="md">
+        <form className="home-modal-form" onSubmit={(e) => { e.preventDefault(); if (editName.trim()) handleEdit(); }}>
           <Input
-            label="New Name"
-            value={renameName}
-            onChange={(e) => setRenameName(e.target.value)}
+            label="Title"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            required
             autoFocus
             ref={(el) => {
-              if (el && !!renameTarget) {
+              if (el && !!editTarget) {
                 setTimeout(() => el.focus(), 10);
               }
             }}
           />
+          <TextArea
+            label="Description / Excerpt"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            rows={3}
+          />
+          <Input
+            label="Author"
+            value={editAuthor}
+            onChange={(e) => setEditAuthor(e.target.value)}
+            disabled={true}
+          />
+          {(() => {
+            const isKnownGenre = POPULAR_GENRES.some((g) => g.value === editGenre);
+            const showCustomInput = isEditOtherGenre || (Boolean(editGenre) && !isKnownGenre);
+            const dropdownValue = showCustomInput ? '__other__' : isKnownGenre ? editGenre : '';
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <Dropdown
+                  label="Genre"
+                  placeholder="Select a popular genre..."
+                  options={POPULAR_GENRES}
+                  value={dropdownValue}
+                  onChange={(val, query) => {
+                    if (val === '__other__') {
+                      setIsEditOtherGenre(true);
+                      if (query && !POPULAR_GENRES.some((g) => g.value.toLowerCase() === query.toLowerCase())) {
+                        setEditGenre(query);
+                      } else if (isKnownGenre) {
+                        setEditGenre('');
+                      }
+                    } else {
+                      setIsEditOtherGenre(false);
+                      setEditGenre(val);
+                    }
+                  }}
+                />
+                {showCustomInput && (
+                  <Input
+                    placeholder="Type your custom genre..."
+                    value={isKnownGenre ? '' : editGenre}
+                    onChange={(e) => setEditGenre(e.target.value)}
+                  />
+                )}
+              </div>
+            );
+          })()}
+          <TagInput
+            label="Tags"
+            placeholder="e.g. Sci-Fi, Magic, Drama"
+            tags={editTags}
+            onChange={setEditTags}
+          />
           <div className="home-modal-actions">
-            <Button variant="primary" type="submit" disabled={!renameName.trim()}>
-              Rename Project
+            <Button variant="primary" type="submit" disabled={!editName.trim()}>
+              Save Changes
             </Button>
           </div>
         </form>

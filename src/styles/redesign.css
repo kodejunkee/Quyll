@@ -2,7 +2,7 @@
 
 /* Projects home */
 .home-page { background: var(--color-bg); background-image:none; min-height:100vh; }
-.home-page__container { max-width: 1240px; padding: 0 34px 40px; }
+.home-page__container { max-width: 1240px; padding: 0 0 40px; }
 .home-nav { min-height:76px; padding:0; border-bottom:1px solid var(--color-border-subtle); }
 .home-nav__brand { font-family:var(--font-interface); font-size:25px; letter-spacing:-.03em; }
 .home-nav__subtitle { margin-top:1px; color:var(--color-text-tertiary); font-size:11px; }
@@ -113,7 +113,7 @@
   .dashboard-page__continue{align-items:flex-start;flex-wrap:wrap}
   .dashboard-page__primary-action{margin-left:59px}
   .dashboard-page__overview-grid{grid-template-columns:repeat(2,1fr)}
-  .home-page__container{padding:0 22px 36px}
+  .home-page__container{padding:0 0 36px}
   .home-nav{align-items:flex-start}
   .home-nav__right{width:100%}
 }

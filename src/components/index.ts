@@ -15,6 +15,7 @@ export { Sidebar } from './Sidebar';
 export { TextArea } from './TextArea';
 export { Toolbar } from './Toolbar';
 export { ThemeToggle } from './ThemeToggle/ThemeToggle';
+export * from './TagInput';
 export * from './ReferenceBubbles';
 export * from './EntityReferences';
 export { NotificationProvider, useNotification } from './Notification';

@@ -7,7 +7,7 @@ export {
   listProjects,
   listDeletedProjects,
   touchProject,
-  renameProject,
+  editProject,
   unregisterProject,
   softDeleteProject,
   restoreProject,
