@@ -49,7 +49,7 @@ let appDbInitialized = false;
 export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbProviderProps) {
   const [db, setDb] = useState<Database | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { projects, setProjects, setCurrentProject } = useProjectStore();
+  const { projects, setProjects, updateTabProjectInfo } = useProjectStore();
   const project = projects.find((p) => p.id === projectId);
   const projectPath = project?.path ?? `projects/${projectId}.quyll`;
 
@@ -114,7 +114,7 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
           if (cancelled) return;
           const meta = metaRows[0];
           if (meta) {
-            setCurrentProject({
+            updateTabProjectInfo(projectId, {
               id: meta.id || projectId,
               name: meta.title || activeProj?.name || 'Untitled Project',
               path: resolvedPath,
@@ -129,11 +129,11 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
               updated_at: activeProj?.updated_at || new Date().toISOString(),
             });
           } else if (activeProj) {
-            setCurrentProject({ ...activeProj, last_opened_at: new Date().toISOString() });
+            updateTabProjectInfo(projectId, { ...activeProj, last_opened_at: new Date().toISOString() });
           }
         } catch (metaErr) {
           console.error('[ProjectDbProvider] Failed to fetch project_meta:', metaErr);
-          if (activeProj) setCurrentProject(activeProj);
+          if (activeProj) updateTabProjectInfo(projectId, activeProj);
         }
       } catch (err) {
         console.error('[ProjectDbProvider] Failed to open project DB:', err);
@@ -145,7 +145,7 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
 
     return () => {
       cancelled = true;
-      setCurrentProject(null);
+      // Don't null out currentProject — tab management handles that
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);

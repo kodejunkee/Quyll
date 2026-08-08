@@ -47,6 +47,11 @@ export async function initAppDatabase(): Promise<Database> {
   } catch {
     // Ignore if column already exists
   }
+  try {
+    await execute(appDb, "ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
+  } catch {
+    // Ignore if column already exists
+  }
   
   return appDb;
 }

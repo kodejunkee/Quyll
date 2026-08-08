@@ -61,15 +61,21 @@
   flex: 1;
   height: 100%;
   gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
   /* Allow dragging anywhere in this empty area */
   -webkit-app-region: drag;
+}
+
+.global-top-bar__tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .global-tab {
   display: flex;
   align-items: center;
   height: 32px;
-  padding: 0 16px;
+  padding: 0 28px 0 16px;
   background-color: transparent;
   color: #94A3B8;
   border: 1px solid transparent;
@@ -79,6 +85,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   -webkit-app-region: no-drag; /* Buttons shouldn't drag */
+  position: relative;
+  max-width: 200px;
+  min-width: 100px;
+  gap: 6px;
 }
 
 .global-tab:hover {
@@ -91,6 +101,43 @@
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Home button active state */
+.global-top-bar__home-btn--active .global-top-bar__home-icon {
+  color: var(--color-primary, #3B82F6);
+  filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb, 59, 130, 246), 0.5));
+}
+
+/* Tab name truncation */
+.global-tab__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tab close button */
+.global-tab__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s ease;
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.global-tab:hover .global-tab__close,
+.global-tab.active .global-tab__close {
+  opacity: 1;
+}
+
+.global-tab__close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
 }
 
 .global-tab-new {

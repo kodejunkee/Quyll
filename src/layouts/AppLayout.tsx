@@ -31,7 +31,7 @@ function SuspenseWrap({ children }: { children: React.ReactNode }) {
 
 export function AppLayout() {
   const { sidebarCollapsed, inspectorCollapsed, toggleSidebar, toggleInspector } = useLayoutStore();
-  const { currentProject, projects } = useProjectStore();
+  const { currentProject, projects, openTabs, updateTabRoute } = useProjectStore();
   const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
   const { notify } = useNotification();
@@ -58,6 +58,13 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [toggleSidebar, toggleInspector, isWritingWorkspace]);
 
+  // Track route changes for tab persistence
+  useEffect(() => {
+    if (projectId) {
+      updateTabRoute(projectId, location.pathname);
+    }
+  }, [projectId, location.pathname, updateTabRoute]);
+
   if (!projectId) return null;
 
   const hideInspector = isWritingWorkspace || inspectorCollapsed;
@@ -70,7 +77,7 @@ export function AppLayout() {
           <span className="app-global-header__title">Quyll</span>
           <span className="app-global-header__divider">/</span>
           <span className="app-global-header__project">
-            {currentProject?.name || projects.find((p) => p.id === projectId)?.name || 'Loading...'}
+            {currentProject?.name || openTabs.find(t => t.projectId === projectId)?.projectInfo.name || projects.find((p) => p.id === projectId)?.name || 'Loading...'}
           </span>
         </div>
 
@@ -124,7 +131,7 @@ export function AppLayout() {
             <span className="app-global-header__title">Quyll</span>
             <span className="app-global-header__divider">/</span>
             <span className="app-global-header__project">
-              {currentProject?.name || projects.find((p) => p.id === projectId)?.name || 'Untitled Project'}
+              {currentProject?.name || openTabs.find(t => t.projectId === projectId)?.projectInfo.name || projects.find((p) => p.id === projectId)?.name || 'Untitled Project'}
             </span>
           </div>
 

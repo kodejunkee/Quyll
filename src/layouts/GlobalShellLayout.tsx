@@ -1,19 +1,40 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Plus, Square, Copy, Minus, Sun, Moon } from 'lucide-react';
+import { Plus, Square, Copy, Minus, Sun, Moon, X } from 'lucide-react';
 import { HomeIcon } from '@radix-ui/react-icons';
 import { useThemeStore } from '@/store/themeStore';
+import { useProjectStore } from '@/store/projectStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import './GlobalShellLayout.css';
 
 export function GlobalShellLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, setTheme } = useThemeStore();
+  const { openTabs, activeTabId, closeTab, setActiveTab } = useProjectStore();
+  const { evictProject } = useWorkspaceStore();
 
-  // Mock tabs based on the current location just for visual effect
-  // In a real implementation, this would read from the projectStore's open tabs
-  const isHome = location.pathname === '/';
+  const isHome = location.pathname === '/' || !location.pathname.startsWith('/project/');
+
+  const handleCloseTab = (projectId: string) => {
+    const wasActive = projectId === activeTabId;
+    const tabIndex = openTabs.findIndex(t => t.projectId === projectId);
+    
+    // Evict cached entities for this project
+    evictProject(projectId);
+    closeTab(projectId);
+
+    if (wasActive) {
+      const remaining = openTabs.filter(t => t.projectId !== projectId);
+      if (remaining.length > 0) {
+        const newIndex = Math.min(tabIndex, remaining.length - 1);
+        navigate(remaining[newIndex]!.lastRoute);
+      } else {
+        navigate('/');
+      }
+    }
+  };
   
   const [isMaximized, setIsMaximized] = useState(false);
 
@@ -59,18 +80,38 @@ export function GlobalShellLayout() {
       {/* Custom Tauri Titlebar / Global Top Nav */}
       <header className="global-top-bar" data-tauri-drag-region>
         {/* Left: Home Button */}
-        <div className="global-top-bar__home-btn" onClick={() => navigate('/')}>
+        <div className={`global-top-bar__home-btn${isHome ? ' global-top-bar__home-btn--active' : ''}`} onClick={() => navigate('/')}>
           <HomeIcon width={20} height={20} className="global-top-bar__home-icon" />
         </div>
 
         {/* Center: Tabs */}
         <div className="global-top-bar__tabs" data-tauri-drag-region>
-          {/* Mock Tab for visual effect */}
-          {!isHome && (
-            <button className="global-tab active" type="button">
-              Active Project
+          {openTabs.map((tab) => (
+            <button
+              key={tab.projectId}
+              className={`global-tab${tab.projectId === activeTabId ? ' active' : ''}`}
+              type="button"
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              onClick={() => {
+                setActiveTab(tab.projectId);
+                navigate(tab.lastRoute);
+              }}
+              onAuxClick={(e) => {
+                if (e.button === 1) handleCloseTab(tab.projectId);
+              }}
+            >
+              <span className="global-tab__name">{tab.projectInfo.name}</span>
+              <span
+                className="global-tab__close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseTab(tab.projectId);
+                }}
+              >
+                <X size={12} />
+              </span>
             </button>
-          )}
+          ))}
 
           <button className="global-tab-new" title="New Project" type="button" onClick={() => navigate('/')}>
             <Plus size={14} />

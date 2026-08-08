@@ -15,6 +15,24 @@ import { timelineEventService } from '@/features/timeline/services/timelineEvent
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
 import { glossaryService } from '@/features/glossary/services/glossaryService';
 
+/** Snapshot of all entity arrays for a single project */
+interface ProjectSnapshot {
+  characters: Character[];
+  chapters: Chapter[];
+  locations: Location[];
+  organizations: Organization[];
+  species: Species[];
+  items: Item[];
+  worldSystems: WorldSystem[];
+  lore: LoreEntry[];
+  timeline: TimelineEvent[];
+  plotPoints: PlotPoint[];
+  glossary: GlossaryEntry[];
+}
+
+/** In-memory cache of project entity snapshots for fast tab switching */
+const projectCache = new Map<string, ProjectSnapshot>();
+
 interface WorkspaceState {
   isInitialized: boolean;
   isInitializing: boolean;
@@ -34,8 +52,10 @@ interface WorkspaceState {
   plotPoints: PlotPoint[];
   glossary: GlossaryEntry[];
 
-  // Initialization
+  // Initialization & tab switching
   initialize: (db: Database, projectId: string, force?: boolean) => Promise<void>;
+  switchProject: (db: Database, projectId: string) => Promise<void>;
+  evictProject: (projectId: string) => void;
   
   // Phase 1: Characters CRUD actions
   // Note: These actions immediately update the Zustand state (instant UI),
@@ -127,10 +147,42 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       return;
     }
 
+    // Snapshot current project's state before switching (if we have one loaded)
+    const currentId = get().activeProjectId;
+    if (currentId && get().isInitialized && currentId !== projectId) {
+      const state = get();
+      projectCache.set(currentId, {
+        characters: state.characters,
+        chapters: state.chapters,
+        locations: state.locations,
+        organizations: state.organizations,
+        species: state.species,
+        items: state.items,
+        worldSystems: state.worldSystems,
+        lore: state.lore,
+        timeline: state.timeline,
+        plotPoints: state.plotPoints,
+        glossary: state.glossary,
+      });
+    }
+
+    // Check cache first for instant restore
+    const cached = projectCache.get(projectId);
+    if (cached && !force) {
+      set({
+        ...cached,
+        activeProjectId: projectId,
+        isInitialized: true,
+        isInitializing: false,
+        initError: null,
+      });
+      return;
+    }
+
     set({ isInitializing: true, initError: null, activeProjectId: projectId });
 
     try {
-      // Load Phase 1, 2, 3 & 4 entities concurrently
+      // Load all entities concurrently from DB
       const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, glossary] = await Promise.all([
         characterService.list(db, projectId),
         chapterService.list(db, projectId),
@@ -145,18 +197,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         glossaryService.list(db, projectId),
       ]);
 
+      const snapshot = { characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, glossary };
+
+      // Cache the freshly loaded data
+      projectCache.set(projectId, snapshot);
+
       set({
-        characters,
-        chapters,
-        locations,
-        organizations,
-        species,
-        items,
-        worldSystems,
-        lore,
-        timeline,
-        plotPoints,
-        glossary,
+        ...snapshot,
         isInitialized: true,
         isInitializing: false,
       });
@@ -166,6 +213,33 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         initError: err instanceof Error ? err.message : 'Failed to initialize workspace',
         isInitializing: false,
         isInitialized: false
+      });
+    }
+  },
+
+  switchProject: async (db, projectId) => {
+    // Delegate to initialize which handles snapshot/restore/cache
+    await get().initialize(db, projectId);
+  },
+
+  evictProject: (projectId) => {
+    projectCache.delete(projectId);
+    // If we just evicted the active project, reset state
+    if (get().activeProjectId === projectId) {
+      set({
+        activeProjectId: null,
+        isInitialized: false,
+        characters: [],
+        chapters: [],
+        locations: [],
+        organizations: [],
+        species: [],
+        items: [],
+        worldSystems: [],
+        lore: [],
+        timeline: [],
+        plotPoints: [],
+        glossary: [],
       });
     }
   },

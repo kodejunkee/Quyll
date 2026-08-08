@@ -72,9 +72,10 @@
   box-shadow: none;
 }
 
-.tag-input-field:focus {
-  outline: none;
-  box-shadow: none;
+.tag-input-field:focus,
+.tag-input-field:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .tag-input-field::placeholder {

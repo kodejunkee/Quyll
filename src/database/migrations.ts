@@ -119,7 +119,14 @@ export async function migrateProjectDatabase(db: Database, dbPath?: string): Pro
     }
     if (current < 16) {
       try {
-        await execute(db, 'ALTER TABLE project_meta ADD COLUMN tags TEXT NOT NULL DEFAULT "[]"');
+        await execute(db, "ALTER TABLE project_meta ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
+      } catch {
+        // Ignore if column exists
+      }
+    }
+    if (current < 17) {
+      try {
+        await execute(db, "ALTER TABLE project_meta ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
       } catch {
         // Ignore if column exists
       }
@@ -161,7 +168,15 @@ export async function migrateAppDatabase(db: Database): Promise<void> {
     
     if (current < 16) {
       try {
-        await execute(db, 'ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT "[]"');
+        await execute(db, "ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
+      } catch {
+        // Column might already exist
+      }
+    }
+    
+    if (current < 17) {
+      try {
+        await execute(db, "ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
       } catch {
         // Column might already exist
       }

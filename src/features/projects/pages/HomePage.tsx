@@ -136,7 +136,7 @@ function getBookTheme(index: number, genre?: string) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { projects, setProjects, deletedProjects } = useProjectStore();
+  const { projects, setProjects, deletedProjects, openTab, openTabs } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   const viewTab = 'active';
@@ -350,9 +350,26 @@ export default function HomePage() {
       setNewTags([]);
       await touchProject(id);
       await loadProjects();
+      // Open a tab for the newly created project
+      const newProjectInfo = {
+        id,
+        name: newTitle.trim(),
+        path: projectPath,
+        description: newDescription,
+        author: newAuthor,
+        genre: newGenre,
+        tags: newTags,
+        cover_image: null,
+        last_opened_at: new Date().toISOString(),
+        deleted_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      openTab(newProjectInfo, `/project/${id}/dashboard`);
       navigate(`/project/${id}/dashboard`);
     } catch (err) {
       console.error('Failed to create project:', err);
+      alert(`Failed to create project: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -407,6 +424,17 @@ export default function HomePage() {
   }
 
   function openProject(id: string) {
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      // Check if already open in a tab — switch to it
+      const existingTab = openTabs.find(t => t.projectId === id);
+      if (existingTab) {
+        openTab(project, existingTab.lastRoute);
+        navigate(existingTab.lastRoute);
+        return;
+      }
+      openTab(project, `/project/${id}/dashboard`);
+    }
     navigate(`/project/${id}/dashboard`);
   }
 
@@ -443,8 +471,24 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <div className="home-page__container">
-        {/* Top Search Section */}
-        <section className="home-search-section">
+        {projects.length === 0 ? (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="home-empty" style={{ border: 'none', background: 'transparent', padding: 0 }}>
+              <LayersIcon width={64} height={64} className="home-empty__icon" style={{ marginBottom: '24px' }} />
+              <h2 className="home-empty__title" style={{ fontSize: '1.75rem', marginBottom: '16px' }}>Create your first world</h2>
+              <p className="home-empty__desc" style={{ fontSize: '1rem', marginBottom: '40px' }}>
+                Build your story, chapters, characters and world in one connected workspace.
+              </p>
+            <Button variant="primary" onClick={openCreateDialog} style={{ padding: '12px 24px', fontSize: '1rem', height: 'auto', borderRadius: '8px' }}>
+              <PlusIcon width={20} height={20} style={{ marginRight: '8px' }} />
+              Create Project
+            </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Top Search Section */}
+            <section className="home-search-section">
           <div className="home-search-bar">
             <MagnifyingGlassIcon width={18} height={18} className="home-search-icon" />
             <input
@@ -823,6 +867,8 @@ export default function HomePage() {
             </div>
           )}
         </section>
+        </>
+        )}
       </div>
 
       {/* Create Project Modal */}
