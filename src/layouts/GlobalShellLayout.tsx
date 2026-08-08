@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Home, Plus, Square, Copy, Minus, Sun, Moon } from 'lucide-react';
+import { Plus, Square, Copy, Minus, Sun, Moon } from 'lucide-react';
+import { HomeIcon } from '@radix-ui/react-icons';
 import { useThemeStore } from '@/store/themeStore';
 import './GlobalShellLayout.css';
 
@@ -57,9 +58,9 @@ export function GlobalShellLayout() {
     <div className="global-shell">
       {/* Custom Tauri Titlebar / Global Top Nav */}
       <header className="global-top-bar" data-tauri-drag-region>
-        {/* Left: Brand */}
-        <div className="global-top-bar__brand" onClick={() => navigate('/')}>
-          <Home size={20} className="global-top-bar__logo" />
+        {/* Left: Home Button */}
+        <div className="global-top-bar__home-btn" onClick={() => navigate('/')}>
+          <HomeIcon width={20} height={20} className="global-top-bar__home-icon" />
         </div>
 
         {/* Center: Tabs */}

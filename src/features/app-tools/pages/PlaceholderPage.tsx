@@ -1,5 +1,4 @@
-import React from 'react';
-import { Settings, Download, Trash2, RefreshCw, Info, HelpCircle } from 'lucide-react';
+import { Settings, Download, Trash2, RefreshCw, Info, Coffee } from 'lucide-react';
 
 interface PlaceholderProps {
   title: string;
@@ -12,7 +11,7 @@ const iconMap = {
   trash: Trash2,
   updates: RefreshCw,
   about: Info,
-  support: HelpCircle,
+  support: Coffee,
 };
 
 export function PlaceholderPage({ title, icon }: PlaceholderProps) {

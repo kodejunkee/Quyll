@@ -1,27 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Feather,
-  Plus,
-  FolderOpen,
-  MoreVertical,
-  Edit2,
-  Trash2,
-  Search,
-  BookOpen,
-  Clock,
-  ArrowRight,
-  LayoutGrid,
-  List,
-  Compass,
-  CircleDot,
-  Flame,
-  TreeDeciduous,
-  Sparkles,
-  ArrowUpDown,
-  Check,
-  Image as ImageIcon,
-} from 'lucide-react';
+  PlusIcon,
+  MagnifyingGlassIcon,
+  ClockIcon,
+  GridIcon,
+  ListBulletIcon,
+  GlobeIcon,
+  DrawingPinIcon,
+  LightningBoltIcon,
+  StarIcon,
+  MagicWandIcon,
+  CaretSortIcon,
+  CheckIcon,
+  ImageIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DotsVerticalIcon,
+  LayersIcon,
+  Pencil2Icon,
+  TrashIcon
+} from '@radix-ui/react-icons';
 import { Button, Modal, Input, TextArea, Dialog, Dropdown } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import {
@@ -31,28 +30,19 @@ import {
   listDeletedProjects,
   renameProject as dbRename,
   softDeleteProject,
-  restoreProject,
   hardDeleteProject,
   autoDeleteOldProjects,
   initializeProjectDatabase,
-  openProjectDatabase,
   touchProject,
   setProjectCover,
 } from '@/database';
-import { select } from '@/database/databaseService';
 import { formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import { generateId } from '@/utils/uuid';
-import { pickAndImportQuyllProject } from '@/services/importService';
 // Removed unused ClockIcon import
 import { open } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import './HomePage.css';
 import '@/styles/redesign.css';
-
-interface ProjectStats {
-  chapterCount: number;
-  wordCount: number;
-}
 
 // Deterministic book cover themes matching the 5 books in the screenshot
 const BOOK_COVER_THEMES = [
@@ -61,35 +51,35 @@ const BOOK_COVER_THEMES = [
     name: 'Fantasy',
     gradient: 'linear-gradient(135deg, #3B0764 0%, #1E1B4B 100%)',
     ribbonColor: '#A855F7',
-    icon: TreeDeciduous,
+    icon: MagicWandIcon,
   },
   {
     type: 'green',
     name: 'Fantasy / Adventure',
     gradient: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
     ribbonColor: '#10B981',
-    icon: Compass,
+    icon: GlobeIcon,
   },
   {
     type: 'blue',
     name: 'Historical Fiction',
     gradient: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
     ribbonColor: '#3B82F6',
-    icon: CircleDot,
+    icon: DrawingPinIcon,
   },
   {
     type: 'brown',
     name: 'Epic Fantasy',
     gradient: 'linear-gradient(135deg, #451A03 0%, #291307 100%)',
     ribbonColor: '#F59E0B',
-    icon: Flame,
+    icon: LightningBoltIcon,
   },
   {
     type: 'black',
     name: 'Mystery / Dark',
     gradient: 'linear-gradient(135deg, #18181B 0%, #09090B 100%)',
     ribbonColor: '#71717A',
-    icon: Sparkles,
+    icon: StarIcon,
   },
 ];
 
@@ -147,10 +137,9 @@ function getBookTheme(index: number, genre?: string) {
 export default function HomePage() {
   const navigate = useNavigate();
   const { projects, setProjects, deletedProjects } = useProjectStore();
-  const [statsMap, setStatsMap] = useState<Record<string, ProjectStats>>({});
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [viewTab, setViewTab] = useState<'active' | 'trash'>('active');
+  const viewTab = 'active';
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('quyll_home_view_mode') as 'grid' | 'list') || 'grid';
   });
@@ -162,6 +151,43 @@ export default function HomePage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollButtons = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateScrollButtons();
+    const current = scrollRef.current;
+    if (current) {
+      current.addEventListener('scroll', updateScrollButtons);
+    }
+    window.addEventListener('resize', updateScrollButtons);
+    return () => {
+      if (current) current.removeEventListener('scroll', updateScrollButtons);
+      window.removeEventListener('resize', updateScrollButtons);
+    };
+  }, [updateScrollButtons, projects]);
+
+  const handleScrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -190,7 +216,6 @@ export default function HomePage() {
     }
   }, [createOpen]);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [newTitle, setNewTitle] = useState('');
@@ -200,27 +225,6 @@ export default function HomePage() {
   const [isOtherGenre, setIsOtherGenre] = useState(false);
   const [renameName, setRenameName] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const fetchProjectStats = useCallback(async (projectList: typeof projects) => {
-    const map: Record<string, ProjectStats> = {};
-    for (const p of projectList) {
-      try {
-        const db = await openProjectDatabase(p.path);
-        const rows = await select<{ c: number; w: number }>(
-          db,
-          `SELECT COUNT(*) as c, COALESCE(SUM(word_count), 0) as w FROM chapters WHERE project_id = $1 AND deleted_at IS NULL`,
-          [p.id],
-        );
-        map[p.id] = {
-          chapterCount: rows[0]?.c ?? 0,
-          wordCount: rows[0]?.w ?? 0,
-        };
-      } catch (err) {
-        map[p.id] = { chapterCount: 0, wordCount: 0 };
-      }
-    }
-    setStatsMap(map);
-  }, []);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -257,12 +261,10 @@ export default function HomePage() {
         updated_at: r.updated_at,
       }));
       useProjectStore.getState().setDeletedProjects(mappedDeleted);
-
-      void fetchProjectStats(mapped);
     } catch (err) {
       console.error('Failed to load projects:', err);
     }
-  }, [setProjects, fetchProjectStats]);
+  }, [setProjects]);
 
   useEffect(() => {
     void loadProjects();
@@ -386,17 +388,7 @@ export default function HomePage() {
     }
   }
 
-  async function handleRestore(projectId: string) {
-    try {
-      await restoreProject(projectId);
-      await loadProjects();
-    } catch (err) {
-      console.error('Failed to restore project:', err);
-    }
-  }
-
   function openProject(id: string) {
-    if (viewTab === 'trash') return;
     navigate(`/project/${id}/dashboard`);
   }
 
@@ -436,7 +428,7 @@ export default function HomePage() {
         {/* Top Search Section */}
         <section className="home-search-section">
           <div className="home-search-bar">
-            <Search size={18} className="home-search-icon" />
+            <MagnifyingGlassIcon width={18} height={18} className="home-search-icon" />
             <input
               id="home-search-input"
               type="text"
@@ -452,8 +444,21 @@ export default function HomePage() {
         {/* Recent Projects */}
         {!searchQuery && (
           <section className="home-section">
-            <h3 className="home-section__title">Recent Projects</h3>
-            <div className="home-recent-row">
+            <h3 className="home-section__title home-section__title--gradient">
+              <ClockIcon width={18} height={18} />
+              Recent Projects
+            </h3>
+            <div className="home-recent-carousel">
+              <button 
+                className="home-recent-scroll-btn left" 
+                onClick={handleScrollLeft}
+                disabled={!canScrollLeft}
+                aria-label="Scroll left"
+              >
+                <ChevronLeftIcon width={20} height={20} />
+              </button>
+              
+              <div className="home-recent-row" ref={scrollRef}>
               {/* Create New Project Card */}
               <div
                 className="home-project-card create-new"
@@ -463,9 +468,9 @@ export default function HomePage() {
                 onKeyDown={(e) => e.key === 'Enter' && openCreateDialog()}
               >
                 <div className="create-new__icon">
-                  <Plus size={32} />
+                  <PlusIcon width={32} height={32} />
                 </div>
-                <span className="create-new__text">Start a new project</span>
+                <span className="create-new__text">Create new project</span>
               </div>
 
               {recentProjects.map((project, idx) => {
@@ -484,24 +489,29 @@ export default function HomePage() {
                         <img 
                           src={convertFileSrc(project.cover_image)} 
                           alt="" 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          className="recent-card__image"
                         />
                       )}
                     </div>
                     <div className="recent-card__info">
                       <h4 className="recent-card__title">{project.name}</h4>
-                      <p className="recent-card__time">
-                        {project.last_opened_at ? formatTimeAgo(project.last_opened_at) : 'Not opened yet'}
-                      </p>
-                    </div>
-                    <div className="recent-card__overlay">
                       <button className="recent-card__continue" onClick={(e) => { e.stopPropagation(); openProject(project.id); }}>
-                        Continue <ArrowRight size={14} />
+                        Continue
                       </button>
                     </div>
                   </div>
                 );
               })}
+              </div>
+
+              <button 
+                className="home-recent-scroll-btn right" 
+                onClick={handleScrollRight}
+                disabled={!canScrollRight}
+                aria-label="Scroll right"
+              >
+                <ChevronRightIcon width={20} height={20} />
+              </button>
             </div>
           </section>
         )}
@@ -518,7 +528,7 @@ export default function HomePage() {
                   title="Sort projects"
                   type="button"
                 >
-                  <ArrowUpDown size={14} />
+                  <CaretSortIcon width={14} height={14} />
                   <span>Sort</span>
                 </button>
                 <div className={`home-section__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
@@ -543,7 +553,7 @@ export default function HomePage() {
                         type="button"
                       >
                         <span>{opt.label}</span>
-                        {active && <Check size={14} />}
+                        {active && <CheckIcon width={14} height={14} />}
                       </button>
                     );
                   })}
@@ -557,7 +567,7 @@ export default function HomePage() {
                   title="Grid view"
                   type="button"
                 >
-                  <LayoutGrid size={15} />
+                  <GridIcon width={15} height={15} />
                 </button>
                 <button
                   className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
@@ -565,7 +575,7 @@ export default function HomePage() {
                   title="List view"
                   type="button"
                 >
-                  <List size={15} />
+                  <ListBulletIcon width={15} height={15} />
                 </button>
               </div>
             </div>
@@ -573,7 +583,7 @@ export default function HomePage() {
 
           {sortedProjects.length === 0 ? (
             <div className="home-empty">
-              <FolderOpen size={48} className="home-empty__icon" />
+              <LayersIcon width={48} height={48} className="home-empty__icon" />
               <h4 className="home-empty__title">
                 {searchQuery ? 'No matching projects found' : 'Create your first world'}
               </h4>
@@ -586,7 +596,6 @@ export default function HomePage() {
           ) : viewMode === 'grid' ? (
             <div className="recent-projects-grid">
               {sortedProjects.map((project, idx) => {
-                const stats = statsMap[project.id] ?? { chapterCount: 0, wordCount: 0 };
                 const theme = getBookTheme(idx, project.genre);
                 const CoverIcon = theme.icon;
 
@@ -635,7 +644,7 @@ export default function HomePage() {
                         aria-label="Project Actions"
                         type="button"
                       >
-                        <MoreVertical size={16} />
+                        <DotsVerticalIcon width={16} height={16} />
                       </button>
 
                       <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`}>
@@ -647,7 +656,7 @@ export default function HomePage() {
                           }}
                           type="button"
                         >
-                          <ImageIcon size={14} /> Change Cover Art
+                          <ImageIcon width={14} height={14} /> Change Cover Art
                         </button>
                         <button
                           onClick={(e) => {
@@ -658,7 +667,7 @@ export default function HomePage() {
                           }}
                           type="button"
                         >
-                          <Edit2 size={14} /> Rename
+                          <Pencil2Icon width={14} height={14} /> Rename
                         </button>
                         <button
                           className="danger"
@@ -669,7 +678,7 @@ export default function HomePage() {
                           }}
                           type="button"
                         >
-                          <Trash2 size={14} /> Delete
+                          <TrashIcon width={14} height={14} /> Delete
                         </button>
                       </div>
                     </div>
@@ -683,7 +692,7 @@ export default function HomePage() {
                       {/* Stats removed */}
 
                       <div className="home-project-card__footer">
-                        <Clock size={12} />
+                        <ClockIcon width={12} height={12} />
                         <span>
                           {project.last_opened_at ? formatTimeAgo(project.last_opened_at) : 'Not opened yet'}
                         </span>
@@ -696,7 +705,6 @@ export default function HomePage() {
           ) : (
             <div className="recent-projects-list">
               {sortedProjects.map((project, idx) => {
-                const stats = statsMap[project.id] ?? { chapterCount: 0, wordCount: 0 };
                 const theme = getBookTheme(idx, project.genre);
                 const CoverIcon = theme.icon;
 
@@ -741,7 +749,7 @@ export default function HomePage() {
                           }}
                           type="button"
                         >
-                          <MoreVertical size={16} />
+                          <DotsVerticalIcon width={16} height={16} />
                         </button>
                         
                         <div className={`home-project-card__menu ${openMenuId === project.id ? 'open' : ''}`} style={{ top: '32px', right: 0 }}>
@@ -754,7 +762,7 @@ export default function HomePage() {
                             }}
                             type="button"
                           >
-                            <Edit2 size={14} /> Rename
+                            <Pencil2Icon width={14} height={14} /> Rename
                           </button>
                           <button
                             className="danger"
@@ -765,7 +773,7 @@ export default function HomePage() {
                             }}
                             type="button"
                           >
-                            <Trash2 size={14} /> Delete
+                            <TrashIcon width={14} height={14} /> Delete
                           </button>
                         </div>
                       </div>

@@ -95,7 +95,7 @@
 /* ===== Dark Theme (default) ===== */
 [data-theme='dark'],
 :root {
-  --color-bg: #0b0c0e;
+  --color-bg: #090a0c;
   --color-bg-elevated: #101216;
   --color-bg-surface: #171a20;
   --color-bg-hover: #1c2027;

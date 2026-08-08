@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useProjectDb } from '@/hooks/useProjectDb';
+import { useOptionalProjectDb } from '@/hooks/useProjectDb';
 import { SettingsService } from '../services/settingsService';
 import type { Settings, SettingsFormData } from '../types/settings';
 
 export function useSettings() {
-  const { db } = useProjectDb();
+  const ctx = useOptionalProjectDb();
+  const db = ctx?.db;
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

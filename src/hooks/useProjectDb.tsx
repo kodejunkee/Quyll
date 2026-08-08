@@ -27,6 +27,10 @@ export function useProjectDb(): ProjectDbContextValue {
   return ctx;
 }
 
+export function useOptionalProjectDb(): ProjectDbContextValue | null {
+  return useContext(ProjectDbContext);
+}
+
 interface ProjectDbProviderProps {
   projectId: string;
   children: ReactNode;
