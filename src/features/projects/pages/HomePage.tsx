@@ -17,10 +17,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DotsVerticalIcon,
-  LayersIcon,
   Pencil2Icon,
-  TrashIcon
+  TrashIcon,
+  UploadIcon
 } from '@radix-ui/react-icons';
+import { Library } from 'lucide-react';
 import { Button, Modal, Input, TextArea, Dialog, GenreInput } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -444,17 +445,29 @@ export default function HomePage() {
     <div className="home-page">
       <div className="home-page__container">
         {projects.length === 0 ? (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="home-empty" style={{ border: 'none', background: 'transparent', padding: 0 }}>
-              <LayersIcon width={64} height={64} className="home-empty__icon" style={{ marginBottom: '24px' }} />
-              <h2 className="home-empty__title" style={{ fontSize: '1.75rem', marginBottom: '16px' }}>Create your first world</h2>
-              <p className="home-empty__desc" style={{ fontSize: '1rem', marginBottom: '40px' }}>
-                Build your story, chapters, characters and world in one connected workspace.
+          <div className="home-empty-container">
+            <div className="home-empty">
+              <div className="home-empty__icon-wrapper">
+                <Library width={36} height={36} strokeWidth={1.5} className="home-empty__icon" />
+              </div>
+              <h2 className="home-empty__title">You haven't created any <span>projects</span> yet</h2>
+              <p className="home-empty__desc">
+                Create your first project and start building your world, characters, and adventures.
               </p>
-            <Button variant="primary" onClick={openCreateDialog} style={{ padding: '12px 24px', fontSize: '1rem', height: 'auto', borderRadius: '8px' }}>
-              <PlusIcon width={20} height={20} style={{ marginRight: '8px' }} />
-              Create Project
-            </Button>
+              
+              <Button variant="primary" onClick={() => window.dispatchEvent(new Event('open-create-project'))} className="home-empty__create-btn">
+                <PlusIcon width={18} height={18} style={{ marginRight: '8px' }} />
+                Create Project
+              </Button>
+              
+              <div className="home-empty__divider">
+                <span>or</span>
+              </div>
+              
+              <Button variant="secondary" onClick={() => navigate('/import-export')} className="home-empty__import-btn">
+                <UploadIcon width={16} height={16} style={{ marginRight: '8px' }} />
+                Import Existing Project
+              </Button>
             </div>
           </div>
         ) : (
@@ -556,7 +569,7 @@ export default function HomePage() {
         <section className="home-section all-projects-section">
           <div className="home-section__header-box" style={{ '--section-color': '#F59E0B' } as React.CSSProperties}>
             <h3 className="home-section__title">
-              <LayersIcon width={18} height={18} className="home-section__icon" />
+              <Library width={18} height={18} strokeWidth={1.5} className="home-section__icon" />
               All Projects
             </h3>
             <div className="home-section__controls">
@@ -622,7 +635,7 @@ export default function HomePage() {
 
           {sortedProjects.length === 0 ? (
             <div className="home-empty">
-              <LayersIcon width={48} height={48} className="home-empty__icon" />
+              <Library width={48} height={48} strokeWidth={1.5} className="home-empty__icon" style={{ opacity: 0.5 }} />
               <h4 className="home-empty__title">
                 {searchQuery ? 'No matching projects found' : 'Create your first world'}
               </h4>
