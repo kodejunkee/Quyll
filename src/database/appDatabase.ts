@@ -17,11 +17,11 @@ export interface ProjectRow {
   id: string;
   name: string;
   path: string;
-  description: string;
-  author: string;
-  genre: string;
-  tags: string;
-  cover_image: string | null;
+  description?: string;
+  author?: string;
+  genre?: string[];
+  theme_index?: number;
+  cover_image?: string | null;
   last_opened_at: string | null;
   deleted_at: string | null;
   created_at: string;
@@ -48,7 +48,7 @@ export async function initAppDatabase(): Promise<Database> {
     // Ignore if column already exists
   }
   try {
-    await execute(appDb, "ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'");
+    await execute(appDb, 'ALTER TABLE projects ADD COLUMN theme_index INTEGER');
   } catch {
     // Ignore if column already exists
   }
@@ -63,14 +63,19 @@ export async function registerProject(project: {
   path: string;
   description?: string;
   author?: string;
-  genre?: string;
-  tags?: string[];
+  genre?: string[];
 }): Promise<void> {
   const db = await initAppDatabase();
   const now = new Date().toISOString();
+  
+  // Determine next theme index
+  const rows = await select<{ max_index: number | null }>(db, 'SELECT MAX(theme_index) as max_index FROM projects');
+  const maxIndex = rows[0]?.max_index ?? -1;
+  const nextThemeIndex = maxIndex + 1;
+
   await execute(
     db,
-    `INSERT INTO projects (id, name, path, description, author, genre, tags, last_opened_at, deleted_at, created_at, updated_at)
+    `INSERT INTO projects (id, name, path, description, author, genre, theme_index, last_opened_at, deleted_at, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL, $8, $9)`,
     [
       project.id,
@@ -78,12 +83,27 @@ export async function registerProject(project: {
       project.path,
       project.description ?? '',
       project.author ?? '',
-      project.genre ?? '',
-      JSON.stringify(project.tags ?? []),
+      project.genre ? JSON.stringify(project.genre) : '[]',
+      nextThemeIndex,
       now,
       now,
     ],
   );
+}
+
+async function processRows(rows: ProjectRow[]): Promise<ProjectRow[]> {
+  const appData = await appDataDir();
+  for (const row of rows) {
+    if (typeof row.genre === 'string') {
+        try { row.genre = JSON.parse(row.genre); } catch { row.genre = []; }
+    } else if (!Array.isArray(row.genre)) {
+        row.genre = [];
+    }
+    if (row.cover_image && !row.cover_image.includes(':\\') && !row.cover_image.startsWith('/')) {
+      row.cover_image = await join(appData, row.cover_image);
+    }
+  }
+  return rows;
 }
 
 /** Get all registered active projects, most recently opened first. */
@@ -93,23 +113,17 @@ export async function listProjects(): Promise<ProjectRow[]> {
     db,
     'SELECT * FROM projects WHERE deleted_at IS NULL ORDER BY datetime(COALESCE(last_opened_at, created_at)) DESC, datetime(created_at) DESC',
   );
-  const appData = await appDataDir();
-  
-  for (const row of rows) {
-    if (row.cover_image && !row.cover_image.includes(':\\') && !row.cover_image.startsWith('/')) {
-      row.cover_image = await join(appData, row.cover_image);
-    }
-  }
-  return rows;
+  return processRows(rows);
 }
 
 /** Get all soft-deleted projects. */
 export async function listDeletedProjects(): Promise<ProjectRow[]> {
   const db = await initAppDatabase();
-  return select<ProjectRow>(
+  const rows = await select<ProjectRow>(
     db,
     'SELECT * FROM projects WHERE deleted_at IS NOT NULL ORDER BY datetime(deleted_at) DESC',
   );
+  return processRows(rows);
 }
 
 /** Update the last_opened_at timestamp for a project. */
@@ -127,8 +141,7 @@ export async function touchProject(projectId: string): Promise<void> {
 export async function editProject(projectId: string, updates: {
   name?: string;
   description?: string;
-  genre?: string;
-  tags?: string[];
+  genre?: string[];
 }): Promise<void> {
   const db = await initAppDatabase();
   const setClauses: string[] = [];
@@ -145,11 +158,7 @@ export async function editProject(projectId: string, updates: {
   }
   if (updates.genre !== undefined) {
     setClauses.push(`genre = $${paramIdx++}`);
-    values.push(updates.genre);
-  }
-  if (updates.tags !== undefined) {
-    setClauses.push(`tags = $${paramIdx++}`);
-    values.push(JSON.stringify(updates.tags));
+    values.push(JSON.stringify(updates.genre));
   }
 
   if (setClauses.length === 0) return;

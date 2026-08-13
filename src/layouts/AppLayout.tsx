@@ -71,39 +71,6 @@ export function AppLayout() {
 
   const SkeletonLayout = (
     <div className="app-shell">
-      <header className="app-global-header">
-        <div className="app-global-header__brand">
-          <Feather size={20} className="app-global-header__logo" />
-          <span className="app-global-header__title">Quyll</span>
-          <span className="app-global-header__divider">/</span>
-          <span className="app-global-header__project">
-            {currentProject?.name || openTabs.find(t => t.projectId === projectId)?.projectInfo.name || projects.find((p) => p.id === projectId)?.name || 'Loading...'}
-          </span>
-        </div>
-
-        <div className="app-global-header__center">
-          <div className="global-search-wrapper">
-            <div className="global-search-bar">
-              <Search size={16} className="global-search-bar__icon" />
-              <input disabled type="text" className="global-search-bar__input" placeholder="Search the project" />
-              <kbd className="global-search-bar__shortcut">Ctrl K</kbd>
-            </div>
-          </div>
-        </div>
-
-        <div className="app-global-header__actions">
-          <button className="app-global-header__ai-btn" disabled>
-            <Bot size={15} className="app-global-header__ai-icon" />
-            <span className="app-global-header__ai-label">AI Assistant</span>
-            <span className="app-global-header__ai-badge">Coming Soon</span>
-          </button>
-          <ThemeToggle />
-          <button className="app-global-header__settings-btn" disabled>
-            <Settings size={18} />
-          </button>
-        </div>
-      </header>
-
       <div className={`app-layout ${sidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''} ${hideInspector ? 'app-layout--inspector-collapsed' : ''}`}>
         <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <main className="app-layout__main">
@@ -123,47 +90,15 @@ export function AppLayout() {
 
   return (
     <ProjectDbProvider projectId={projectId} fallback={SkeletonLayout}>
-
         <div className="app-shell">
-          <header className="app-global-header">
-          <div className="app-global-header__brand">
-            <Feather size={20} className="app-global-header__logo" />
-            <span className="app-global-header__title">Quyll</span>
-            <span className="app-global-header__divider">/</span>
-            <span className="app-global-header__project">
-              {currentProject?.name || openTabs.find(t => t.projectId === projectId)?.projectInfo.name || projects.find((p) => p.id === projectId)?.name || 'Untitled Project'}
-            </span>
-          </div>
-
-          <div className="app-global-header__center">
-            <GlobalSearch />
-          </div>
-
-          <div className="app-global-header__actions">
-            <button
-              className="app-global-header__ai-btn"
-              onClick={() => notify('AI Assistant feature is coming soon to Quyll!', 'info')}
-              title="AI Assistant"
-            >
-              <Bot size={15} className="app-global-header__ai-icon" />
-              <span className="app-global-header__ai-label">AI Assistant</span>
-              <span className="app-global-header__ai-badge">Coming Soon</span>
-            </button>
-            <ThemeToggle />
-            <button
-              className="app-global-header__settings-btn"
-              onClick={() => setIsSettingsModalOpen(true)}
-              title="Project Settings"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
-        </header>
-
         <div
           className={`app-layout ${sidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''} ${hideInspector ? 'app-layout--inspector-collapsed' : ''}`}
         >
-          <NavigationSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+          <NavigationSidebar 
+            collapsed={sidebarCollapsed} 
+            onToggle={toggleSidebar} 
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+          />
           <main className="app-layout__main">
             <div style={{ display: isWritingWorkspace ? 'block' : 'none', height: '100%' }}>
               <SuspenseWrap>

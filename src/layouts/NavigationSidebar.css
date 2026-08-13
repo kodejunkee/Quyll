@@ -8,6 +8,10 @@
   transition: width var(--transition-slow);
 }
 
+[data-theme='light'] .nav-sidebar__header-logo {
+  filter: invert(1) brightness(0.2) !important;
+}
+
 .nav-sidebar__header {
   display: flex;
   align-items: center;

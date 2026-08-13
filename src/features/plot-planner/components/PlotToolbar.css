@@ -1,0 +1,30 @@
+.plot-toolbar {
+  position: absolute;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through where there are no buttons */
+}
+
+.plot-toolbar__left,
+.plot-toolbar__right {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  pointer-events: auto; /* Enable clicks on the actual toolbar content */
+  background: var(--color-bg-surface);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.plot-toolbar__right {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(4px);
+}

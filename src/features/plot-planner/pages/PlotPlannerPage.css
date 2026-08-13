@@ -1,56 +1,35 @@
-.plot-page {
+.plot-planner-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: var(--space-6) var(--space-8);
+  height: 100vh; /* Takes full height of window */
+  width: 100%;
+  overflow: hidden;
 }
 
-.plot-page__header {
+.plot-planner-page__loading {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.plot-page__title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-}
-
-.plot-page__count {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-1);
-}
-
-.plot-page__search {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
-  max-width: 100%;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
 }
 
-.plot-page__search > :first-child {
-  max-width: 400px;
+.plot-planner-page__container {
+  display: flex;
   flex: 1;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
-.plot-page__view-toggle {
-  display: flex;
-  gap: var(--space-2);
+.plot-planner-page__canvas {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
-.plot-page__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  max-width: 800px;
-}
-
-.plot-page__loading {
-  padding: var(--space-8);
-  text-align: center;
-  color: var(--color-text-tertiary);
+.plot-planner-page__sidebar {
+  height: 100%;
+  /* The detail panel handles its own width and border */
 }

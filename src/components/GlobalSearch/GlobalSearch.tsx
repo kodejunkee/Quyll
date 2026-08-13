@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProjectDb } from '@/hooks/useProjectDb';
+import { useOptionalProjectDb } from '@/hooks/useProjectDb';
 import { searchService, SearchResult } from '@/services/searchService';
 import { Search, Loader2, BookOpen, MapPin, Users, Hash, Shield, Box, Globe, Book, Clock, Map } from 'lucide-react';
 import './GlobalSearch.css';
@@ -12,7 +12,9 @@ export function GlobalSearch() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   
-  const { db, projectId } = useProjectDb();
+  const ctx = useOptionalProjectDb();
+  const db = ctx?.db;
+  const projectId = ctx?.projectId;
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,7 @@ export function GlobalSearch() {
           type="text"
           className="global-search-bar__input"
           placeholder="Search the project"
+          title="Search (Ctrl+K)"
           value={query}
           onChange={e => {
             setQuery(e.target.value);
@@ -142,9 +145,6 @@ export function GlobalSearch() {
           onKeyDown={handleKeyDown}
         />
         {loading && <Loader2 size={15} className="global-search-spinner" />}
-        {!isFocused && !query && (
-          <kbd className="global-search-bar__shortcut">Ctrl K</kbd>
-        )}
       </div>
 
       {isFocused && (query.trim().length > 0 || results.length > 0) && (

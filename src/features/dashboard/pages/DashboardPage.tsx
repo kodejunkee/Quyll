@@ -8,11 +8,61 @@ import { ExportDialog } from '@/features/settings';
 import { Button } from '@/components';
 import {
   ArrowRight, BookOpen, Users, MapPin, Building2, Bug, Sword,
-  Globe, ScrollText, Clock, GitBranch, Type, PenLine, Plus, Download,
+  Globe, ScrollText, Clock, GitBranch, Type, Download, Image as ImageIcon,
+  BookMarked
 } from 'lucide-react';
 import { formatNumber, formatReadingTime, formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import './DashboardPage.css';
 import '@/styles/redesign.css';
+
+// Import banners
+import bannerFantasy from '@/assets/images/project-banners/fantasy.png';
+import bannerSciFi from '@/assets/images/project-banners/science.png';
+import bannerMystery from '@/assets/images/project-banners/mystery.png';
+import bannerRomance from '@/assets/images/project-banners/romance.png';
+import bannerDarkFantasy from '@/assets/images/project-banners/dark-fantasy.png';
+import bannerFolklore from '@/assets/images/project-banners/folklore.png';
+import bannerAdventure from '@/assets/images/project-banners/adventure.png';
+import bannerHighFantasy from '@/assets/images/project-banners/high-fantasy.png';
+import bannerMagic from '@/assets/images/project-banners/magic.png';
+import bannerMythology from '@/assets/images/project-banners/mythology.png';
+import bannerCyberpunk from '@/assets/images/project-banners/cyberpunk.png';
+
+const BANNER_MAP: Record<string, string> = {
+  'fantasy': bannerFantasy,
+  'science fiction': bannerSciFi,
+  'sci-fi': bannerSciFi,
+  'mystery': bannerMystery,
+  'romance': bannerRomance,
+  'dark fantasy': bannerDarkFantasy,
+  'horror': bannerDarkFantasy,
+  'historical': bannerFolklore,
+  'adventure': bannerAdventure,
+  'thriller': bannerMystery,
+  'contemporary': bannerMagic,
+  'dystopian': bannerCyberpunk,
+  'cyberpunk': bannerCyberpunk,
+  'folklore': bannerFolklore,
+  'high fantasy': bannerHighFantasy,
+  'magic': bannerMagic,
+  'mythology': bannerMythology
+};
+const DEFAULT_BANNERS = Object.values(BANNER_MAP);
+
+function getBannerForProject(genres?: string[], projectId?: string) {
+  if (genres && genres.length > 0) {
+    const firstGenre = genres[0].toLowerCase();
+    for (const [key, banner] of Object.entries(BANNER_MAP)) {
+      if (firstGenre.includes(key)) return banner;
+    }
+  }
+  // Deterministic fallback based on project ID
+  if (projectId) {
+    const sum = projectId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return DEFAULT_BANNERS[sum % DEFAULT_BANNERS.length];
+  }
+  return bannerAdventure;
+}
 
 interface StatConfig { label: string; table: string; path: string; icon: ElementType; colorKey: string }
 interface LatestChapter { id: string; title: string; chapter_number: number; word_count: number; updated_at: string }
@@ -37,13 +87,10 @@ export default function DashboardPage() {
   const { currentProject } = useProjectStore();
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  // Initialize from cache (if available), otherwise use sensible defaults
   const cached = getDashboardData(projectId);
   const [counts, setCounts] = useState<Record<string, number>>(cached?.counts ?? {});
   const [latestChapter, setLatestChapter] = useState<LatestChapter | null>(cached?.latestChapter ?? null);
   const [writingStats, setWritingStats] = useState(cached?.writingStats ?? { totalWords: 0, totalReadingTime: 0 });
-  
-  // Track whether data has ever been loaded (from cache or fresh)
   const [hasLoaded, setHasLoaded] = useState(!!cached);
 
   const loadDashboard = useCallback(async () => {
@@ -51,7 +98,6 @@ export default function DashboardPage() {
     let totalWords = 0;
     let totalReadingTime = 0;
 
-    // Run all stats queries concurrently
     const promises = STAT_CONFIGS.map(async ({ table }) => {
       try {
         if (table === 'chapters') {
@@ -76,7 +122,6 @@ export default function DashboardPage() {
       }
     });
 
-    // Get latest chapter concurrently
     let freshLatest: LatestChapter | null = null;
     const latestChapterPromise = select<LatestChapter>(
       db,
@@ -87,16 +132,13 @@ export default function DashboardPage() {
       .catch(() => { freshLatest = null; });
 
     await Promise.all([...promises, latestChapterPromise]);
-
     const freshWritingStats = { totalWords, totalReadingTime };
 
-    // Update local state
     setCounts(results);
     setLatestChapter(freshLatest);
     setWritingStats(freshWritingStats);
     setHasLoaded(true);
 
-    // Persist to the global store so next navigation is instant
     setDashboardData(projectId, {
       counts: results,
       latestChapter: freshLatest,
@@ -110,91 +152,188 @@ export default function DashboardPage() {
 
   const open = (path: string) => navigate(`/project/${projectId}/${path}`);
   const totalWorldEntries = Object.entries(counts).filter(([table]) => table !== 'chapters').reduce((sum, [, count]) => sum + count, 0);
+  const activeBanner = getBannerForProject(currentProject?.genre, projectId);
+  const authorName = currentProject?.author || '';
 
-  // If we have no cached data and haven't loaded yet, show nothing to avoid the flash
-  if (!hasLoaded) {
-    return null;
-  }
+  if (!hasLoaded) return null;
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <span className="page-eyebrow">Writing workspace</span>
-          <h1 className="dashboard-page__title">Dashboard</h1>
-          <p className="dashboard-page__subtitle">Keep your story moving and your world within reach.</p>
-        </div>
-        <Button 
-          variant="secondary"
-          onClick={() => setIsExportOpen(true)}
-          icon={<Download size={16} />}
-        >
-          Export Project
-        </Button>
-      </header>
-
-      <section className="dashboard-page__continue" style={{ alignItems: 'flex-start' }}>
-        <div className="dashboard-page__continue-icon" style={{ marginTop: '2px' }}><PenLine size={21} /></div>
-        <div className="dashboard-page__continue-copy">
-          <span className="page-eyebrow">Project Overview</span>
-          <h2>{currentProject?.name ?? 'Untitled Project'}</h2>
-          
-          <p style={{ marginTop: '8px', color: 'var(--color-text-secondary)', maxWidth: '600px', lineHeight: '1.5' }}>
-            {currentProject?.description || 'No description provided for this project.'}
-          </p>
-
-          <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)' }}>
-            {currentProject?.author && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ opacity: 0.7 }}>Author:</span> <strong style={{ color: 'var(--color-text-primary)' }}>{currentProject.author}</strong>
-              </span>
-            )}
-            {currentProject?.genre && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ opacity: 0.7 }}>Genre:</span> <strong style={{ color: 'var(--color-text-primary)' }}>{currentProject.genre}</strong>
-              </span>
-            )}
+      <div 
+        className="dashboard-banner" 
+        style={{ backgroundImage: `url(${activeBanner})` }}
+      >
+        <div className="dashboard-banner__content">
+          <div className="dashboard-banner__text">
+            <span className="dashboard-banner__welcome">
+              Welcome back{authorName ? ', ' : ''}<strong>{authorName}</strong> 👋
+            </span>
+            <h1 className="dashboard-banner__title">{currentProject?.name ?? 'Untitled Project'}</h1>
+            <p className="dashboard-banner__subtitle">Keep your story moving and your world within reach.</p>
+          </div>
+          <div className="dashboard-banner__actions">
+            <Button 
+              variant="secondary"
+              onClick={() => setIsExportOpen(true)}
+              icon={<Download size={16} />}
+              style={{ background: 'var(--color-bg-elevated)', backdropFilter: 'blur(8px)' }}
+            >
+              Export Project
+            </Button>
           </div>
         </div>
-        <button 
-          className="dashboard-page__primary-action" 
-          onClick={() => open(latestChapter ? `chapters/${latestChapter.id}` : 'chapters')}
-          style={{ alignSelf: 'center' }}
-        >
-          {latestChapter ? 'Continue writing' : 'Create first chapter'} {latestChapter ? <ArrowRight size={16} /> : <Plus size={16} />}
-        </button>
-      </section>
+      </div>
 
-      <section className="dashboard-page__progress-section">
-        <div className="dashboard-page__section-heading"><div><h2>Writing progress</h2><p>A quiet snapshot of your manuscript.</p></div></div>
-        <div className="dashboard-page__progress">
-          <div><Type size={17} /><strong>{formatNumber(writingStats.totalWords)}</strong><span>Total words</span></div>
-          <div><Clock size={17} /><strong>{formatReadingTime(writingStats.totalReadingTime)}</strong><span>Reading time</span></div>
-          <div><BookOpen size={17} /><strong>{counts.chapters ?? 0}</strong><span>Chapters</span></div>
-          <div><GitBranch size={17} /><strong>{totalWorldEntries}</strong><span>World entries</span></div>
-        </div>
-      </section>
-
-      <section className="dashboard-page__world">
-        <div className="dashboard-page__section-heading"><div><h2>World overview</h2><p>The people, places and systems behind your story.</p></div></div>
-        <div className="dashboard-page__overview-grid">
-          {STAT_CONFIGS.map(({ label, table, path, icon: Icon, colorKey }) => (
-            <button key={table} className="dashboard-page__overview-item" onClick={() => open(path)} style={{ '--item-color': `var(--color-icon-${colorKey})` } as React.CSSProperties}>
-              <span className="dashboard-page__overview-icon"><Icon size={18} /></span>
-              <span><strong>{counts[table] ?? 0}</strong><small>{label}</small></span><ArrowRight size={14} />
+      <div className="dashboard-content">
+        <section className="dashboard-overview">
+          <div className="dashboard-overview__cover-wrapper">
+            <div className="book-cover book-cover--empty">
+              {currentProject?.cover_image ? (
+                <img src={currentProject.cover_image} alt="Project Cover" className="dashboard-overview__cover-image" />
+              ) : (
+                <div className="book-cover__placeholder">
+                  <div className="book-cover__spine"></div>
+                  <BookMarked size={32} className="book-cover__placeholder-icon" />
+                </div>
+              )}
+            </div>
+            <button className="dashboard-overview__cover-edit-btn" title="Change cover">
+              <ImageIcon size={14} />
             </button>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      <section className="dashboard-page__recent">
-        <div className="dashboard-page__section-heading"><div><h2>Recent activity</h2><p>{latestChapter ? 'Pick up where you last left off.' : 'Useful places to begin building your project.'}</p></div></div>
-        {latestChapter ? (
-          <button className="dashboard-page__activity-item" onClick={() => open(`chapters/${latestChapter.id}`)}><BookOpen size={18} /><span><strong>{latestChapter.title}</strong><small>Chapter edited {formatTimeAgo(latestChapter.updated_at)}</small></span><ArrowRight size={15} /></button>
-        ) : (
-          <div className="dashboard-page__onboarding"><button onClick={() => open('chapters')}><Plus size={15} /> Create a chapter</button><button onClick={() => open('characters')}><Plus size={15} /> Add a character</button><button onClick={() => open('locations')}><Plus size={15} /> Add a location</button></div>
-        )}
-      </section>
+          <div className="dashboard-overview__info">
+            <span className="dashboard-overview__eyebrow">Project Overview</span>
+            <h2 className="dashboard-overview__title">{currentProject?.name ?? 'Untitled Project'}</h2>
+            <p className="dashboard-overview__desc">
+              {currentProject?.description || 'No description provided for this project. Update it in your project settings to give a clear overview of your story.'}
+            </p>
+            <div className="dashboard-overview__meta">
+              {currentProject?.author && (
+                <span className="dashboard-overview__meta-item">
+                  Author: <strong>{currentProject.author}</strong>
+                </span>
+              )}
+              {currentProject?.genre && currentProject.genre.length > 0 && (
+                <span className="dashboard-overview__meta-item">
+                  Genre: <strong>{currentProject.genre.join(', ')}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button 
+            className="dashboard-overview__cta"
+            onClick={() => open(latestChapter ? `chapters/${latestChapter.id}` : 'chapters')}
+          >
+            <div className="dashboard-overview__cta-icon-wrap">
+              <BookOpen size={18} color="var(--color-primary-text, white)" />
+            </div>
+            <div className="dashboard-overview__cta-content">
+              <span className="dashboard-overview__cta-title">
+                {latestChapter ? 'Continue writing' : 'Start writing'}
+              </span>
+              <p className="dashboard-overview__cta-desc">
+                {latestChapter ? latestChapter.title : 'Create your first chapter and bring your story to life.'}
+              </p>
+            </div>
+            <ArrowRight size={16} className="dashboard-overview__cta-arrow" />
+          </button>
+        </section>
+
+        <div className="dashboard-split">
+          <section className="dashboard-panel">
+            <div className="dashboard-section__header">
+              <h3 className="dashboard-section__title">Writing Progress</h3>
+              <p className="dashboard-section__desc">A quiet snapshot of your manuscript.</p>
+            </div>
+            <div className="dashboard-progress">
+              <div className="dashboard-progress__card dashboard-progress__card--words">
+                <div className="dashboard-progress__icon"><Type size={18} /></div>
+                <div className="dashboard-progress__stats">
+                  <span className="dashboard-progress__value">{formatNumber(writingStats.totalWords)}</span>
+                  <span className="dashboard-progress__label">Total words</span>
+                </div>
+              </div>
+              <div className="dashboard-progress__card dashboard-progress__card--time">
+                <div className="dashboard-progress__icon"><Clock size={18} /></div>
+                <div className="dashboard-progress__stats">
+                  <span className="dashboard-progress__value">{formatReadingTime(writingStats.totalReadingTime)}</span>
+                  <span className="dashboard-progress__label">Reading time</span>
+                </div>
+              </div>
+              <div className="dashboard-progress__card dashboard-progress__card--chapters">
+                <div className="dashboard-progress__icon"><BookOpen size={18} /></div>
+                <div className="dashboard-progress__stats">
+                  <span className="dashboard-progress__value">{counts.chapters ?? 0}</span>
+                  <span className="dashboard-progress__label">Chapters</span>
+                </div>
+              </div>
+              <div className="dashboard-progress__card dashboard-progress__card--entries">
+                <div className="dashboard-progress__icon"><GitBranch size={18} /></div>
+                <div className="dashboard-progress__stats">
+                  <span className="dashboard-progress__value">{totalWorldEntries}</span>
+                  <span className="dashboard-progress__label">World entries</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-panel">
+            <div className="dashboard-section__header">
+              <h3 className="dashboard-section__title">Recent Activity</h3>
+              <p className="dashboard-section__desc">Pick up where you last left off.</p>
+            </div>
+            <div className="dashboard-activity">
+              {latestChapter ? (
+                <button className="dashboard-activity__item" onClick={() => open(`chapters/${latestChapter.id}`)}>
+                  <BookOpen size={18} className="dashboard-activity__item-icon" />
+                  <div className="dashboard-activity__item-text">
+                    <span className="dashboard-activity__item-title">{latestChapter.title}</span>
+                    <span className="dashboard-activity__item-date">Edited {formatTimeAgo(latestChapter.updated_at)}</span>
+                  </div>
+                  <ArrowRight size={14} className="dashboard-activity__item-arrow" />
+                </button>
+              ) : (
+                <div className="dashboard-activity__empty">
+                  <BookOpen size={24} className="dashboard-activity__empty-icon" />
+                  <h4 className="dashboard-activity__empty-title">Nothing here yet</h4>
+                  <p className="dashboard-activity__empty-desc">Your recent activity will appear here once you start writing.</p>
+                  <div className="dashboard-activity__actions">
+                    <button className="dashboard-activity__btn" onClick={() => open('chapters')}><BookOpen size={14} /> Chapter</button>
+                    <button className="dashboard-activity__btn" onClick={() => open('characters')}><Users size={14} /> Character</button>
+                    <button className="dashboard-activity__btn" onClick={() => open('locations')}><MapPin size={14} /> Location</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <section className="dashboard-panel dashboard-world">
+          <div className="dashboard-section__header">
+            <h3 className="dashboard-section__title">World Overview</h3>
+            <p className="dashboard-section__desc">The people, places and systems behind your story.</p>
+          </div>
+          <div className="dashboard-world__grid">
+            {STAT_CONFIGS.map(({ label, table, path, icon: Icon, colorKey }) => (
+              <button 
+                key={table} 
+                className="dashboard-world__item" 
+                onClick={() => open(path)} 
+                style={{ '--item-color': `var(--color-icon-${colorKey})` } as React.CSSProperties}
+              >
+                <div className="dashboard-world__icon"><Icon size={16} /></div>
+                <div className="dashboard-world__text">
+                  <span className="dashboard-world__count">{counts[table] ?? 0}</span>
+                  <span className="dashboard-world__label">{label}</span>
+                </div>
+                <ArrowRight size={14} className="dashboard-world__arrow" />
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
 
       <ExportDialog isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
     </div>

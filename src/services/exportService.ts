@@ -113,8 +113,7 @@ export interface QuyllExportData {
   version: number;
   author?: string;
   description?: string;
-  genre?: string;
-  tags?: string[];
+  genre?: string[];
   chapters: Chapter[];
   characters: Character[];
   lore: LoreEntry[];
@@ -125,6 +124,8 @@ export interface QuyllExportData {
   items: Item[];
   worldSystems: WorldSystem[];
   plotPoints: PlotPoint[];
+  plotGroups?: any[]; // using any since type might not be imported here
+  plotEdges?: any[];
   images?: Image[];
   imageFiles?: { path: string; base64: string }[];
   keywords?: Keyword[];
@@ -156,6 +157,8 @@ export async function buildQuyllExport(
   const items = await select<Item>(db, 'SELECT * FROM items WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const worldSystems = await select<WorldSystem>(db, 'SELECT * FROM world_systems WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const plotPoints = await select<PlotPoint>(db, 'SELECT * FROM plot_points WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const plotGroups = await select<any>(db, 'SELECT * FROM plot_groups WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const plotEdges = await select<any>(db, 'SELECT * FROM plot_edges WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
 
   const images = await select<Image>(db, 'SELECT * FROM images WHERE project_id = $1', [projectId]);
   const keywords = await select<Keyword>(db, 'SELECT * FROM keywords WHERE project_id = $1', [projectId]);
@@ -213,7 +216,6 @@ export async function buildQuyllExport(
     author: projectInfo?.author,
     description: projectInfo?.description,
     genre: projectInfo?.genre,
-    tags: projectInfo?.tags ? JSON.parse(projectInfo.tags) : [],
     chapters,
     characters,
     lore,
@@ -224,6 +226,8 @@ export async function buildQuyllExport(
     items,
     worldSystems,
     plotPoints,
+    plotGroups,
+    plotEdges,
     images,
     imageFiles,
     keywords,
@@ -828,8 +832,6 @@ async function getEntitiesForExport(
       return rows.map((r) => ({
         name: r.title,
         fields: [
-          { label: 'Status', value: r.status },
-          { label: 'Arc', value: r.arc },
           { label: 'Description', value: r.description, isLong: true },
           { label: 'Notes', value: r.notes, isLong: true },
         ],

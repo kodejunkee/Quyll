@@ -21,8 +21,9 @@ import {
   Pencil2Icon,
   TrashIcon
 } from '@radix-ui/react-icons';
-import { Button, Modal, Input, TextArea, TagInput, Dialog, Dropdown } from '@/components';
+import { Button, Modal, Input, TextArea, Dialog, GenreInput } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
+import { useThemeStore } from '@/store/themeStore';
 import {
   initAppDatabase,
   registerProject,
@@ -117,24 +118,27 @@ const POPULAR_GENRES = [
   { value: 'Mythology & Folklore', label: 'Mythology & Folklore' },
   { value: 'LitRPG & GameLit', label: 'LitRPG & GameLit' },
   { value: 'Steampunk', label: 'Steampunk' },
-  { value: 'Western', label: 'Western' },
-  { value: '__other__', label: 'Other (Type custom genre...)' },
 ];
 
-function getBookTheme(index: number, genre?: string) {
-  if (genre) {
-    const g = genre.toLowerCase();
+function getBookTheme(projectId: string, genre?: string[], themeIndex?: number | null) {
+  if (genre && genre.length > 0) {
+    const g = genre.join(' ').toLowerCase();
     if (g.includes('myst') || g.includes('dark') || g.includes('thrill')) return BOOK_COVER_THEMES[4]!;
     if (g.includes('hist') || g.includes('sci') || g.includes('space')) return BOOK_COVER_THEMES[2]!;
     if (g.includes('epic') || g.includes('dragon') || g.includes('war')) return BOOK_COVER_THEMES[3]!;
     if (g.includes('adv') || g.includes('nature') || g.includes('wander')) return BOOK_COVER_THEMES[1]!;
   }
+  
+  // Use the strictly tracked index in the database.
+  // (Defaults to 0 if something goes wrong or for old deleted projects).
+  const index = themeIndex != null ? Math.abs(themeIndex) : 0;
   return BOOK_COVER_THEMES[index % BOOK_COVER_THEMES.length]!;
 }
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { projects, setProjects, openTab, openTabs, closeTab } = useProjectStore();
+  const { authorName } = useThemeStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('quyll_home_view_mode') as 'grid' | 'list') || 'grid';
@@ -223,16 +227,12 @@ export default function HomePage() {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newAuthor, setNewAuthor] = useState('');
-  const [newGenre, setNewGenre] = useState('');
-  const [newTags, setNewTags] = useState<string[]>([]);
-  const [isOtherGenre, setIsOtherGenre] = useState(false);
-  const [editTarget, setEditTarget] = useState<{ id: string; name: string; description: string; author: string; genre: string; tags: string[] } | null>(null);
+  const [newGenre, setNewGenre] = useState<string[]>([]);
+  const [editTarget, setEditTarget] = useState<{ id: string; name: string; description: string; author: string; genre: string[] } | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editAuthor, setEditAuthor] = useState('');
-  const [editGenre, setEditGenre] = useState('');
-  const [editTags, setEditTags] = useState<string[]>([]);
-  const [isEditOtherGenre, setIsEditOtherGenre] = useState(false);
+  const [editGenre, setEditGenre] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
@@ -246,8 +246,7 @@ export default function HomePage() {
         path: r.path,
         description: r.description ?? '',
         author: r.author ?? '',
-        genre: r.genre ?? '',
-        tags: r.tags ? JSON.parse(r.tags) : [],
+        genre: r.genre ?? [],
         cover_image: r.cover_image ?? null,
         last_opened_at: r.last_opened_at,
         deleted_at: r.deleted_at,
@@ -273,6 +272,10 @@ export default function HomePage() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
+        setNewTitle('');
+        setNewDescription('');
+        setNewAuthor(useThemeStore.getState().authorName);
+        setNewGenre([]);
         setCreateOpen(true);
       }
     }
@@ -294,10 +297,8 @@ export default function HomePage() {
   function openCreateDialog() {
     setNewTitle('');
     setNewDescription('');
-    setNewAuthor('');
-    setNewGenre('');
-    setNewTags([]);
-    setIsOtherGenre(false);
+    setNewAuthor(authorName);
+    setNewGenre([]);
     setCreateOpen(true);
     const titleInput = document.getElementById('new-project-title-input');
     if (titleInput) titleInput.focus();
@@ -314,7 +315,6 @@ export default function HomePage() {
         description: newDescription,
         author: newAuthor,
         genre: newGenre,
-        tags: newTags,
       });
 
       await registerProject({
@@ -324,15 +324,12 @@ export default function HomePage() {
         description: newDescription,
         author: newAuthor,
         genre: newGenre,
-        tags: newTags,
       });
       setCreateOpen(false);
-      setIsOtherGenre(false);
       setNewTitle('');
       setNewDescription('');
       setNewAuthor('');
-      setNewGenre('');
-      setNewTags([]);
+      setNewGenre([]);
       await touchProject(id);
       await loadProjects();
       // Open a tab for the newly created project
@@ -343,7 +340,6 @@ export default function HomePage() {
         description: newDescription,
         author: newAuthor,
         genre: newGenre,
-        tags: newTags,
         cover_image: null,
         last_opened_at: new Date().toISOString(),
         deleted_at: null,
@@ -365,7 +361,6 @@ export default function HomePage() {
         name: editName.trim(),
         description: editDescription,
         genre: editGenre,
-        tags: editTags,
       });
       await loadProjects();
       setEditTarget(null);
@@ -419,7 +414,7 @@ export default function HomePage() {
   const filteredProjects = projects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.genre && p.genre.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (p.genre && p.genre.join(', ').toLowerCase().includes(searchQuery.toLowerCase())) ||
       (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
@@ -483,22 +478,12 @@ export default function HomePage() {
         {/* Recent Projects */}
         {!searchQuery && (
           <section className="home-section">
-            <h3 className="home-section__title home-section__title--gradient-reverse">
-              <svg width="0" height="0" style={{ position: 'absolute' }}>
-                <defs>
-                  <linearGradient id="forwardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="var(--color-primary)" />
-                    <stop offset="100%" stopColor="var(--color-text, #F3F4F6)" />
-                  </linearGradient>
-                  <linearGradient id="reverseGrad" x1="100%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="var(--color-primary)" />
-                    <stop offset="100%" stopColor="var(--color-text, #F3F4F6)" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <ClockIcon width={24} height={24} className="home-section__icon--gradient-reverse" />
-              Recent Projects
-            </h3>
+            <div className="home-section__header-box" style={{ '--section-color': '#A855F7' } as React.CSSProperties}>
+              <h3 className="home-section__title">
+                <ClockIcon width={18} height={18} className="home-section__icon" />
+                Recent Projects
+              </h3>
+            </div>
             <div className="home-recent-carousel">
               <button 
                 className="home-recent-scroll-btn left" 
@@ -525,7 +510,7 @@ export default function HomePage() {
               </div>
 
               {recentProjects.map((project, idx) => {
-                const theme = getBookTheme(idx, project.genre);
+                const theme = getBookTheme(project.id, project.genre, (project as any).theme_index);
                 
                 return (
                   <div
@@ -569,9 +554,9 @@ export default function HomePage() {
 
         {/* All Projects */}
         <section className="home-section all-projects-section">
-          <div className="home-section__header">
-            <h3 className="home-section__title home-section__title--gradient">
-              <LayersIcon width={29} height={29} className="home-section__icon--gradient" />
+          <div className="home-section__header-box" style={{ '--section-color': '#F59E0B' } as React.CSSProperties}>
+            <h3 className="home-section__title">
+              <LayersIcon width={18} height={18} className="home-section__icon" />
               All Projects
             </h3>
             <div className="home-section__controls">
@@ -650,7 +635,7 @@ export default function HomePage() {
           ) : viewMode === 'grid' ? (
             <div className="recent-projects-grid">
               {sortedProjects.map((project, idx) => {
-                const theme = getBookTheme(idx, project.genre);
+                const theme = getBookTheme(project.id, project.genre, (project as any).theme_index);
                 const CoverIcon = theme.icon;
 
                 return (
@@ -715,12 +700,15 @@ export default function HomePage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre, tags: project.tags });
+                            setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre });
                             setEditName(project.name);
                             setEditDescription(project.description);
                             setEditAuthor(project.author);
                             setEditGenre(project.genre);
-                            setEditTags(project.tags);
+                            setTimeout(() => {
+                              const input = document.getElementById('edit-project-title-input');
+                              if (input) input.focus();
+                            }, 10);
                           }}
                           type="button"
                         >
@@ -743,7 +731,7 @@ export default function HomePage() {
                     <div className="home-project-card__content">
                       <h4 className="home-project-card__title">{project.name}</h4>
                       <p className="home-project-card__genre">
-                        {project.genre && project.genre.trim() ? project.genre : 'No genre specified'}
+                        {project.genre && project.genre.length > 0 ? project.genre.join(', ') : 'No genre specified'}
                       </p>
 
                       {/* Stats removed */}
@@ -762,7 +750,7 @@ export default function HomePage() {
           ) : (
             <div className="recent-projects-list">
               {sortedProjects.map((project, idx) => {
-                const theme = getBookTheme(idx, project.genre);
+                const theme = getBookTheme(project.id, project.genre, (project as any).theme_index);
                 const CoverIcon = theme.icon;
 
                 return (
@@ -781,7 +769,7 @@ export default function HomePage() {
                       <div>
                         <h4 className="home-project-list-row__title">{project.name}</h4>
                         <span className="home-project-list-row__genre">
-                          {project.genre && project.genre.trim() ? project.genre : 'No genre specified'}
+                          {project.genre && project.genre.length > 0 ? project.genre.join(', ') : 'No genre specified'}
                         </span>
                       </div>
                     </div>
@@ -813,12 +801,15 @@ export default function HomePage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre, tags: project.tags });
+                              setEditTarget({ id: project.id, name: project.name, description: project.description, author: project.author, genre: project.genre });
                               setEditName(project.name);
                               setEditDescription(project.description);
                               setEditAuthor(project.author);
                               setEditGenre(project.genre);
-                              setEditTags(project.tags);
+                              setTimeout(() => {
+                                const input = document.getElementById('edit-project-title-input');
+                                if (input) input.focus();
+                              }, 10);
                             }}
                             type="button"
                           >
@@ -849,7 +840,7 @@ export default function HomePage() {
       </div>
 
       {/* Create Project Modal */}
-      <Modal open={createOpen} onClose={() => { setCreateOpen(false); setIsOtherGenre(false); }} title="Create New Project" size="md">
+      <Modal open={createOpen} onClose={() => { setCreateOpen(false); }} title="Create New Project" size="md" preventBackdropClose>
         <form className="home-modal-form" onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) handleCreate(); }}>
           <Input
             label="Title"
@@ -873,46 +864,12 @@ export default function HomePage() {
             value={newAuthor}
             onChange={(e) => setNewAuthor(e.target.value)}
           />
-          {(() => {
-            const isKnownGenre = POPULAR_GENRES.some((g) => g.value === newGenre);
-            const showCustomInput = isOtherGenre || (Boolean(newGenre) && !isKnownGenre);
-            const dropdownValue = showCustomInput ? '__other__' : isKnownGenre ? newGenre : '';
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <Dropdown
-                  label="Genre"
-                  placeholder="Select a popular genre..."
-                  options={POPULAR_GENRES}
-                  value={dropdownValue}
-                  onChange={(val, query) => {
-                    if (val === '__other__') {
-                      setIsOtherGenre(true);
-                      if (query && !POPULAR_GENRES.some((g) => g.value.toLowerCase() === query.toLowerCase())) {
-                        setNewGenre(query);
-                      } else if (isKnownGenre) {
-                        setNewGenre('');
-                      }
-                    } else {
-                      setIsOtherGenre(false);
-                      setNewGenre(val);
-                    }
-                  }}
-                />
-                {showCustomInput && (
-                  <Input
-                    placeholder="Type your custom genre..."
-                    value={isKnownGenre ? '' : newGenre}
-                    onChange={(e) => setNewGenre(e.target.value)}
-                  />
-                )}
-              </div>
-            );
-          })()}
-          <TagInput
-            label="Tags"
-            placeholder="e.g. Sci-Fi, Magic, Drama"
-            tags={newTags}
-            onChange={setNewTags}
+          <GenreInput
+            label="Genres"
+            placeholder="e.g. Fantasy, Sci-Fi, Romance"
+            genres={newGenre}
+            onChange={setNewGenre}
+            options={POPULAR_GENRES}
           />
           <div className="home-modal-actions">
             <Button variant="primary" type="submit" disabled={!newTitle.trim()}>
@@ -949,46 +906,12 @@ export default function HomePage() {
             onChange={(e) => setEditAuthor(e.target.value)}
             disabled={true}
           />
-          {(() => {
-            const isKnownGenre = POPULAR_GENRES.some((g) => g.value === editGenre);
-            const showCustomInput = isEditOtherGenre || (Boolean(editGenre) && !isKnownGenre);
-            const dropdownValue = showCustomInput ? '__other__' : isKnownGenre ? editGenre : '';
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <Dropdown
-                  label="Genre"
-                  placeholder="Select a popular genre..."
-                  options={POPULAR_GENRES}
-                  value={dropdownValue}
-                  onChange={(val, query) => {
-                    if (val === '__other__') {
-                      setIsEditOtherGenre(true);
-                      if (query && !POPULAR_GENRES.some((g) => g.value.toLowerCase() === query.toLowerCase())) {
-                        setEditGenre(query);
-                      } else if (isKnownGenre) {
-                        setEditGenre('');
-                      }
-                    } else {
-                      setIsEditOtherGenre(false);
-                      setEditGenre(val);
-                    }
-                  }}
-                />
-                {showCustomInput && (
-                  <Input
-                    placeholder="Type your custom genre..."
-                    value={isKnownGenre ? '' : editGenre}
-                    onChange={(e) => setEditGenre(e.target.value)}
-                  />
-                )}
-              </div>
-            );
-          })()}
-          <TagInput
-            label="Tags"
-            placeholder="e.g. Sci-Fi, Magic, Drama"
-            tags={editTags}
-            onChange={setEditTags}
+          <GenreInput
+            label="Genres"
+            placeholder="e.g. Fantasy, Sci-Fi, Romance"
+            genres={editGenre}
+            onChange={setEditGenre}
+            options={POPULAR_GENRES}
           />
           <div className="home-modal-actions">
             <Button variant="primary" type="submit" disabled={!editName.trim()}>

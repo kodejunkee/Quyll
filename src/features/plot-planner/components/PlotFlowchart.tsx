@@ -1,115 +1,203 @@
-import { useMemo } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
   Controls,
   Background,
-  Handle,
-  Position,
-  MarkerType
+  useNodesState,
+  useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
+  type Connection,
+  type Edge as ReactFlowEdge,
+  type Node as ReactFlowNode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import type { PlotPoint } from '@/types/database';
+import type { UUID } from '@/types/database';
+import { usePlotPoints } from '../hooks/usePlotPoints';
+import { usePlotEdges } from '../hooks/usePlotEdges';
+import { PlotNode } from './PlotNode';
+import { PlotToolbar } from './PlotToolbar';
 import './PlotFlowchart.css';
-
-// Custom Node Component to match app styling
-function PlotNode({ data }: { data: any }) {
-  return (
-    <div className={`plot-flowchart__node plot-flowchart__node--${data.status.toLowerCase().replace(' ', '-')}`}>
-      <Handle type="target" position={Position.Left} />
-      <div className="plot-flowchart__node-title">{data.title}</div>
-      {data.arc && <div className="plot-flowchart__node-arc">{data.arc}</div>}
-      <Handle type="source" position={Position.Right} />
-    </div>
-  );
-}
 
 const nodeTypes = {
   plotNode: PlotNode,
 };
 
 interface PlotFlowchartProps {
-  items: PlotPoint[];
+  onNodeSelect: (id: string | null) => void;
 }
 
-export function PlotFlowchart({ items }: PlotFlowchartProps) {
-  const { nodes, edges } = useMemo(() => {
-    // Sort items by order_index
-    const sorted = [...items].sort((a, b) => a.order_index - b.order_index);
-    
-    const initialNodes = sorted.map((p) => ({
+function FlowComponent({ onNodeSelect }: PlotFlowchartProps) {
+  const { items: plotPoints, update: updatePlotPoint, create: createPlotPoint } = usePlotPoints();
+  const { items: plotEdges, create: createPlotEdge, softDelete: deletePlotEdge } = usePlotEdges();
+  const reactFlowInstance = useReactFlow();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<ReactFlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<ReactFlowEdge>([]);
+
+  // Sync DB state to React Flow state
+  useEffect(() => {
+    const rfNodes: ReactFlowNode[] = plotPoints.map((p) => ({
       id: p.id,
       type: 'plotNode',
-      data: { title: p.title, status: p.status, arc: p.arc },
-      position: { x: 0, y: 0 }, // Will be positioned by dagre
+      position: { x: p.position_x, y: p.position_y },
+      data: {
+        plotPoint: p,
+        onDoubleClick: (id: string) => onNodeSelect(id),
+      },
     }));
+    setNodes(rfNodes);
+  }, [plotPoints, onNodeSelect, setNodes]);
 
-    // Create sequential edges (simple linear connection for now)
-    // If arcs were robustly defined with parents, we would branch them here.
-    // For now, we connect everything sequentially to demonstrate the flowchart layout.
-    const initialEdges = [];
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const current = sorted[i]!;
-      const next = sorted[i+1]!;
-      initialEdges.push({
-        id: `e-${current.id}-${next.id}`,
-        source: current.id,
-        target: next.id,
-        type: 'smoothstep',
-        animated: true,
-        style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: 'var(--color-accent)',
-        },
+  useEffect(() => {
+    const rfEdges: ReactFlowEdge[] = plotEdges.map((e) => ({
+      id: e.id,
+      source: e.source_id,
+      target: e.target_id,
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
+    }));
+    setEdges(rfEdges);
+  }, [plotEdges, setEdges]);
+
+  // Handle connecting nodes
+  const onConnect = useCallback(
+    async (params: Connection) => {
+      if (params.source && params.target) {
+        await createPlotEdge({
+          source_id: params.source as UUID,
+          target_id: params.target as UUID,
+        });
+      }
+    },
+    [createPlotEdge]
+  );
+
+  // Handle edge deletion
+  const onEdgesDelete = useCallback(
+    (deletedEdges: ReactFlowEdge[]) => {
+      deletedEdges.forEach(async (edge) => {
+        await deletePlotEdge(edge.id);
       });
-    }
+    },
+    [deletePlotEdge]
+  );
 
-    // Apply Dagre layout
+  // Double click canvas to add new node
+  const onPaneDoubleClick = useCallback(
+    async (event: React.MouseEvent) => {
+      if (!wrapperRef.current) return;
+      
+      const reactFlowBounds = wrapperRef.current.getBoundingClientRect();
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+
+      const newPoint = await createPlotPoint({
+        title: 'New Plot Point',
+        status: 'idea',
+        position_x: position.x,
+        position_y: position.y,
+      });
+      
+      onNodeSelect(newPoint.id);
+    },
+    [reactFlowInstance, createPlotPoint, onNodeSelect]
+  );
+
+  // Auto-layout using dagre
+  const onLayout = useCallback(() => {
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: 'LR', ranksep: 100, nodesep: 50 }); // Left to Right
+    dagreGraph.setGraph({ rankdir: 'LR', ranksep: 100, nodesep: 50 });
 
-    initialNodes.forEach((node) => {
-      dagreGraph.setNode(node.id, { width: 200, height: 80 });
+    nodes.forEach((node) => {
+      dagreGraph.setNode(node.id, { width: 220, height: 100 });
     });
 
-    initialEdges.forEach((edge) => {
+    edges.forEach((edge) => {
       dagreGraph.setEdge(edge.source, edge.target);
     });
 
     dagre.layout(dagreGraph);
 
-    const layoutedNodes = initialNodes.map((node) => {
+    nodes.forEach((node) => {
       const nodeWithPosition = dagreGraph.node(node.id);
-      return {
-        ...node,
-        position: {
-          x: (nodeWithPosition?.x ?? 0) - 200 / 2,
-          y: (nodeWithPosition?.y ?? 0) - 80 / 2,
-        },
-      };
+      if (nodeWithPosition) {
+        updatePlotPoint(node.id, {
+          position_x: nodeWithPosition.x - 220 / 2,
+          position_y: nodeWithPosition.y - 100 / 2,
+        });
+      }
     });
+    
+    // Fit view after a small delay to let state update
+    setTimeout(() => {
+      reactFlowInstance.fitView({ padding: 0.2, duration: 800 });
+    }, 100);
+  }, [nodes, edges, updatePlotPoint, reactFlowInstance]);
 
-    return { nodes: layoutedNodes, edges: initialEdges };
-  }, [items]);
+  const onAddNodeClick = useCallback(async () => {
+    // Add in center of current view
+    const center = reactFlowInstance.screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+    const newPoint = await createPlotPoint({
+      title: 'New Plot Point',
+      status: 'idea',
+      position_x: center.x,
+      position_y: center.y,
+    });
+    onNodeSelect(newPoint.id);
+  }, [createPlotPoint, reactFlowInstance, onNodeSelect]);
 
   return (
-    <div className="plot-flowchart__container">
+    <div className="plot-flowchart__wrapper" ref={wrapperRef}>
+      <PlotToolbar onAddNode={onAddNodeClick} onRelayout={onLayout} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={(changes) => {
+          onNodesChange(changes);
+          changes.forEach((change) => {
+            if (change.type === 'position' && change.position && !change.dragging) {
+              updatePlotPoint(change.id, {
+                position_x: change.position.x,
+                position_y: change.position.y,
+              });
+            }
+          });
+        }}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
+        onNodeClick={(_, node) => onNodeSelect(node.id)}
+        onPaneClick={() => onNodeSelect(null)}
         nodeTypes={nodeTypes}
         colorMode="dark"
         proOptions={{ hideAttribution: true }}
         fitView
-        attributionPosition="bottom-right"
+        minZoom={0.1}
+        maxZoom={1.5}
       >
         <Controls />
         <MiniMap zoomable pannable nodeColor="var(--color-accent)" maskColor="rgba(0,0,0,0.2)" />
         <Background color="var(--color-border-subtle)" gap={16} />
       </ReactFlow>
     </div>
+  );
+}
+
+export function PlotFlowchart(props: PlotFlowchartProps) {
+  return (
+    <ReactFlowProvider>
+      <FlowComponent {...props} />
+    </ReactFlowProvider>
   );
 }

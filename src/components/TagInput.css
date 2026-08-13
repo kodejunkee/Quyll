@@ -18,16 +18,17 @@
   gap: 6px;
   min-height: 36px;
   padding: 6px 10px;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-subtle);
+  background-color: var(--color-bg);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   cursor: text;
+  box-shadow: var(--shadow-neumorphic-inset);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .tag-input-container:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.2);
+  border-color: var(--color-primary-subtle);
+  box-shadow: var(--shadow-neumorphic-inset), 0 0 0 2px var(--color-primary-subtle);
 }
 
 .tag-pill {

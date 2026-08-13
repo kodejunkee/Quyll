@@ -72,8 +72,7 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
               path: r.path,
               description: r.description ?? '',
               author: r.author ?? '',
-              genre: r.genre ?? '',
-              tags: r.tags ? JSON.parse(r.tags) : [],
+              genre: r.genre ?? [],
               cover_image: r.cover_image ?? null,
               last_opened_at: r.last_opened_at ?? null,
               deleted_at: r.deleted_at ?? null,
@@ -110,9 +109,20 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
 
         // Background: fetch project metadata without blocking the UI
         try {
-          const metaRows = await conn.select<{ id: string; title: string; description?: string; author?: string; genre?: string; tags?: string }[]>('SELECT * FROM project_meta LIMIT 1');
+          const metaRows = await conn.select<{ id: string; title: string; description?: string; author?: string; genre?: string }[]>('SELECT * FROM project_meta LIMIT 1');
           if (cancelled) return;
           const meta = metaRows[0];
+          
+          let parsedGenre: string[] = [];
+          if (meta?.genre) {
+            try {
+              const parsed = JSON.parse(meta.genre);
+              if (Array.isArray(parsed)) parsedGenre = parsed;
+            } catch {
+              // Ignore parse errors from old string-based genres
+            }
+          }
+
           if (meta) {
             updateTabProjectInfo(projectId, {
               id: meta.id || projectId,
@@ -120,8 +130,7 @@ export function ProjectDbProvider({ projectId, children, fallback }: ProjectDbPr
               path: resolvedPath,
               description: meta.description || activeProj?.description || '',
               author: meta.author || activeProj?.author || '',
-              genre: meta.genre || activeProj?.genre || '',
-              tags: meta.tags ? JSON.parse(meta.tags) : activeProj?.tags || [],
+              genre: parsedGenre.length > 0 ? parsedGenre : activeProj?.genre || [],
               cover_image: activeProj?.cover_image || null,
               last_opened_at: new Date().toISOString(),
               deleted_at: activeProj?.deleted_at || null,

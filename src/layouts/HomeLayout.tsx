@@ -73,13 +73,6 @@ export function HomeLayout() {
           </NavLink>
         </nav>
 
-        {/* Exit Button */}
-        <div className="home-sidebar__footer">
-          <button className="home-sidebar__link home-sidebar__exit" onClick={handleExit}>
-            <ExitIcon width={18} height={18} color="#F87171" />
-            <span>Exit</span>
-          </button>
-        </div>
       </aside>
 
       {/* Main Content (Dashboard/Settings etc) */}

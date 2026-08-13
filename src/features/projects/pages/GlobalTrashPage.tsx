@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Trash2, RotateCcw, Info } from 'lucide-react';
 import { Button, Dialog } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import { 
@@ -9,7 +8,64 @@ import {
   hardDeleteProject, 
   autoDeleteOldProjects 
 } from '@/database/appDatabase';
+import {
+  MagicWandIcon,
+  GlobeIcon,
+  DrawingPinIcon,
+  LightningBoltIcon,
+  StarIcon,
+  TrashIcon,
+  ResetIcon,
+  InfoCircledIcon,
+  ArchiveIcon,
+} from '@radix-ui/react-icons';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import './GlobalTrashPage.css';
+
+// Deterministic book cover themes matching the Home screen
+const BOOK_COVER_THEMES = [
+  {
+    type: 'purple',
+    name: 'Fantasy',
+    gradient: 'linear-gradient(135deg, #3B0764 0%, #1E1B4B 100%)',
+    icon: MagicWandIcon,
+  },
+  {
+    type: 'green',
+    name: 'Fantasy / Adventure',
+    gradient: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
+    icon: GlobeIcon,
+  },
+  {
+    type: 'blue',
+    name: 'Historical Fiction',
+    gradient: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+    icon: DrawingPinIcon,
+  },
+  {
+    type: 'brown',
+    name: 'Epic Fantasy',
+    gradient: 'linear-gradient(135deg, #451A03 0%, #291307 100%)',
+    icon: LightningBoltIcon,
+  },
+  {
+    type: 'black',
+    name: 'Mystery / Dark',
+    gradient: 'linear-gradient(135deg, #18181B 0%, #09090B 100%)',
+    icon: StarIcon,
+  },
+];
+
+function getBookTheme(index: number, genre?: string[]) {
+  if (genre && genre.length > 0) {
+    const g = genre.join(' ').toLowerCase();
+    if (g.includes('myst') || g.includes('dark') || g.includes('thrill')) return BOOK_COVER_THEMES[4]!;
+    if (g.includes('hist') || g.includes('sci') || g.includes('space')) return BOOK_COVER_THEMES[2]!;
+    if (g.includes('epic') || g.includes('dragon') || g.includes('war')) return BOOK_COVER_THEMES[3]!;
+    if (g.includes('adv') || g.includes('nature') || g.includes('wander')) return BOOK_COVER_THEMES[1]!;
+  }
+  return BOOK_COVER_THEMES[index % BOOK_COVER_THEMES.length]!;
+}
 
 export function GlobalTrashPage() {
   const { deletedProjects, setDeletedProjects, setProjects, closeTab } = useProjectStore();
@@ -21,8 +77,7 @@ export function GlobalTrashPage() {
     path: r.path,
     description: r.description ?? '',
     author: r.author ?? '',
-    genre: r.genre ?? '',
-    tags: r.tags ? JSON.parse(r.tags) : [],
+    genre: r.genre ?? [],
     cover_image: r.cover_image ?? null,
     last_opened_at: r.last_opened_at,
     deleted_at: r.deleted_at,
@@ -76,53 +131,87 @@ export function GlobalTrashPage() {
     <div className="global-trash-page">
       <header className="global-trash-page__header">
         <div className="global-trash-page__header-title">
-          <Trash2 size={24} />
+          <TrashIcon width={24} height={24} className="trash-header-icon" />
           <h1>Trash</h1>
         </div>
         {deletedProjects.length > 0 && (
-          <Button variant="danger" onClick={() => setEmptyDialogOpen(true)}>
+          <button className="trash-empty-btn" onClick={() => setEmptyDialogOpen(true)}>
             Empty Trash
-          </Button>
+          </button>
         )}
       </header>
 
       <div className="global-trash-page__content">
         <div className="global-trash-page__notice">
-          <Info size={16} />
-          Items in the trash are automatically deleted after 60 days.
+          <InfoCircledIcon width={16} height={16} />
+          Items in the trash are automatically permanently deleted after 60 days.
         </div>
 
         {deletedProjects.length === 0 ? (
           <div className="global-trash-page__empty">
-            <Trash2 size={64} className="global-trash-page__empty-icon" />
+            <div className="global-trash-page__empty-icon-wrap">
+              <ArchiveIcon width={64} height={64} className="global-trash-page__empty-icon" />
+            </div>
             <h2>Trash is empty</h2>
-            <p>Deleted projects will appear here.</p>
+            <p>Deleted projects will rest here.</p>
           </div>
         ) : (
           <div className="trash-grid">
-            {deletedProjects.map((project) => (
-              <div key={project.id} className="trash-card">
-                <h3 className="trash-card__title">{project.name}</h3>
-                <span className="trash-card__date">
-                  Deleted: {formatDate(project.deleted_at)}
-                </span>
-                
-                <div className="trash-card__actions">
-                  <button 
-                    className="trash-card__btn trash-card__btn--restore"
-                    onClick={() => handleRestore(project.id)}
-                  >
-                    <RotateCcw size={14} /> Restore
-                  </button>
-                  <button 
-                    className="trash-card__btn trash-card__btn--delete"
-                    onClick={() => handleHardDelete(project.id)}
-                  >
-                    <Trash2 size={14} /> Permanently Delete
-                  </button>
+            {deletedProjects.map((project, idx) => {
+              const theme = getBookTheme(idx, project.genre);
+              const CoverIcon = theme.icon;
+
+              return (
+                <div key={project.id} className="trash-card">
+                  <div className="trash-card__cover-wrap">
+                    {project.cover_image ? (
+                      <div className="trash-card__cover custom-cover">
+                        <img 
+                          src={convertFileSrc(project.cover_image)} 
+                          alt="Project Cover"
+                          className="trash-card__image"
+                          onError={() => console.error("Image failed to load:", convertFileSrc(project.cover_image!))}
+                        />
+                      </div>
+                    ) : (
+                      <div className="trash-card__cover" style={{ background: theme.gradient }}>
+                        <div className="trash-cover__spine" />
+                        <div className="trash-cover__frame">
+                          <div className="trash-cover__emblem">
+                            <CoverIcon width={24} height={24} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Glassmorphism actions overlay on hover */}
+                    <div className="trash-card__actions-overlay">
+                      <button 
+                        className="trash-btn trash-btn--restore"
+                        onClick={() => handleRestore(project.id)}
+                        title="Restore Project"
+                      >
+                        <ResetIcon width={16} height={16} />
+                      </button>
+                      <button 
+                        className="trash-btn trash-btn--delete"
+                        onClick={() => handleHardDelete(project.id)}
+                        title="Permanently Delete"
+                      >
+                        <TrashIcon width={16} height={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="trash-card__content">
+                    <h3 className="trash-card__title">{project.name}</h3>
+                    <span className="trash-card__date">
+                      Deleted: {formatDate(project.deleted_at)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -7,9 +7,11 @@ interface ThemeState {
   theme: Theme;
   accent: Accent;
   defaultFont: string;
+  authorName: string;
   setTheme: (theme: Theme) => void;
   setAccent: (accent: Accent) => void;
   setDefaultFont: (font: string) => void;
+  setAuthorName: (name: string) => void;
 }
 
 function applyThemeAndAccent(theme: Theme, accent: Accent) {
@@ -31,9 +33,14 @@ const storedDefaultFont = typeof localStorage !== 'undefined'
   ? localStorage.getItem('quyll-default-font')
   : null;
 
+const storedAuthorName = typeof localStorage !== 'undefined'
+  ? localStorage.getItem('quyll-author-name')
+  : null;
+
 const initialTheme: Theme = storedTheme || 'dark';
 const initialAccent: Accent = storedAccent || 'blue';
 const initialDefaultFont: string = storedDefaultFont || 'Inter';
+const initialAuthorName: string = storedAuthorName || '';
 
 applyThemeAndAccent(initialTheme, initialAccent);
 
@@ -41,6 +48,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   theme: initialTheme,
   accent: initialAccent,
   defaultFont: initialDefaultFont,
+  authorName: initialAuthorName,
   setTheme: (theme) => {
     set((state) => {
       applyThemeAndAccent(theme, state.accent);
@@ -56,5 +64,9 @@ export const useThemeStore = create<ThemeState>((set) => ({
   setDefaultFont: (font) => {
     localStorage.setItem('quyll-default-font', font);
     set({ defaultFont: font });
+  },
+  setAuthorName: (name) => {
+    localStorage.setItem('quyll-author-name', name);
+    set({ authorName: name });
   },
 }));

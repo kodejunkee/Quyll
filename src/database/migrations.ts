@@ -131,6 +131,45 @@ export async function migrateProjectDatabase(db: Database, dbPath?: string): Pro
         // Ignore if column exists
       }
     }
+    if (current < 19) {
+      try { await execute(db, 'ALTER TABLE plot_points ADD COLUMN position_x REAL NOT NULL DEFAULT 0'); } catch {}
+      try { await execute(db, 'ALTER TABLE plot_points ADD COLUMN position_y REAL NOT NULL DEFAULT 0'); } catch {}
+      try { await execute(db, 'ALTER TABLE plot_points ADD COLUMN group_id TEXT'); } catch {}
+      
+      try {
+        await execute(db, `
+          CREATE TABLE IF NOT EXISTS plot_groups (
+            id            TEXT PRIMARY KEY,
+            project_id    TEXT NOT NULL,
+            name          TEXT NOT NULL DEFAULT '',
+            color         TEXT NOT NULL DEFAULT '#6366f1',
+            category      TEXT NOT NULL DEFAULT 'custom',
+            deleted_at    TEXT,
+            created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+          );
+        `);
+        await execute(db, 'CREATE INDEX IF NOT EXISTS idx_plot_groups_project ON plot_groups(project_id)');
+      } catch {}
+
+      try {
+        await execute(db, `
+          CREATE TABLE IF NOT EXISTS plot_edges (
+            id            TEXT PRIMARY KEY,
+            project_id    TEXT NOT NULL,
+            source_id     TEXT NOT NULL,
+            target_id     TEXT NOT NULL,
+            label         TEXT NOT NULL DEFAULT '',
+            deleted_at    TEXT,
+            created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+          );
+        `);
+        await execute(db, 'CREATE INDEX IF NOT EXISTS idx_plot_edges_project ON plot_edges(project_id)');
+      } catch (e) {
+        console.error('Failed to run migration to schema v19', e);
+      }
+    }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);
   }
 

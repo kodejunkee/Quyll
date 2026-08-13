@@ -5,5 +5,3 @@ export { ImportDialog } from './components/ImportDialog';
 export { ExportDialog } from './components/ExportDialog';
 export { useBackup } from './hooks/useBackup';
 export { BackupPanel } from './components/BackupPanel';
-export { GlobalSettingsModal } from './components/GlobalSettingsModal';
-

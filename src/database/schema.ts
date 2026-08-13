@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS project_meta (
   title         TEXT NOT NULL DEFAULT '',
   description   TEXT NOT NULL DEFAULT '',
   author        TEXT NOT NULL DEFAULT '',
-  genre         TEXT NOT NULL DEFAULT '',
-  tags          TEXT NOT NULL DEFAULT '[]',
+  genre         TEXT NOT NULL DEFAULT '[]',
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -206,11 +205,40 @@ CREATE TABLE IF NOT EXISTS plot_points (
   arc           TEXT NOT NULL DEFAULT '',
   notes         TEXT NOT NULL DEFAULT '',
   order_index   INTEGER NOT NULL DEFAULT 0,
+  position_x    REAL NOT NULL DEFAULT 0,
+  position_y    REAL NOT NULL DEFAULT 0,
+  group_id      TEXT,
   deleted_at    TEXT,
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_plot_points_project ON plot_points(project_id);
+
+-- Plot Groups
+CREATE TABLE IF NOT EXISTS plot_groups (
+  id            TEXT PRIMARY KEY,
+  project_id    TEXT NOT NULL,
+  name          TEXT NOT NULL DEFAULT '',
+  color         TEXT NOT NULL DEFAULT '#6366f1',
+  category      TEXT NOT NULL DEFAULT 'custom',
+  deleted_at    TEXT,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_plot_groups_project ON plot_groups(project_id);
+
+-- Plot Edges
+CREATE TABLE IF NOT EXISTS plot_edges (
+  id            TEXT PRIMARY KEY,
+  project_id    TEXT NOT NULL,
+  source_id     TEXT NOT NULL,
+  target_id     TEXT NOT NULL,
+  label         TEXT NOT NULL DEFAULT '',
+  deleted_at    TEXT,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_plot_edges_project ON plot_edges(project_id);
 
 -- Glossaries
 CREATE TABLE IF NOT EXISTS glossaries (
@@ -335,8 +363,7 @@ CREATE TABLE IF NOT EXISTS projects (
   path           TEXT NOT NULL UNIQUE,
   description    TEXT NOT NULL DEFAULT '',
   author         TEXT NOT NULL DEFAULT '',
-  genre          TEXT NOT NULL DEFAULT '',
-  tags           TEXT NOT NULL DEFAULT '[]',
+  genre          TEXT NOT NULL DEFAULT '[]',
   cover_image    TEXT,
   last_opened_at TEXT,
   deleted_at     TEXT,
@@ -355,4 +382,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 17;
+export const CURRENT_SCHEMA_VERSION = 19;

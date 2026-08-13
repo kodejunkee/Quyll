@@ -8,6 +8,8 @@ import '@/styles/reset.css';
 import '@/styles/variables.css';
 import '@/styles/global.css';
 import '@/styles/animations.css';
+import '@xyflow/react/dist/style.css';
+
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');

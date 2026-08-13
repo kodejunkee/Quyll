@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type Database from '@tauri-apps/plugin-sql';
 import type { Timestamp } from '@/types/common';
-import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint, GlossaryEntry } from '@/types/database';
+import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint, PlotGroup, PlotEdge, GlossaryEntry } from '@/types/database';
 import { characterService } from '@/features/characters/services/characterService';
 
 import { chapterService } from '@/features/chapters/services/chapterService';
@@ -13,6 +13,8 @@ import { worldSystemService } from '@/features/world-systems/services/worldSyste
 import { loreService } from '@/features/lore/services/loreService';
 import { timelineEventService } from '@/features/timeline/services/timelineEventService';
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
+import { plotGroupService } from '@/features/plot-planner/services/plotGroupService';
+import { plotEdgeService } from '@/features/plot-planner/services/plotEdgeService';
 import { glossaryService } from '@/features/glossary/services/glossaryService';
 
 /** Snapshot of all entity arrays for a single project */
@@ -27,6 +29,8 @@ interface ProjectSnapshot {
   lore: LoreEntry[];
   timeline: TimelineEvent[];
   plotPoints: PlotPoint[];
+  plotGroups: PlotGroup[];
+  plotEdges: PlotEdge[];
   glossary: GlossaryEntry[];
 }
 
@@ -50,6 +54,8 @@ interface WorkspaceState {
   lore: LoreEntry[];
   timeline: TimelineEvent[];
   plotPoints: PlotPoint[];
+  plotGroups: PlotGroup[];
+  plotEdges: PlotEdge[];
   glossary: GlossaryEntry[];
 
   // Initialization & tab switching
@@ -116,6 +122,16 @@ interface WorkspaceState {
   softDeletePlotPoint: (db: Database, id: string) => Promise<void>;
   restorePlotPoint: (db: Database, id: string) => Promise<void>;
 
+  createPlotGroup: (db: Database, projectId: string, data: Partial<PlotGroup>) => Promise<PlotGroup>;
+  updatePlotGroup: (db: Database, id: string, data: Partial<PlotGroup>) => Promise<void>;
+  softDeletePlotGroup: (db: Database, id: string) => Promise<void>;
+  restorePlotGroup: (db: Database, id: string) => Promise<void>;
+
+  createPlotEdge: (db: Database, projectId: string, data: Partial<PlotEdge>) => Promise<PlotEdge>;
+  updatePlotEdge: (db: Database, id: string, data: Partial<PlotEdge>) => Promise<void>;
+  softDeletePlotEdge: (db: Database, id: string) => Promise<void>;
+  restorePlotEdge: (db: Database, id: string) => Promise<void>;
+
   // Glossary
   createGlossary: (db: Database, projectId: string, data: Partial<GlossaryEntry>) => Promise<GlossaryEntry>;
   updateGlossary: (db: Database, id: string, data: Partial<GlossaryEntry>) => Promise<void>;
@@ -139,6 +155,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   lore: [],
   timeline: [],
   plotPoints: [],
+  plotGroups: [],
+  plotEdges: [],
   glossary: [],
 
   initialize: async (db, projectId, force = false) => {
@@ -162,6 +180,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         lore: state.lore,
         timeline: state.timeline,
         plotPoints: state.plotPoints,
+        plotGroups: state.plotGroups,
+        plotEdges: state.plotEdges,
         glossary: state.glossary,
       });
     }
@@ -183,7 +203,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
     try {
       // Load all entities concurrently from DB
-      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, glossary] = await Promise.all([
+      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, plotGroups, plotEdges, glossary] = await Promise.all([
         characterService.list(db, projectId),
         chapterService.list(db, projectId),
         locationService.list(db, projectId),
@@ -194,10 +214,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         loreService.list(db, projectId),
         timelineEventService.list(db, projectId),
         plotPointService.list(db, projectId),
+        plotGroupService.list(db, projectId),
+        plotEdgeService.list(db, projectId),
         glossaryService.list(db, projectId),
       ]);
 
-      const snapshot = { characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, glossary };
+      const snapshot = { characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, plotGroups, plotEdges, glossary };
 
       // Cache the freshly loaded data
       projectCache.set(projectId, snapshot);
@@ -239,6 +261,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         lore: [],
         timeline: [],
         plotPoints: [],
+        plotGroups: [],
+        plotEdges: [],
         glossary: [],
       });
     }
@@ -545,6 +569,55 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       plotPoints: state.plotPoints.map((pp) => (pp.id === id ? { ...pp, deleted_at: null } : pp)),
     }));
     try { await plotPointService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  createPlotGroup: async (db, projectId, data) => {
+    const newGroup = await plotGroupService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ plotGroups: [newGroup, ...state.plotGroups] }));
+    return newGroup;
+  },
+  updatePlotGroup: async (db, id, data) => {
+    set((state) => ({
+      plotGroups: state.plotGroups.map((pg) => (pg.id === id ? { ...pg, ...data } : pg)),
+    }));
+    try { await plotGroupService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeletePlotGroup: async (db, id) => {
+    const deletedAt = (new Date().toISOString() as Timestamp);
+    set((state) => ({
+      plotGroups: state.plotGroups.map((pg) => (pg.id === id ? { ...pg, deleted_at: deletedAt } : pg)),
+    }));
+    try { await plotGroupService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restorePlotGroup: async (db, id) => {
+    set((state) => ({
+      plotGroups: state.plotGroups.map((pg) => (pg.id === id ? { ...pg, deleted_at: null } : pg)),
+    }));
+    try { await plotGroupService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+
+  createPlotEdge: async (db, projectId, data) => {
+    const newEdge = await plotEdgeService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ plotEdges: [newEdge, ...state.plotEdges] }));
+    return newEdge;
+  },
+  updatePlotEdge: async (db, id, data) => {
+    set((state) => ({
+      plotEdges: state.plotEdges.map((pe) => (pe.id === id ? { ...pe, ...data } : pe)),
+    }));
+    try { await plotEdgeService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+  },
+  softDeletePlotEdge: async (db, id) => {
+    const deletedAt = (new Date().toISOString() as Timestamp);
+    set((state) => ({
+      plotEdges: state.plotEdges.map((pe) => (pe.id === id ? { ...pe, deleted_at: deletedAt } : pe)),
+    }));
+    try { await plotEdgeService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+  },
+  restorePlotEdge: async (db, id) => {
+    set((state) => ({
+      plotEdges: state.plotEdges.map((pe) => (pe.id === id ? { ...pe, deleted_at: null } : pe)),
+    }));
+    try { await plotEdgeService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 
   createGlossary: async (db, projectId, data) => {

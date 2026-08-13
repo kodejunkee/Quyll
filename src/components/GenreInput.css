@@ -1,0 +1,114 @@
+.genre-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.genre-input-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.genre-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  background-color: var(--color-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: text;
+  box-shadow: var(--shadow-neumorphic-inset);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.genre-input-container.focused {
+  border-color: var(--color-primary-subtle);
+  box-shadow: var(--shadow-neumorphic-inset), 0 0 0 2px var(--color-primary-subtle);
+}
+
+.genre-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.genre-pill-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  margin-right: -4px;
+}
+
+.genre-pill-remove:hover {
+  color: var(--color-danger, #ef4444);
+  background-color: var(--color-bg);
+}
+
+.genre-input-field {
+  flex: 1;
+  min-width: 60px;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 13px;
+  padding: 2px 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.genre-input-field:focus,
+.genre-input-field:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.genre-input-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Dropdown list */
+.genre-dropdown-list {
+  position: fixed;
+  z-index: 9999;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-neumorphic-float);
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.genre-dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.genre-dropdown-item:hover,
+.genre-dropdown-item.focused {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
+}

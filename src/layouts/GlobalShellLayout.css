@@ -12,8 +12,8 @@
   display: flex;
   align-items: center;
   height: 48px;
-  background-color: #000000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--color-bg-top-bar, #000000);
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.05));
   padding: 0;
   flex-shrink: 0;
   user-select: none;
@@ -27,7 +27,7 @@
   width: 60px;
   height: 100%;
   cursor: pointer;
-  color: #E2E8F0;
+  color: var(--color-text-secondary, #E2E8F0);
   flex-shrink: 0;
   margin-right: 16px;
   transition: all 0.2s ease;
@@ -41,12 +41,12 @@
   top: 7.5%;
   height: 85%;
   width: 1px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--color-border, rgba(255, 255, 255, 0.08));
 }
 
 .global-top-bar__home-btn:hover {
-  color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text, #FFFFFF);
+  background: var(--color-bg-hover, rgba(255, 255, 255, 0.05));
 }
 
 .global-top-bar__home-icon {
@@ -54,19 +54,27 @@
 }
 
 /* Center: Tabs */
-.global-top-bar__tabs {
+.global-top-bar__tabs-container {
   display: flex;
   align-items: center;
   flex: 1;
+  height: 100%;
+  overflow: visible;
+}
+
+.global-top-bar__tabs-scroll {
+  display: flex;
+  align-items: center;
   height: 100%;
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
   /* Allow dragging anywhere in this empty area */
   -webkit-app-region: drag;
+  flex: 0 1 auto;
 }
 
-.global-top-bar__tabs::-webkit-scrollbar {
+.global-top-bar__tabs-scroll::-webkit-scrollbar {
   display: none;
 }
 
@@ -76,7 +84,7 @@
   height: 32px;
   padding: 0 28px 0 16px;
   background-color: transparent;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   border: 1px solid transparent;
   border-radius: 8px;
   font-size: 13px;
@@ -91,15 +99,29 @@
 }
 
 .global-tab:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #E2E8F0;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.05));
+  color: var(--color-text, #E2E8F0);
 }
 
 .global-tab.active {
-  background-color: #1E1E24;
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--color-primary, #3B82F6);
+  color: var(--color-primary-text, #FFFFFF);
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1));
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.global-tab.active .global-tab__name {
+  /* text-shadow removed for better readability against solid color */
+}
+
+.global-tab + .global-tab::before {
+  content: "";
+  position: absolute;
+  left: -4.5px;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background-color: var(--color-border, rgba(255, 255, 255, 0.2));
 }
 
 /* Home button active state */
@@ -127,7 +149,7 @@
   border-radius: 4px;
   opacity: 0;
   transition: all 0.15s ease;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   flex-shrink: 0;
 }
 
@@ -136,9 +158,18 @@
   opacity: 1;
 }
 
+.global-tab.active .global-tab__close {
+  color: inherit;
+}
+
 .global-tab__close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.1));
+  color: var(--color-text, #FFFFFF);
+}
+
+.global-tab.active .global-tab__close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: inherit;
 }
 
 .global-tab-new {
@@ -149,7 +180,7 @@
   height: 28px;
   border-radius: 6px;
   background-color: transparent;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -157,8 +188,8 @@
 }
 
 .global-tab-new:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #FFFFFF;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.05));
+  color: var(--color-text, #FFFFFF);
 }
 
 /* Right: Actions */
@@ -177,7 +208,7 @@
   height: 32px;
   border-radius: 50%;
   background-color: transparent;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -185,8 +216,8 @@
 }
 
 .global-action-btn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #FFFFFF;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.05));
+  color: var(--color-text, #FFFFFF);
 }
 
 .global-window-btn {
@@ -196,7 +227,7 @@
   width: 46px;
   height: 32px;
   background-color: transparent;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -204,13 +235,29 @@
 }
 
 .global-window-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.1));
+  color: var(--color-text, #FFFFFF);
 }
 
 .global-window-btn.minimize {
   color: var(--color-primary, #A855F7);
   filter: drop-shadow(0 0 8px rgba(var(--color-primary-rgb, 168, 85, 247), 0.4));
+}
+
+.global-window-btn.close-btn {
+  color: #EF4444; /* Default red color for the X icon */
+}
+
+.global-window-btn.close-btn:hover {
+  background-color: #E81123; /* Bright red background */
+  color: #FFFFFF; /* White icon on hover */
+}
+
+.global-top-bar__divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--color-border, rgba(255, 255, 255, 0.1));
+  margin: 0 4px;
 }
 
 /* Main Area */

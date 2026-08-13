@@ -206,6 +206,33 @@ export interface PlotPoint {
   readonly arc: string;
   readonly notes: string;
   readonly order_index: number;
+  readonly position_x: number;
+  readonly position_y: number;
+  readonly group_id: UUID | null;
+  readonly deleted_at: Timestamp | null;
+  readonly created_at: Timestamp;
+  readonly updated_at: Timestamp;
+}
+
+/** A grouping for plot points (e.g. arc, volume, act). */
+export interface PlotGroup {
+  readonly id: UUID;
+  readonly project_id: UUID;
+  readonly name: string;
+  readonly color: string;
+  readonly category: string;
+  readonly deleted_at: Timestamp | null;
+  readonly created_at: Timestamp;
+  readonly updated_at: Timestamp;
+}
+
+/** A connection between two plot points. */
+export interface PlotEdge {
+  readonly id: UUID;
+  readonly project_id: UUID;
+  readonly source_id: UUID;
+  readonly target_id: UUID;
+  readonly label: string;
   readonly deleted_at: Timestamp | null;
   readonly created_at: Timestamp;
   readonly updated_at: Timestamp;

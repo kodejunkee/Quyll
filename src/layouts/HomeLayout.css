@@ -9,12 +9,16 @@
 .home-sidebar {
   width: 240px;
   background-color: var(--color-bg);
-  box-shadow: 1px 0 15px rgba(0, 0, 0, 0.35);
+  box-shadow: 1px 0 15px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   padding: 5px 0 4px 0;
   z-index: 10;
+}
+
+[data-theme='light'] .home-sidebar__brand img {
+  filter: invert(1) brightness(0.2);
 }
 
 .home-sidebar__brand {
@@ -24,7 +28,7 @@
 .home-sidebar__brand-text {
   font-size: 14px;
   font-weight: 600;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -42,7 +46,7 @@
   padding: 24px 8px 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748B;
+  color: var(--color-text-tertiary, #64748B);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -53,7 +57,7 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  color: #94A3B8;
+  color: var(--color-text-secondary, #94A3B8);
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
@@ -66,13 +70,13 @@
 }
 
 .home-sidebar__link:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #E2E8F0;
+  background-color: var(--color-bg-hover, rgba(255, 255, 255, 0.05));
+  color: var(--color-text, #E2E8F0);
 }
 
 .home-sidebar__link.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+  background-color: var(--color-bg-active, rgba(255, 255, 255, 0.1));
+  color: var(--color-text, #FFFFFF);
 }
 
 .home-sidebar__footer {
@@ -88,7 +92,7 @@
   left: 7.5%;
   width: 85%;
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-border, rgba(255, 255, 255, 0.05));
 }
 
 .home-sidebar__exit:hover {

@@ -285,8 +285,7 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
       path: projectPath,
       description: data.description ?? 'Imported project',
       author: data.author ?? '',
-      genre: data.genre ?? '',
-      tags: data.tags ?? [],
+      genre: data.genre ?? [],
     });
 
     if (data.projectCoverBase64) {
@@ -324,8 +323,7 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
       title: data.projectName,
       description: data.description ?? 'Imported project',
       author: data.author ?? '',
-      genre: data.genre ?? '',
-      tags: data.tags ?? [],
+      genre: data.genre ?? [],
     });
     const db = await openProjectDatabase(projectPath);
 
@@ -429,9 +427,29 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
     if (data.plotPoints) {
       for (const p of data.plotPoints) {
         await execute(db, `
-          INSERT INTO plot_points (id, project_id, title, status, arc, description, notes, order_index, created_at, updated_at, deleted_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        `, [p.id, newProjectId, p.title, p.status, p.arc, p.description, p.notes, p.order_index, p.created_at, p.updated_at, p.deleted_at]);
+          INSERT INTO plot_points (id, project_id, title, status, arc, description, notes, order_index, position_x, position_y, group_id, created_at, updated_at, deleted_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        `, [p.id, newProjectId, p.title, p.status || 'idea', p.arc || '', p.description, p.notes, p.order_index, (p as any).position_x || 0, (p as any).position_y || 0, (p as any).group_id || null, p.created_at, p.updated_at, p.deleted_at]);
+      }
+    }
+
+    // Plot Groups
+    if ((data as any).plotGroups) {
+      for (const g of (data as any).plotGroups) {
+        await execute(db, `
+          INSERT INTO plot_groups (id, project_id, name, color, category, created_at, updated_at, deleted_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [g.id, newProjectId, g.name, g.color, g.category, g.created_at, g.updated_at, g.deleted_at]);
+      }
+    }
+
+    // Plot Edges
+    if ((data as any).plotEdges) {
+      for (const e of (data as any).plotEdges) {
+        await execute(db, `
+          INSERT INTO plot_edges (id, project_id, source_id, target_id, label, created_at, updated_at, deleted_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [e.id, newProjectId, e.source_id, e.target_id, e.label, e.created_at, e.updated_at, e.deleted_at]);
       }
     }
 

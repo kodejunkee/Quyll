@@ -1,0 +1,79 @@
+.plot-node {
+  background: var(--color-bg-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-width: 200px;
+  max-width: 250px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+}
+
+.plot-node:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* React flow selection state */
+.plot-node.selected {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-subtle);
+}
+
+.plot-node__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.plot-node__group {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.65rem;
+}
+
+.plot-node__status {
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+}
+
+.plot-node__title {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  line-height: 1.3;
+}
+
+.plot-node__desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* React Flow Handle styling */
+.plot-node .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--color-border);
+  border: 2px solid var(--color-bg-surface);
+  transition: all var(--transition-fast);
+}
+
+.plot-node:hover .react-flow__handle,
+.plot-node.selected .react-flow__handle {
+  background: var(--color-accent);
+}

@@ -8,6 +8,7 @@ import {
   Download,
   Upload,
   Palette,
+  User,
 } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { useThemeStore } from '@/store/themeStore';
@@ -62,13 +63,13 @@ const ACCENT_OPTIONS = [
   { value: 'yellow', label: 'Yellow' },
 ];
 
-type SettingsTab = 'appearance' | 'editor' | 'backup' | 'export-import';
+type SettingsTab = 'profile' | 'appearance' | 'editor' | 'backup' | 'export-import';
 
 export default function SettingsPage() {
   const ctx = useOptionalProjectDb();
   const db = ctx?.db;
   const { settings, loading, updateSettings } = useSettings();
-  const { theme, setTheme, accent, setAccent, defaultFont, setDefaultFont } = useThemeStore();
+  const { theme, setTheme, accent, setAccent, defaultFont, setDefaultFont, authorName, setAuthorName } = useThemeStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -87,9 +88,10 @@ export default function SettingsPage() {
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'profile', label: 'Profile', icon: <User size={16} className="settings-page__tab-icon" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} className="settings-page__tab-icon" /> },
+    { id: 'editor', label: db ? 'Editor' : 'Editor Defaults', icon: <Type size={16} className="settings-page__tab-icon" /> },
     ...(db ? [
-      { id: 'editor' as const, label: 'Editor', icon: <Type size={16} className="settings-page__tab-icon" /> },
       { id: 'backup' as const, label: 'Backup & Recovery', icon: <HardDrive size={16} className="settings-page__tab-icon" /> },
       { id: 'export-import' as const, label: 'Export & Import', icon: <FileStack size={16} className="settings-page__tab-icon" /> },
     ] : []),
@@ -114,6 +116,37 @@ export default function SettingsPage() {
       </header>
 
       <div className="settings-page__sections">
+        {activeTab === 'profile' && (
+          <Card title="Author Profile" className="settings-page__card">
+            <div className="settings-page__setting">
+              <div className="settings-page__setting-info">
+                <span className="settings-page__setting-label">Author Name</span>
+                <span className="settings-page__setting-desc">This will be autofilled as the default author when creating new projects.</span>
+              </div>
+              <div style={{ width: 200 }}>
+                <input
+                  type="text"
+                  value={authorName}
+                  onChange={(e) => setAuthorName(e.target.value)}
+                  placeholder="Your Pen Name"
+                  className="components-input"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-bg-elevated)',
+                    color: 'var(--color-text)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.9rem',
+                    transition: 'border-color var(--transition-fast)'
+                  }}
+                />
+              </div>
+            </div>
+          </Card>
+        )}
+
         {activeTab === 'appearance' && (
           <Card title="Appearance" className="settings-page__card">
             <div className="settings-page__setting">
@@ -146,7 +179,7 @@ export default function SettingsPage() {
         )}
 
         {activeTab === 'editor' && (
-          <Card title="Editor" className="settings-page__card">
+          <Card title={db ? "Editor" : "Editor Defaults"} className="settings-page__card">
             <div className="settings-page__setting">
               <div className="settings-page__setting-info">
                 <span className="settings-page__setting-label">Default Editor Font</span>
@@ -160,32 +193,36 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-            <div className="settings-page__setting">
-              <div className="settings-page__setting-info">
-                <span className="settings-page__setting-label">Font Size</span>
-                <span className="settings-page__setting-desc">Adjust the editor font size</span>
-              </div>
-              <div style={{ width: 200 }}>
-                <Dropdown
-                  options={FONT_SIZE_OPTIONS}
-                  value={String(settings?.editor_font_size ?? 16)}
-                  onChange={(val) => void updateSettings({ editor_font_size: parseInt(val, 10) })}
-                />
-              </div>
-            </div>
-            <div className="settings-page__setting">
-              <div className="settings-page__setting-info">
-                <span className="settings-page__setting-label">Autosave Interval</span>
-                <span className="settings-page__setting-desc">How often your work is saved automatically</span>
-              </div>
-              <div style={{ width: 200 }}>
-                <Dropdown
-                  options={AUTOSAVE_OPTIONS}
-                  value={String(settings?.autosave_interval ?? 5)}
-                  onChange={(val) => void updateSettings({ autosave_interval: parseInt(val, 10) })}
-                />
-              </div>
-            </div>
+            {db && (
+              <>
+                <div className="settings-page__setting">
+                  <div className="settings-page__setting-info">
+                    <span className="settings-page__setting-label">Font Size</span>
+                    <span className="settings-page__setting-desc">Adjust the editor font size</span>
+                  </div>
+                  <div style={{ width: 200 }}>
+                    <Dropdown
+                      options={FONT_SIZE_OPTIONS}
+                      value={String(settings?.editor_font_size ?? 16)}
+                      onChange={(val) => void updateSettings({ editor_font_size: parseInt(val, 10) })}
+                    />
+                  </div>
+                </div>
+                <div className="settings-page__setting">
+                  <div className="settings-page__setting-info">
+                    <span className="settings-page__setting-label">Autosave Interval</span>
+                    <span className="settings-page__setting-desc">How often your work is saved automatically</span>
+                  </div>
+                  <div style={{ width: 200 }}>
+                    <Dropdown
+                      options={AUTOSAVE_OPTIONS}
+                      value={String(settings?.autosave_interval ?? 5)}
+                      onChange={(val) => void updateSettings({ autosave_interval: parseInt(val, 10) })}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </Card>
         )}
 

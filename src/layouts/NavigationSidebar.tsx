@@ -1,5 +1,6 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useLocation, useParams } from 'react-router-dom';
 import type { CSSProperties } from 'react';
+import quyllBanner from '@/assets/images/quyll-banner.png';
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,13 +17,18 @@ import {
   PanelLeftClose,
   Home,
   Trash2,
-  BookA
+  BookA,
+  Settings,
+  Search
 } from 'lucide-react';
+import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import './NavigationSidebar.css';
+import { useLayoutStore } from '@/store/layoutStore';
 
 interface NavigationSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  onOpenSettings?: () => void;
 }
 
 const NAV_SECTIONS = [
@@ -60,18 +66,21 @@ function accentStyle(colorKey: string): CSSProperties {
   return { '--nav-accent': `var(--color-icon-${colorKey})` } as CSSProperties;
 }
 
-import { useLayoutStore } from '@/store/layoutStore';
-
-// ... (I need to import useLayoutStore properly, wait, I will replace the whole component function)
-
-export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProps) {
+export function NavigationSidebar({ collapsed, onToggle, onOpenSettings }: NavigationSidebarProps) {
   const { projectId } = useParams<{ projectId: string }>();
   const { lastActiveChapterId } = useLayoutStore();
 
   return (
     <nav className={`nav-sidebar ${collapsed ? 'nav-sidebar--collapsed' : ''}`}>
       <div className="nav-sidebar__header">
-        {!collapsed && <span className="nav-sidebar__header-label">SIDEBAR</span>}
+        {!collapsed && (
+          <img 
+            src={quyllBanner} 
+            alt="Quyll Logo" 
+            className="nav-sidebar__header-logo" 
+            style={{ height: '44px', objectFit: 'contain', marginLeft: '-2px', marginTop: '-10px', marginBottom: '-10px', filter: 'var(--theme-logo-filter, none)' }} 
+          />
+        )}
         <button
           className="nav-sidebar__toggle"
           onClick={onToggle}
@@ -81,6 +90,23 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
           {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
         </button>
       </div>
+
+      <div style={{ padding: '0 14px 10px 14px', display: collapsed ? 'none' : 'block' }}>
+        <GlobalSearch />
+      </div>
+
+      {collapsed && (
+        <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '10px' }}>
+          <button 
+            className="nav-sidebar__toggle" 
+            style={{ width: '32px', height: '32px' }}
+            onClick={onToggle}
+            title="Search (Ctrl+K)"
+          >
+            <Search size={18} />
+          </button>
+        </div>
+      )}
 
       <div className="nav-sidebar__items">
         {NAV_SECTIONS.map((section) => (
@@ -116,19 +142,40 @@ export function NavigationSidebar({ collapsed, onToggle }: NavigationSidebarProp
             })}
           </div>
         ))}
-
-        {/* Footer section follows */}
       </div>
       <div className="nav-sidebar__footer">
         <NavLink
           to="/"
           className="nav-sidebar__link"
-          title={collapsed ? 'Back to projects' : undefined}
-          style={accentStyle('home')}
+          title={collapsed ? "Back to projects" : undefined}
+          style={{ '--nav-accent': 'var(--color-text-secondary)' } as CSSProperties}
         >
           <Home size={18} className="nav-sidebar__link-icon" />
           {!collapsed && <span className="nav-sidebar__link-label">Back to projects</span>}
         </NavLink>
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="nav-sidebar__link"
+            title={collapsed ? "Project Settings" : undefined}
+            style={{ 
+              '--nav-accent': 'var(--color-text-secondary)',
+              background: 'transparent',
+              border: 'none',
+              width: '100%',
+              textAlign: 'left',
+              padding: '6px 10px',
+              fontFamily: 'inherit',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)'
+            } as CSSProperties}
+          >
+            <Settings size={18} className="nav-sidebar__link-icon" />
+            {!collapsed && <span className="nav-sidebar__link-label">Project Settings</span>}
+          </button>
+        )}
       </div>
     </nav>
   );

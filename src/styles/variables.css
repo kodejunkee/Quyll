@@ -51,6 +51,8 @@
   --shadow-md: 0 2px 8px hsla(0, 0%, 0%, 0.2);
   --shadow-lg: 0 4px 16px hsla(0, 0%, 0%, 0.25);
   --shadow-xl: 0 8px 32px hsla(0, 0%, 0%, 0.3);
+  --shadow-neumorphic-inset: inset 2px 2px 5px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03);
+  --shadow-elevated: 8px 8px 16px rgba(0, 0, 0, 0.4), -4px -4px 12px rgba(255, 255, 255, 0.03);
 
   /* ── Transitions ── */
   --transition-fast: 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -100,6 +102,7 @@
   --color-bg-surface: #1C1F28;
   --color-bg-hover: #232832;
   --color-bg-active: #2C323E;
+  --color-bg-top-bar: #000000;
 
   --color-border: #303641;
   --color-border-subtle: #222730;
@@ -137,19 +140,20 @@
 
 /* ===== Light Theme ===== */
 [data-theme='light'] {
-  --color-bg:#f7f8fa;
-  --color-bg-elevated:#ffffff;
-  --color-bg-surface:#f0f2f5;
-  --color-bg-hover:#edf0f4;
-  --color-bg-active:#e3e7ed;
+  --color-bg: #e5e7eb; /* Softer, tamer background */
+  --color-bg-elevated: #f3f4f6; /* Off-white for elevated cards (no pure white) */
+  --color-bg-surface: #d1d5db; /* Deeper gray for surfaces/hover backgrounds */
+  --color-bg-hover: #e0e2e6;
+  --color-bg-active: #cdd1d8;
+  --color-bg-top-bar: var(--color-bg-elevated);
 
-  --color-border:#cbd2dc;
-  --color-border-subtle:#dde2e9;
+  --color-border: #9ca3af;
+  --color-border-subtle: #d1d5db;
 
-  --color-text:#171b24;
-  --color-text-secondary:#536071;
-  --color-text-tertiary:#778397;
-  --color-text-inverse: hsl(220, 20%, 98%);
+  --color-text: #1f2937; /* Softer dark gray instead of harsh black */
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #f9fafb;
   
   --color-primary:#3769e8;
   --color-primary-hover:#2d59cc;
@@ -165,18 +169,18 @@
 
   --color-overlay: rgba(15, 23, 42, 0.36);
 
-  --scrollbar-track:#f6f7f9;
-  --scrollbar-thumb:#cbd1da;
-  --scrollbar-thumb-hover:#aeb6c2;
+
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.08);
+  --shadow-neumorphic-inset: inset 2px 2px 5px rgba(163, 177, 198, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+  --shadow-elevated: 8px 8px 16px rgba(163, 177, 198, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.9);
 
   --scrollbar-track: hsl(220, 14%, 96%);
-  --scrollbar-thumb: hsl(220, 10%, 80%);
-  --scrollbar-thumb-hover: hsl(220, 10%, 70%);
+  --scrollbar-thumb: hsl(220, 10%, 65%);
+  --scrollbar-thumb-hover: hsl(220, 10%, 50%);
 
   /* Glassmorphic values for Light theme */
   --glass-bg: rgba(250, 251, 253, 0.7);
