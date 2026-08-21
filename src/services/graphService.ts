@@ -43,7 +43,7 @@ export const graphService = {
       UNION ALL
       SELECT id, 'lore' as type, title as name FROM lore WHERE project_id = $1 AND deleted_at IS NULL
       UNION ALL
-      SELECT id, 'timeline_event' as type, title as name FROM timeline_events WHERE project_id = $1 AND deleted_at IS NULL
+      SELECT id, 'outline' as type, title as name FROM outlines WHERE project_id = $1 AND deleted_at IS NULL
       UNION ALL
       SELECT id, 'plot_point' as type, title as name FROM plot_points WHERE project_id = $1 AND deleted_at IS NULL
     `;

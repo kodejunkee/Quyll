@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { ArchiveIcon, DownloadIcon, TrashIcon, ClockIcon, ResetIcon } from '@radix-ui/react-icons';
 import { Button, Card, Dialog, Input, Dropdown } from '@/components';
 import { useBackup } from '../hooks/useBackup';
 import { useSettings } from '../hooks/useSettings';
-import { HardDrive, Download, Trash2, Clock, Loader2, RotateCcw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import './BackupPanel.css';
 
 const SCHEDULED_OPTIONS = [
@@ -78,7 +79,7 @@ export function BackupPanel() {
             onClick={handleCreateBackup}
             disabled={isCreating || isRestoring}
             loading={isCreating}
-            icon={!isCreating ? <HardDrive size={16} /> : undefined}
+            icon={!isCreating ? <ArchiveIcon width={16} height={16} /> : undefined}
           >
             {isCreating ? 'Creating...' : 'Create Backup'}
           </Button>
@@ -115,7 +116,7 @@ export function BackupPanel() {
             backups.map((backup) => (
               <div key={backup.id} className="backup-panel__item">
                 <div className="backup-panel__item-info">
-                  <Clock size={16} />
+                  <ClockIcon width={16} height={16} />
                   <span>{formatTimestamp(backup.timestamp)}</span>
                   {backup.label && (
                     <span className="backup-panel__label">{backup.label}</span>
@@ -125,7 +126,7 @@ export function BackupPanel() {
                   <Button
                     variant="outline"
                     size="sm"
-                    icon={<RotateCcw size={14} />}
+                    icon={<ResetIcon width={14} height={14} />}
                     onClick={() => {
                       setSelectedBackupId(backup.id);
                       setRestoreDialogOpen(true);
@@ -137,7 +138,7 @@ export function BackupPanel() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    icon={<Download size={14} />}
+                    icon={<DownloadIcon width={14} height={14} />}
                     onClick={() => void exportBackup(backup.id)}
                     disabled={isRestoring || isCreating}
                     title="Export backup"
@@ -145,7 +146,7 @@ export function BackupPanel() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    icon={<Trash2 size={14} />}
+                    icon={<TrashIcon width={14} height={14} />}
                     onClick={() => void deleteBackup(backup.id)}
                     disabled={isRestoring || isCreating}
                     title="Delete backup"

@@ -27,7 +27,7 @@ const TYPE_COLORS: Record<string, string> = {
   organization: '#ee8d12',   // Warm Orange
   item: '#5ea82a',           // Olive Lime
   lore: '#c4a514',           // Rich Gold
-  timeline_event: '#6b4fd4', // Deep Indigo
+  outline: '#6b4fd4', // Deep Indigo
   world_system: '#12a3cf',   // Ocean Cyan
   plot_point: '#d43888',     // Rose Pink
   species: '#b050d4',        // Royal Purple

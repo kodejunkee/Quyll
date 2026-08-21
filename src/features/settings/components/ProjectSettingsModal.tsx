@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { DownloadIcon, UploadIcon, ArchiveIcon } from '@radix-ui/react-icons';
 import { Modal, Card, Dropdown, Button } from '@/components';
-import { Type, Download, Upload, FileStack, HardDrive } from 'lucide-react';
+import { Type, FileStack } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { ExportDialog } from './ExportDialog';
 import { ImportDialog } from './ImportDialog';
@@ -82,7 +83,7 @@ export function ProjectSettingsModal({ isOpen, onClose }: ProjectSettingsModalPr
               className={`project-settings-modal__tab ${activeTab === 'backup' ? 'project-settings-modal__tab--active' : ''}`}
               onClick={() => setActiveTab('backup')}
             >
-              <HardDrive size={16} />
+              <ArchiveIcon width={16} height={16} />
               <span>Backup & Recovery</span>
             </button>
             <button
@@ -161,7 +162,7 @@ export function ProjectSettingsModal({ isOpen, onClose }: ProjectSettingsModalPr
                       </span>
                     </div>
                     <Button variant="primary" onClick={() => setExportOpen(true)}>
-                      <Download size={16} />
+                      <DownloadIcon width={16} height={16} />
                       Export Project
                     </Button>
                   </div>
@@ -173,7 +174,7 @@ export function ProjectSettingsModal({ isOpen, onClose }: ProjectSettingsModalPr
                       </span>
                     </div>
                     <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                      <Upload size={16} />
+                      <UploadIcon width={16} height={16} />
                       Import Document
                     </Button>
                   </div>

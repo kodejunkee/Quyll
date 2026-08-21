@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { ReaderIcon } from '@radix-ui/react-icons';
 import { Link } from 'react-router-dom';
-import { BookOpen, Share2 } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import { EntityType } from '@/types/common';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
@@ -41,11 +42,11 @@ export function EntityReferences({ entityId, entityType }: EntityReferencesProps
           case 'item': table = 'items'; break;
           case 'world_system': table = 'world_systems'; break;
           case 'lore': table = 'lore'; break;
-          case 'timeline_event': table = 'timeline_events'; break;
+          case 'outline': table = 'outlines'; break;
           case 'plot_point': table = 'plot_points'; break;
         }
         if (table) {
-          const nameCol = table === 'timeline_events' || table === 'plot_points' ? 'title' : 'name';
+          const nameCol = table === 'outlines' || table === 'plot_points' ? 'title' : 'name';
           const res = await select<any>(db, `SELECT ${nameCol} as _name FROM ${table} WHERE id = $1`, [r.source_id]);
           if (res.length > 0) sourceName = res[0]._name;
         }
@@ -96,14 +97,14 @@ export function EntityReferences({ entityId, entityType }: EntityReferencesProps
 
       <div className="entity-references__section">
         <h3 className="entity-references__title">
-          <BookOpen size={16} />
+          <ReaderIcon width={16} height={16} />
           Appears In
         </h3>
         <div className="entity-references__content flex flex-col gap-2">
           {chapters.length > 0 ? (
             chapters.map(c => (
               <Link key={c.id} to={`/project/${projectId}/chapters/${c.id}`} className="text-primary hover:underline text-sm flex items-center gap-2">
-                <BookOpen size={14} /> {c.title}
+                <ReaderIcon width={14} height={14} /> {c.title}
               </Link>
             ))
           ) : (

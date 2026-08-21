@@ -113,7 +113,7 @@ export function AppLayout() {
         </div>
 
         <GlobalKeywordHoverCard />
-        <ReferenceBubbles />
+        {isWritingWorkspace && <ReferenceBubbles />}
         <EntityDetailsModal />
         <ProjectSettingsModal 
           isOpen={isSettingsModalOpen}

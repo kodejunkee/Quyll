@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
+import { ReaderIcon, PersonIcon } from '@radix-ui/react-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { characterSchema, CHARACTER_STATUSES, type CharacterFormData } from '../types/character';
 import { Input, TextArea, Button, Checkbox } from '@/components';
 import { Dropdown } from '@/components/Dropdown';
-import { Fingerprint, Shield, BookOpen, User, Swords, History } from 'lucide-react';
+import { Fingerprint, Shield, Swords, History } from 'lucide-react';
 import './CharacterForm.css';
 
 export type CharacterTab = 'identity' | 'attributes' | 'background';
@@ -71,7 +72,7 @@ export function CharacterForm({ defaultValues, onSubmit, onCancel, submitLabel =
           <div className="character-form__section">
             <div className="character-form__section-heading">
               <h3 className="character-form__section-title">
-                <User size={18} className="text-accent" />
+                <PersonIcon width={18} height={18} className="text-accent" />
                 Basic Identity
               </h3>
               <p className="character-form__section-desc">How this character appears and is recognized throughout your world.</p>
@@ -200,7 +201,7 @@ export function CharacterFormTabs({ activeTab, onTabChange }: { activeTab: Chara
         className={`character-form__tab ${activeTab === 'background' ? 'active' : ''}`}
         onClick={() => onTabChange('background')}
       >
-        <BookOpen size={16} className="character-form__tab-icon" />
+        <ReaderIcon width={16} height={16} className="character-form__tab-icon" />
         Background & Story
       </button>
     </div>

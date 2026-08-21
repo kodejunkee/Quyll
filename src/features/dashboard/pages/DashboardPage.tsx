@@ -7,10 +7,11 @@ import { useProjectStore } from '@/store/projectStore';
 import { ExportDialog } from '@/features/settings';
 import { Button } from '@/components';
 import {
-  ArrowRight, BookOpen, Users, MapPin, Building2, Bug, Sword,
+  ArrowRight, Users, MapPin, Building2, Bug, Sword,
   Globe, ScrollText, Clock, GitBranch, Type, Download, Image as ImageIcon,
   BookMarked
 } from 'lucide-react';
+import { ReaderIcon } from '@radix-ui/react-icons';
 import { formatNumber, formatReadingTime, formatTimeAgo } from '@/features/chapters/utils/writingStats';
 import './DashboardPage.css';
 import '@/styles/redesign.css';
@@ -50,7 +51,7 @@ const BANNER_MAP: Record<string, string> = {
 const DEFAULT_BANNERS = Object.values(BANNER_MAP);
 
 function getBannerForProject(genres?: string[], projectId?: string) {
-  if (genres && genres.length > 0) {
+  if (genres && genres.length > 0 && genres[0]) {
     const firstGenre = genres[0].toLowerCase();
     for (const [key, banner] of Object.entries(BANNER_MAP)) {
       if (firstGenre.includes(key)) return banner;
@@ -68,7 +69,7 @@ interface StatConfig { label: string; table: string; path: string; icon: Element
 interface LatestChapter { id: string; title: string; chapter_number: number; word_count: number; updated_at: string }
 
 const STAT_CONFIGS: StatConfig[] = [
-  { label: 'Chapters', table: 'chapters', path: 'chapters', icon: BookOpen, colorKey: 'chapters' },
+  { label: 'Chapters', table: 'chapters', path: 'chapters', icon: ReaderIcon, colorKey: 'chapters' },
   { label: 'Characters', table: 'characters', path: 'characters', icon: Users, colorKey: 'character' },
   { label: 'Locations', table: 'locations', path: 'locations', icon: MapPin, colorKey: 'location' },
   { label: 'Organizations', table: 'organizations', path: 'organizations', icon: Building2, colorKey: 'organization' },
@@ -76,7 +77,7 @@ const STAT_CONFIGS: StatConfig[] = [
   { label: 'Items', table: 'items', path: 'items', icon: Sword, colorKey: 'item' },
   { label: 'World Systems', table: 'world_systems', path: 'world-systems', icon: Globe, colorKey: 'world_system' },
   { label: 'Lore Entries', table: 'lore', path: 'lore', icon: ScrollText, colorKey: 'lore' },
-  { label: 'Timeline Events', table: 'timeline_events', path: 'timeline', icon: Clock, colorKey: 'timeline_event' },
+  { label: 'Timeline Events', table: 'outlines', path: 'outliner', icon: Clock, colorKey: 'outline' },
   { label: 'Plot Points', table: 'plot_points', path: 'plot-planner', icon: GitBranch, colorKey: 'plot_planner' },
 ];
 
@@ -227,7 +228,7 @@ export default function DashboardPage() {
             onClick={() => open(latestChapter ? `chapters/${latestChapter.id}` : 'chapters')}
           >
             <div className="dashboard-overview__cta-icon-wrap">
-              <BookOpen size={18} color="var(--color-primary-text, white)" />
+              <ReaderIcon width={18} height={18} color="var(--color-primary-text, white)" />
             </div>
             <div className="dashboard-overview__cta-content">
               <span className="dashboard-overview__cta-title">
@@ -263,7 +264,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="dashboard-progress__card dashboard-progress__card--chapters">
-                <div className="dashboard-progress__icon"><BookOpen size={18} /></div>
+                <div className="dashboard-progress__icon"><ReaderIcon width={18} height={18} /></div>
                 <div className="dashboard-progress__stats">
                   <span className="dashboard-progress__value">{counts.chapters ?? 0}</span>
                   <span className="dashboard-progress__label">Chapters</span>
@@ -287,7 +288,7 @@ export default function DashboardPage() {
             <div className="dashboard-activity">
               {latestChapter ? (
                 <button className="dashboard-activity__item" onClick={() => open(`chapters/${latestChapter.id}`)}>
-                  <BookOpen size={18} className="dashboard-activity__item-icon" />
+                  <ReaderIcon width={18} height={18} className="dashboard-activity__item-icon" />
                   <div className="dashboard-activity__item-text">
                     <span className="dashboard-activity__item-title">{latestChapter.title}</span>
                     <span className="dashboard-activity__item-date">Edited {formatTimeAgo(latestChapter.updated_at)}</span>
@@ -296,11 +297,11 @@ export default function DashboardPage() {
                 </button>
               ) : (
                 <div className="dashboard-activity__empty">
-                  <BookOpen size={24} className="dashboard-activity__empty-icon" />
+                  <ReaderIcon width={24} height={24} className="dashboard-activity__empty-icon" />
                   <h4 className="dashboard-activity__empty-title">Nothing here yet</h4>
                   <p className="dashboard-activity__empty-desc">Your recent activity will appear here once you start writing.</p>
                   <div className="dashboard-activity__actions">
-                    <button className="dashboard-activity__btn" onClick={() => open('chapters')}><BookOpen size={14} /> Chapter</button>
+                    <button className="dashboard-activity__btn" onClick={() => open('chapters')}><ReaderIcon width={14} height={14} /> Chapter</button>
                     <button className="dashboard-activity__btn" onClick={() => open('characters')}><Users size={14} /> Character</button>
                     <button className="dashboard-activity__btn" onClick={() => open('locations')}><MapPin size={14} /> Location</button>
                   </div>

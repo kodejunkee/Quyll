@@ -60,8 +60,8 @@ export const searchService = {
       WHERE project_id = $1 AND deleted_at IS NULL AND (title LIKE $2 OR content LIKE $3)
       
       UNION ALL
-      SELECT id, 'timeline_event' as type, title as name, description
-      FROM timeline_events
+      SELECT id, 'outline' as type, title as name, description
+      FROM outlines
       WHERE project_id = $1 AND deleted_at IS NULL AND (title LIKE $2 OR description LIKE $3)
       
       UNION ALL

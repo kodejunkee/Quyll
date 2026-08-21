@@ -1,5 +1,6 @@
-import { Sparkles } from 'lucide-react';
+
 import { Button } from '@/components';
+import { MagicWandIcon } from '@radix-ui/react-icons';
 import './AiAssistantButton.css';
 
 interface AiAssistantButtonProps {
@@ -11,7 +12,7 @@ export function AiAssistantButton({ label = 'AI Assistant' }: AiAssistantButtonP
   return (
     <div className="ai-assistant-btn">
       <Button variant="ghost" disabled>
-        <Sparkles size={14} />
+        <MagicWandIcon width={14} height={14} />
         {label}
       </Button>
       <span className="ai-assistant-btn__badge">Coming Soon</span>

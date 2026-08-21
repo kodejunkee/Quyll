@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useCallback, useState } from 'react';
-import { X } from 'lucide-react';
+import { Cross2Icon } from '@radix-ui/react-icons';
+
 import { Button } from '@/components/Button';
 import './Modal.css';
 
@@ -8,7 +9,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   children: ReactNode;
   footer?: ReactNode;
   subHeader?: ReactNode;
@@ -127,7 +128,7 @@ function Modal({
             aria-label="Close dialog"
             className="modal__close-btn"
             style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%' }}
-            icon={<X size={25} />}
+            icon={<Cross2Icon width={25} height={25} />}
           />
         </header>
         {subHeader && <div className="modal__subheader">{subHeader}</div>}

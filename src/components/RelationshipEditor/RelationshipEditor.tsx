@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { PlusIcon, TrashIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { execute, select } from '@/database/databaseService';
 import { graphService, GraphNode } from '@/services/graphService';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Search } from 'lucide-react';
+
 import { Button } from '../Button';
 import './RelationshipEditor.css';
 
@@ -70,11 +71,11 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
         case 'item': table = 'items'; break;
         case 'world_system': table = 'world_systems'; break;
         case 'lore': table = 'lore'; break;
-        case 'timeline_event': table = 'timeline_events'; break;
+        case 'outline': table = 'outlines'; break;
         case 'plot_point': table = 'plot_points'; break;
       }
       if (table) {
-        const nameCol = table === 'chapters' || table === 'timeline_events' || table === 'plot_points' ? 'title' : 'name';
+        const nameCol = table === 'chapters' || table === 'outlines' || table === 'plot_points' ? 'title' : 'name';
         const res = await select<any>(db, `SELECT ${nameCol} as _name FROM ${table} WHERE id = $1`, [r.target_id]);
         if (res.length > 0) targetName = res[0]._name;
       }
@@ -139,7 +140,7 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
         <h3 className="text-lg font-semibold">Relationships</h3>
         {!isAdding && (
           <Button variant="secondary" size="sm" onClick={() => setIsAdding(true)}>
-            <Plus size={16} /> Add Link
+            <PlusIcon width={16} height={16} /> Add Link
           </Button>
         )}
       </div>
@@ -157,7 +158,7 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
               ({rel.target_type.replace('_', ' ')})
             </span>
             <button className="relationship-editor__delete" onClick={() => handleDelete(rel.id)}>
-              <Trash2 size={14} />
+              <TrashIcon width={14} height={14} />
             </button>
           </div>
         ))}
@@ -185,12 +186,12 @@ export function RelationshipEditor({ sourceId, sourceType }: RelationshipEditorP
                   <option value="item">Items</option>
                   <option value="world_system">World Systems</option>
                   <option value="lore">Lore</option>
-                  <option value="timeline_event">Timeline Events</option>
+                  <option value="outline">Timeline Events</option>
                   <option value="plot_point">Plot Points</option>
                 </select>
                 
                 <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', color: 'var(--color-text-tertiary)' }} />
+                  <MagnifyingGlassIcon width={16} height={16} style={{ position: 'absolute', left: '0.75rem', color: 'var(--color-text-tertiary)' }} />
                   <input
                     autoFocus
                     type="text"

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { MagnifyingGlassIcon, Cross2Icon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Hash } from 'lucide-react';
+import { Hash } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import type { Keyword } from '@/types/database';
@@ -17,7 +18,7 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChange,
-  placeholder = 'Search...',
+  placeholder = 'MagnifyingGlassIcon...',
   onClear,
   debounceMs = 300,
 }: SearchBarProps) {
@@ -95,7 +96,7 @@ export function SearchBar({
       case 'item': route = 'items'; break;
       case 'world_system': route = 'world-systems'; break;
       case 'lore': route = 'lore'; break;
-      case 'timeline_event': route = 'timeline'; break;
+      case 'outline': route = 'outliner'; break;
     }
     if (route && projectId) {
       navigate(`/project/${projectId}/${route}/${keyword.entity_id}`);
@@ -106,7 +107,7 @@ export function SearchBar({
   return (
     <div className="search-bar" ref={searchBarRef}>
       <div className="search-bar__input-container">
-        <Search size={16} className="search-bar__icon" />
+        <MagnifyingGlassIcon width={16} height={16} className="search-bar__icon" />
         <input
           type="text"
           className="search-bar__input"
@@ -123,7 +124,7 @@ export function SearchBar({
             onClick={handleClear}
             aria-label="Clear search"
           >
-            <X size={14} />
+            <Cross2Icon width={14} height={14} />
           </button>
         )}
       </div>

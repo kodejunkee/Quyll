@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { PersonIcon, Pencil2Icon, TrashIcon, UploadIcon, Cross2Icon, ArrowLeftIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import { User, Edit, Trash2, Upload, X, ArrowLeft } from 'lucide-react';
+
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal/Modal';
 import { Dialog } from '@/components/Dialog/Dialog';
@@ -99,14 +100,14 @@ export function CharacterDetailCard({
               case 'item': table = 'items'; break;
               case 'world_system': table = 'world_systems'; break;
               case 'lore': table = 'lore'; break;
-              case 'timeline_event': table = 'timeline_events'; break;
+              case 'outline': table = 'outlines'; break;
               case 'plot_point': table = 'plot_points'; break;
               case 'chapter': table = 'chapters'; break;
             }
 
             let name = 'Unknown';
             if (table) {
-              const nameCol = table === 'lore' || table === 'timeline_events' || table === 'plot_points' || table === 'chapters' ? 'title' : 'name';
+              const nameCol = table === 'lore' || table === 'outlines' || table === 'plot_points' || table === 'chapters' ? 'title' : 'name';
               const res = await select<any>(db, `SELECT ${nameCol} as _name FROM ${table} WHERE id = $1`, [otherId]);
               if (res.length > 0) name = res[0]._name;
             }
@@ -209,7 +210,7 @@ export function CharacterDetailCard({
       await characterService.update(db, characterId, { image_id: img.id });
       await loadData();
     } catch (err: any) {
-      console.error('Upload error:', err);
+      console.error('UploadIcon error:', err);
       alert('Failed to upload image: ' + (err.message || err));
     } finally {
       setImageLoading(false);
@@ -272,7 +273,7 @@ export function CharacterDetailCard({
             size="sm"
             onClick={onNavigateBack || (() => navigate(`/project/${projectId}/characters`))}
           >
-            <ArrowLeft size={16} /> Characters
+            <ArrowLeftIcon width={16} height={16} /> Characters
           </Button>
         </div>
       )}
@@ -284,15 +285,15 @@ export function CharacterDetailCard({
             {imageUrl ? (
               <img src={imageUrl} alt={character.name} className="character-detail-card__avatar-img" />
             ) : (
-              <User size={38} className="text-text-tertiary" />
+              <PersonIcon width={38} height={38} className="text-text-tertiary" />
             )}
             <div className="character-detail-card__avatar-overlay">
               <Button variant="secondary" size="sm" onClick={handleImageReplace} disabled={imageLoading}>
-                <Upload size={14} /> Replace
+                <UploadIcon width={14} height={14} /> Replace
               </Button>
               {imageUrl && (
                 <Button variant="danger" size="sm" onClick={handleImageRemove} disabled={imageLoading}>
-                  <X size={14} /> Remove
+                  <Cross2Icon width={14} height={14} /> Remove
                 </Button>
               )}
             </div>
@@ -326,10 +327,10 @@ export function CharacterDetailCard({
                 setEditTab('identity');
                 setEditOpen(true);
               }}>
-            <Edit size={14} /> Edit
+            <Pencil2Icon width={14} height={14} /> Pencil2Icon
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)} className="text-danger hover:bg-danger/10">
-            <Trash2 size={14} /> Delete
+            <TrashIcon width={14} height={14} /> Delete
           </Button>
         </div>
       </div>
@@ -540,11 +541,11 @@ export function CharacterDetailCard({
         </div>
       </div>
 
-      {/* Edit Form Modal */}
+      {/* Pencil2Icon Form Modal */}
       <Modal 
         open={editOpen} 
         onClose={() => setEditOpen(false)} 
-        title="Edit Character" 
+        title="Pencil2Icon Character" 
         size="lg"
         subHeader={<CharacterFormTabs activeTab={editTab} onTabChange={setEditTab} />}
       >

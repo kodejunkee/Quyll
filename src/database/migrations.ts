@@ -93,7 +93,7 @@ export async function migrateProjectDatabase(db: Database, dbPath?: string): Pro
       const tables = [
         'chapters', 'characters', 'locations', 'organizations',
         'species', 'items', 'world_systems', 'lore',
-        'timeline_events', 'plot_points'
+        'outlines', 'plot_points'
       ];
       for (const t of tables) {
         try {
@@ -168,6 +168,30 @@ export async function migrateProjectDatabase(db: Database, dbPath?: string): Pro
         await execute(db, 'CREATE INDEX IF NOT EXISTS idx_plot_edges_project ON plot_edges(project_id)');
       } catch (e) {
         console.error('Failed to run migration to schema v19', e);
+      }
+    }
+    if (current < 20) {
+      try {
+        await execute(db, 'DROP TABLE IF EXISTS outlines');
+        await execute(db, `
+          CREATE TABLE IF NOT EXISTS outlines (
+            id               TEXT PRIMARY KEY,
+            project_id       TEXT NOT NULL,
+            title            TEXT NOT NULL DEFAULT '',
+            description      TEXT NOT NULL DEFAULT '',
+            category         TEXT NOT NULL DEFAULT 'event',
+            keyword_enabled  INTEGER NOT NULL DEFAULT 0,
+            deleted_at       TEXT,
+            created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+          );
+        `);
+        await execute(db, 'CREATE INDEX IF NOT EXISTS idx_outlines_project ON outlines(project_id)');
+        await execute(db, "DELETE FROM keywords WHERE entity_type = 'outline'");
+        await execute(db, "DELETE FROM pinned_references WHERE entity_type = 'outline'");
+        await execute(db, "DELETE FROM relationships WHERE source_type = 'outline' OR target_type = 'outline'");
+      } catch (e) {
+        console.error('Failed to run migration to schema v20', e);
       }
     }
     await recordVersion(db, CURRENT_SCHEMA_VERSION);

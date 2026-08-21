@@ -182,14 +182,13 @@ export interface LoreEntry {
   readonly updated_at: Timestamp;
 }
 
-/** A point on the story or world timeline. */
-export interface TimelineEvent {
+/** A flexible story outline / note. */
+export interface Outline {
   readonly id: UUID;
   readonly project_id: UUID;
   readonly title: string;
   readonly description: string;
-  readonly event_date: string;
-  readonly chapter_id: UUID | null;
+  readonly category: string;
   readonly keyword_enabled: number;
   readonly deleted_at: Timestamp | null;
   readonly created_at: Timestamp;

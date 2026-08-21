@@ -19,7 +19,8 @@
         "minHeight": 768,
         "center": true,
         "theme": "Dark",
-        "decorations": false
+        "decorations": false,
+        "maximized": true
       }
     ],
     "security": {
@@ -37,9 +38,19 @@
       "preload": [
         "sqlite:app.db"
       ]
+    },
+    "updater": {
+      "endpoints": [
+        "https://github.com/OWNER/REPOSITORY/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE2Q0Y3NzI0MzYyQ0ZCMDQKUldRRSt5dzJKSGZQcG85ZzJDRHRtTEFCMG51TGp1ZTlyQ1NjMHFsbUhoTFdacmtLTEVDMTY2NHQK",
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
+    "createUpdaterArtifacts": true,
     "active": true,
     "targets": "all",
     "icon": [

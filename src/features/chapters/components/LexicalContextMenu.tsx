@@ -1,8 +1,9 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import { ScissorsIcon, CopyIcon, ClipboardIcon, ReaderIcon, ChevronRightIcon, CheckIcon } from '@radix-ui/react-icons';
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getSelection, $isRangeSelection, CUT_COMMAND, COPY_COMMAND } from 'lexical';
-import { Scissors, Copy, ClipboardPaste, BookOpen, ChevronRight, SpellCheck, Check, Wand2 } from 'lucide-react';
+import { SpellCheck, Wand2 } from 'lucide-react';
 import { QuickEntityCreateModal } from './QuickEntityCreateModal';
 import { getSynonyms, getSpellingSuggestions, isWordInDictionary, addToCustomDictionary } from '@/services/thesaurusService';
 import './LexicalContextMenu.css';
@@ -323,7 +324,7 @@ export function LexicalContextMenu() {
             }}
           >
             <div className="lexical-context-menu__item-left">
-              <Check className="lexical-context-menu__icon" />
+              <CheckIcon className="lexical-context-menu__icon" />
               <span>Add to Dictionary</span>
             </div>
           </button>
@@ -338,7 +339,7 @@ export function LexicalContextMenu() {
         onClick={handleCut}
       >
         <div className="lexical-context-menu__item-left">
-          <Scissors className="lexical-context-menu__icon" />
+          <ScissorsIcon className="lexical-context-menu__icon" />
           <span>Cut</span>
         </div>
         <span className="lexical-context-menu__shortcut">Ctrl+X</span>
@@ -350,8 +351,8 @@ export function LexicalContextMenu() {
         onClick={handleCopy}
       >
         <div className="lexical-context-menu__item-left">
-          <Copy className="lexical-context-menu__icon" />
-          <span>Copy</span>
+          <CopyIcon className="lexical-context-menu__icon" />
+          <span>CopyIcon</span>
         </div>
         <span className="lexical-context-menu__shortcut">Ctrl+C</span>
       </button>
@@ -362,7 +363,7 @@ export function LexicalContextMenu() {
         onClick={handlePaste}
       >
         <div className="lexical-context-menu__item-left">
-          <ClipboardPaste className="lexical-context-menu__icon" />
+          <ClipboardIcon className="lexical-context-menu__icon" />
           <span>Paste</span>
         </div>
         <span className="lexical-context-menu__shortcut">Ctrl+V</span>
@@ -377,11 +378,11 @@ export function LexicalContextMenu() {
         onClick={() => setSubmenuOpen(prev => !prev)}
       >
         <div className="lexical-context-menu__item-left">
-          <BookOpen className="lexical-context-menu__icon" />
+          <ReaderIcon className="lexical-context-menu__icon" />
           <span>Synonyms</span>
           {targetWord && <span style={{ color: 'var(--color-primary, #F59E0B)', fontSize: '0.75rem', fontWeight: 600 }}>({targetWord})</span>}
         </div>
-        <ChevronRight className="lexical-context-menu__icon" />
+        <ChevronRightIcon className="lexical-context-menu__icon" />
       </div>
 
       <div className="lexical-context-menu__divider" />

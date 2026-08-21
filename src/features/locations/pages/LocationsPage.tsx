@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { MapPin, Plus, ArrowUpDown, LayoutGrid, Share2 } from 'lucide-react';
+import { DrawingPinIcon, PlusIcon, CaretSortIcon, GridIcon } from '@radix-ui/react-icons';
+import { Share2 } from 'lucide-react';
 import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { useLocations } from '../hooks/useLocations';
 import { LocationCard } from '../components/LocationCard';
@@ -33,12 +34,12 @@ export default function LocationsPage() {
               size="sm"
               onClick={() => { setSortKey(sortKey === 'name' ? 'created_at' : 'name'); toggleDirection(); }}
             >
-              <ArrowUpDown size={14} />
+              <CaretSortIcon width={14} height={14} />
               {sortKey === 'name' ? 'Name' : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
             </Button>
           )}
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
+            <PlusIcon width={16} height={16} />
             New Location
           </Button>
         </div>
@@ -51,7 +52,7 @@ export default function LocationsPage() {
               size="sm"
               onClick={() => setViewMode('details')}
             >
-              <LayoutGrid size={14} /> Details
+              <GridIcon width={14} height={14} /> Details
             </Button>
             <Button
               variant={viewMode === 'flowchart' ? 'primary' : 'ghost'}
@@ -70,10 +71,10 @@ export default function LocationsPage() {
         </div>
       ) : sorted.length === 0 ? (
         query ? (
-          <EmptyState icon={MapPin} title="No matches" description={`No locations matching "${query}"`} />
+          <EmptyState icon={DrawingPinIcon} title="No matches" description={`No locations matching "${query}"`} />
         ) : (
           <EmptyState
-            icon={MapPin}
+            icon={DrawingPinIcon}
             title="No locations yet"
             description="Build your world's geography. Map out cities, regions, and significant landmarks."
             actionLabel="Create Location"

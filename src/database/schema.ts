@@ -179,21 +179,19 @@ CREATE TABLE IF NOT EXISTS lore (
 CREATE INDEX IF NOT EXISTS idx_lore_project ON lore(project_id);
 CREATE INDEX IF NOT EXISTS idx_lore_title ON lore(title);
 
--- Timeline Events
-CREATE TABLE IF NOT EXISTS timeline_events (
+-- Outlines
+CREATE TABLE IF NOT EXISTS outlines (
   id               TEXT PRIMARY KEY,
   project_id       TEXT NOT NULL,
   title            TEXT NOT NULL DEFAULT '',
   description      TEXT NOT NULL DEFAULT '',
-  event_date       TEXT NOT NULL DEFAULT '',
-  chapter_id       TEXT,
+  category         TEXT NOT NULL DEFAULT 'event',
   keyword_enabled  INTEGER NOT NULL DEFAULT 0,
   deleted_at       TEXT,
   created_at       TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_timeline_project ON timeline_events(project_id);
-CREATE INDEX IF NOT EXISTS idx_timeline_date ON timeline_events(event_date);
+CREATE INDEX IF NOT EXISTS idx_outlines_project ON outlines(project_id);
 
 -- Plot Points
 CREATE TABLE IF NOT EXISTS plot_points (
@@ -382,4 +380,4 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 `;
 
-export const CURRENT_SCHEMA_VERSION = 19;
+export const CURRENT_SCHEMA_VERSION = 20;

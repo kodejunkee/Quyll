@@ -276,9 +276,9 @@
   background-color: hsla(45, 90%, 55%, 0.12);
 }
 
-.show-keywords .editor__keyword[data-entity-type="timeline_event"],
-.show-keywords .editor__keyword[data-entity-type="timeline"] {
-  border-bottom-color: var(--color-icon-timeline_event);
+.show-keywords .editor__keyword[data-entity-type="outline"],
+.show-keywords .editor__keyword[data-entity-type="outliner"] {
+  border-bottom-color: var(--color-icon-outline);
   background-color: hsla(48, 95%, 60%, 0.12);
 }
 

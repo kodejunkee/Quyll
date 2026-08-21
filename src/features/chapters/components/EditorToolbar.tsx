@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { ListBulletIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   FORMAT_TEXT_COMMAND,
@@ -24,31 +25,7 @@ import { mergeRegister } from '@lexical/utils';
 import { $createQuoteNode } from '@lexical/rich-text';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Search,
-  Highlighter,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Undo2,
-  Redo2,
-  ChevronDown,
-  SlidersHorizontal,
-  Rows3,
-  Minus,
-  Wand2,
-} from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3, ListOrdered, Quote, Highlighter, AlignLeft, AlignCenter, AlignRight, AlignJustify, Undo2, Redo2, SlidersHorizontal, Rows3, Minus, Wand2,  } from 'lucide-react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useSettings } from '@/features/settings/hooks/useSettings';
 import './EditorToolbar.css';
@@ -386,7 +363,7 @@ export function EditorToolbar() {
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        <ChevronDown size={14} aria-hidden="true" />
+        <ChevronDownIcon width={14} height={14} aria-hidden="true" />
       </label>
 
       <ToolbarSeparator />
@@ -433,7 +410,7 @@ export function EditorToolbar() {
           className="editor-toolbar__btn editor-toolbar__split-btn-arrow"
           onClick={() => setHighlightOpen((open) => !open)}
         >
-          <ChevronDown size={12} />
+          <ChevronDownIcon width={12} height={12} />
         </button>
 
         {highlightOpen && (
@@ -488,7 +465,7 @@ export function EditorToolbar() {
         onClick={formatQuote}
       />
       <ToolbarButton
-        icon={<List size={16} />}
+        icon={<ListBulletIcon width={16} height={16} />}
         label="Bullet List"
         active={blockType === 'ul'}
         onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}
@@ -618,7 +595,7 @@ export function EditorToolbar() {
         title="Find & Replace (Ctrl+F)"
         type="button"
       >
-        <Search size={14} />
+        <MagnifyingGlassIcon width={14} height={14} />
         <span>Find & Replace</span>
       </button>
 

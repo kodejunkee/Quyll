@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { ReaderIcon, GridIcon, ListBulletIcon, ClockIcon, FileTextIcon, DotsVerticalIcon, Pencil2Icon, CopyIcon, TrashIcon, PlusIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, LayoutGrid, List, Clock, FileText, MoreVertical, Pencil, Copy, Trash2, Plus, ArrowUpDown, Check } from 'lucide-react';
+
 import { formatTimeAgo } from '../utils/writingStats';
 import { EmptyState, Button, SearchBar, Modal, Dialog } from '@/components';
 import { ChapterForm } from './ChapterForm';
@@ -90,7 +91,7 @@ export function ChapterDirectory({
     return (
       <div className="chapter-directory__empty-state">
         <EmptyState
-          icon={BookOpen}
+          icon={ReaderIcon}
           title="No chapters yet"
           description="Create your first chapter to start writing your manuscript."
           actionLabel="Create Chapter"
@@ -109,7 +110,7 @@ export function ChapterDirectory({
           <p className="chapter-directory__subtitle">Select a chapter to continue writing, or create a new one.</p>
         </div>
         <div className="chapter-directory__header-actions">
-          <Button variant="primary" icon={<Plus size={16} />} onClick={onCreateChapter}>
+          <Button variant="primary" icon={<PlusIcon width={16} height={16} />} onClick={onCreateChapter}>
             New Chapter
           </Button>
         </div>
@@ -127,7 +128,7 @@ export function ChapterDirectory({
               title="Sort chapters"
               type="button"
             >
-              <ArrowUpDown size={14} />
+              <CaretSortIcon width={14} height={14} />
               <span>Sort</span>
             </button>
             <div className={`chapter-directory__sort-menu ${isSortMenuOpen ? 'open' : ''}`}>
@@ -152,7 +153,7 @@ export function ChapterDirectory({
                     type="button"
                   >
                     <span>{opt.label}</span>
-                    {active && <Check size={14} />}
+                    {active && <CheckIcon width={14} height={14} />}
                   </button>
                 );
               })}
@@ -164,14 +165,14 @@ export function ChapterDirectory({
               size="sm"
               onClick={() => setViewMode('grid')}
             >
-              <LayoutGrid size={14} /> Grid
+              <GridIcon width={14} height={14} /> Grid
             </Button>
             <Button
               variant={viewMode === 'list' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('list')}
             >
-              <List size={14} /> List
+              <ListBulletIcon width={14} height={14} /> List
             </Button>
           </div>
         </div>
@@ -179,7 +180,7 @@ export function ChapterDirectory({
 
       {filtered.length === 0 ? (
         <EmptyState
-          icon={BookOpen}
+          icon={ReaderIcon}
           title="No matches"
           description={`No chapters match "${query}"`}
         />
@@ -212,20 +213,20 @@ export function ChapterDirectory({
                         }}
                         type="button"
                       >
-                        <MoreVertical size={16} />
+                        <DotsVerticalIcon width={16} height={16} />
                       </button>
                       {contextMenuId === chapter.id && (
                         <div className="chapter-directory__menu">
                           <button className="chapter-directory__menu-item" onClick={(e) => { e.stopPropagation(); setRenameTarget(chapter); setContextMenuId(null); }} type="button">
-                            <Pencil size={14} />
+                            <Pencil2Icon width={14} height={14} />
                             Rename
                           </button>
                           <button className="chapter-directory__menu-item" onClick={(e) => { e.stopPropagation(); onDuplicate(chapter); setContextMenuId(null); }} type="button">
-                            <Copy size={14} />
+                            <CopyIcon width={14} height={14} />
                             Duplicate
                           </button>
                           <button className="chapter-directory__menu-item chapter-directory__menu-item--danger" onClick={(e) => { e.stopPropagation(); setDeleteTarget(chapter); setContextMenuId(null); }} type="button">
-                            <Trash2 size={14} />
+                            <TrashIcon width={14} height={14} />
                             Delete
                           </button>
                         </div>
@@ -236,10 +237,10 @@ export function ChapterDirectory({
                   <div className="chapter-directory__card-info">
                     <div className="chapter-directory__card-stats">
                       <span title="Word count">
-                        <FileText size={14} /> {chapter.word_count.toLocaleString()} words
+                        <FileTextIcon width={14} height={14} /> {chapter.word_count.toLocaleString()} words
                       </span>
                       <span title="Last updated">
-                        <Clock size={14} /> {formatTimeAgo(chapter.updated_at)}
+                        <ClockIcon width={14} height={14} /> {formatTimeAgo(chapter.updated_at)}
                       </span>
                       {chapter.is_restored === 1 && (
                         <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>RESTORED</span>
@@ -263,20 +264,20 @@ export function ChapterDirectory({
                         }}
                         type="button"
                       >
-                        <MoreVertical size={16} />
+                        <DotsVerticalIcon width={16} height={16} />
                       </button>
                       {contextMenuId === chapter.id && (
                         <div className="chapter-directory__menu">
                           <button className="chapter-directory__menu-item" onClick={(e) => { e.stopPropagation(); setRenameTarget(chapter); setContextMenuId(null); }} type="button">
-                            <Pencil size={14} />
+                            <Pencil2Icon width={14} height={14} />
                             Rename
                           </button>
                           <button className="chapter-directory__menu-item" onClick={(e) => { e.stopPropagation(); onDuplicate(chapter); setContextMenuId(null); }} type="button">
-                            <Copy size={14} />
+                            <CopyIcon width={14} height={14} />
                             Duplicate
                           </button>
                           <button className="chapter-directory__menu-item chapter-directory__menu-item--danger" onClick={(e) => { e.stopPropagation(); setDeleteTarget(chapter); setContextMenuId(null); }} type="button">
-                            <Trash2 size={14} />
+                            <TrashIcon width={14} height={14} />
                             Delete
                           </button>
                         </div>
@@ -285,10 +286,10 @@ export function ChapterDirectory({
                   </div>
                   <div className="chapter-directory__card-stats">
                     <span title="Word count">
-                      <FileText size={14} /> {chapter.word_count.toLocaleString()} words
+                      <FileTextIcon width={14} height={14} /> {chapter.word_count.toLocaleString()} words
                     </span>
                     <span title="Last updated">
-                      <Clock size={14} /> {formatTimeAgo(chapter.updated_at)}
+                      <ClockIcon width={14} height={14} /> {formatTimeAgo(chapter.updated_at)}
                     </span>
                     {chapter.is_restored === 1 && (
                       <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--color-primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>RESTORED</span>

@@ -1,6 +1,7 @@
 // Removed unused Button import
 import { type GrammarIssue } from '@/services/grammarService';
-import { SpellCheck, CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { CheckCircledIcon, MagicWandIcon, Cross2Icon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { SpellCheck, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import './GrammarCheckerPanel.css';
 
 interface GrammarCheckerPanelProps {
@@ -47,7 +48,7 @@ export function GrammarCheckerPanel({
       case 'warning':
         return <AlertTriangle size={14} className="grammar-panel__icon--warning" />;
       default:
-        return <Sparkles size={14} className="grammar-panel__icon--style" />;
+        return <MagicWandIcon width={14} height={14} className="grammar-panel__icon--style" />;
     }
   };
 
@@ -65,7 +66,7 @@ export function GrammarCheckerPanel({
             <span className="grammar-panel__header-badge">{issues.length}</span>
           )}
         </div>
-        {isOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        {isOpen ? <ChevronDownIcon width={16} height={16} /> : <ChevronUpIcon width={16} height={16} />}
       </button>
 
       {isOpen && (
@@ -102,7 +103,7 @@ export function GrammarCheckerPanel({
             </div>
           ) : issues.length === 0 ? (
             <div className="grammar-panel__empty">
-              <CheckCircle2 size={36} className="grammar-panel__empty-icon" />
+              <CheckCircledIcon width={36} height={36} className="grammar-panel__empty-icon" />
               <h4 className="grammar-panel__empty-title">All Clear!</h4>
               <p className="grammar-panel__empty-text">
                 No issues found.
@@ -125,7 +126,7 @@ export function GrammarCheckerPanel({
                       onClick={() => onDismissIssue(issue.id)}
                       title="Dismiss this suggestion"
                     >
-                      <X size={14} />
+                      <Cross2Icon width={14} height={14} />
                     </button>
                   </div>
 

@@ -1,5 +1,6 @@
-import { MoreVertical, Pencil, Copy, Trash2 } from 'lucide-react';
+
 import type { Chapter } from '@/types/database';
+import { DotsVerticalIcon, Pencil2Icon, CopyIcon, TrashIcon } from '@radix-ui/react-icons';
 import { formatNumber } from '../utils/writingStats';
 import './ChapterListItem.css';
 
@@ -47,21 +48,21 @@ export function ChapterListItem({
           aria-label="Chapter actions"
           type="button"
         >
-          <MoreVertical size={14} />
+          <DotsVerticalIcon width={14} height={14} />
         </button>
 
         {showMenu && (
           <div className="chapter-list-item__menu">
             <button className="chapter-list-item__menu-item" onClick={onRename} type="button">
-              <Pencil size={14} />
+              <Pencil2Icon width={14} height={14} />
               Rename
             </button>
             <button className="chapter-list-item__menu-item" onClick={onDuplicate} type="button">
-              <Copy size={14} />
+              <CopyIcon width={14} height={14} />
               Duplicate
             </button>
             <button className="chapter-list-item__menu-item chapter-list-item__menu-item--danger" onClick={onDelete} type="button">
-              <Trash2 size={14} />
+              <TrashIcon width={14} height={14} />
               Delete
             </button>
           </div>

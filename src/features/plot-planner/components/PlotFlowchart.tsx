@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import type { UUID } from '@/types/database';
+import type { UUID } from '@/types/common';
 import { usePlotPoints } from '../hooks/usePlotPoints';
 import { usePlotEdges } from '../hooks/usePlotEdges';
 import { PlotNode } from './PlotNode';
@@ -88,7 +88,7 @@ function FlowComponent({ onNodeSelect }: PlotFlowchartProps) {
   );
 
   // Double click canvas to add new node
-  const onPaneDoubleClick = useCallback(
+  const _onPaneDoubleClick = useCallback(
     async (event: React.MouseEvent) => {
       if (!wrapperRef.current) return;
       

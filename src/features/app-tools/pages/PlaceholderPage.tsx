@@ -1,4 +1,5 @@
-import { Settings, Download, Trash2, RefreshCw, Info, Coffee } from 'lucide-react';
+import { Coffee } from 'lucide-react';
+import { GearIcon, DownloadIcon, TrashIcon, ReloadIcon, InfoCircledIcon } from '@radix-ui/react-icons';
 
 interface PlaceholderProps {
   title: string;
@@ -6,11 +7,11 @@ interface PlaceholderProps {
 }
 
 const iconMap = {
-  settings: Settings,
-  download: Download,
-  trash: Trash2,
-  updates: RefreshCw,
-  about: Info,
+  settings: GearIcon,
+  download: DownloadIcon,
+  trash: TrashIcon,
+  updates: ReloadIcon,
+  about: InfoCircledIcon,
   support: Coffee,
 };
 

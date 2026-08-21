@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { TrashIcon, ResetIcon } from '@radix-ui/react-icons';
 import { useParams } from 'react-router-dom';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { trashService, TrashedItem } from '@/services/trashService';
 import { useWorkspaceStore } from '@/store/workspaceStore';
-import { Trash2, RotateCcw } from 'lucide-react';
+
 import { Dialog } from '@/components/Dialog';
 import { Button } from '@/components/Button';
 import './TrashPage.css';
@@ -89,7 +90,7 @@ export function TrashPage() {
     <div className="trash-page">
       <header className="trash-page__header">
         <div className="trash-page__header-title">
-          <Trash2 size={24} />
+          <TrashIcon width={24} height={24} />
           <h1>Trash</h1>
         </div>
         <div className="trash-page__header-actions">
@@ -112,7 +113,7 @@ export function TrashPage() {
           <div className="trash-page__loading">Loading trash...</div>
         ) : items.length === 0 ? (
           <div className="trash-page__empty">
-            <Trash2 size={48} className="trash-page__empty-icon" />
+            <TrashIcon width={48} height={48} className="trash-page__empty-icon" />
             <p>Your trash is empty.</p>
           </div>
         ) : (
@@ -142,7 +143,7 @@ export function TrashPage() {
                     onClick={() => handleRestore(item)}
                     title="Restore"
                   >
-                    <RotateCcw size={16} />
+                    <ResetIcon width={16} height={16} />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -150,7 +151,7 @@ export function TrashPage() {
                     onClick={() => setDeleteItemOpen(item)}
                     title="Delete Permanently"
                   >
-                    <Trash2 size={16} />
+                    <TrashIcon width={16} height={16} />
                   </Button>
                 </div>
               </div>

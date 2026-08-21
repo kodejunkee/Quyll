@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Plus, Square, Copy, Minus, Sun, Moon, X } from 'lucide-react';
-import { HomeIcon, LayersIcon } from '@radix-ui/react-icons';
+import { Square, Minus } from 'lucide-react';
+import { PlusIcon, CopyIcon, GearIcon, Cross2Icon, HomeIcon, LayersIcon } from '@radix-ui/react-icons';
 import { useThemeStore } from '@/store/themeStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { OpenProjectModal } from '@/components/Modal/OpenProjectModal';
+import { CreateProjectModal } from '@/components/Modal/CreateProjectModal';
+import { GlobalSettingsModal } from '@/features/settings/components';
+import { UpdateService, UpdateState } from '@/services/updateService';
 import './GlobalShellLayout.css';
 import './GlobalShellLayout-Menu.css';
 
@@ -19,6 +22,8 @@ export function GlobalShellLayout() {
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOpenProjectModalOpen, setIsOpenProjectModalOpen] = useState(false);
+  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false);
+  const [updateState, setUpdateState] = useState<UpdateState>('idle');
 
   const isHome = location.pathname === '/' || !location.pathname.startsWith('/project/');
 
@@ -55,6 +60,21 @@ export function GlobalShellLayout() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    const unsubscribe = UpdateService.subscribe((state) => {
+      setUpdateState(state);
+    });
+    
+    // Auto check on startup
+    if (UpdateService.getState() === 'idle') {
+      UpdateService.checkForUpdates(true);
+    } else {
+      setUpdateState(UpdateService.getState());
+    }
+    
+    return unsubscribe;
+  }, []);
 
   // Keep Tauri's custom styling
   useEffect(() => {
@@ -136,7 +156,7 @@ export function GlobalShellLayout() {
                     handleCloseTab(tab.projectId);
                   }}
                 >
-                  <X size={12} />
+                  <Cross2Icon width={12} height={12} />
                 </span>
               </button>
             ))}
@@ -151,7 +171,7 @@ export function GlobalShellLayout() {
               type="button" 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <Plus size={14} />
+              <PlusIcon width={14} height={14} />
             </button>
             {isMenuOpen && (
               <div className="global-new-project-menu">
@@ -159,13 +179,10 @@ export function GlobalShellLayout() {
                   className="global-new-project-menu__item"
                   onClick={() => {
                     setIsMenuOpen(false);
-                    navigate('/');
-                    setTimeout(() => {
-                      window.dispatchEvent(new Event('open-create-project'));
-                    }, 50);
+                    window.dispatchEvent(new Event('open-create-project'));
                   }}
                 >
-                  <Plus size={14} /> New Project
+                  <PlusIcon width={14} height={14} /> New Project
                 </button>
                 <button 
                   className="global-new-project-menu__item"
@@ -186,13 +203,32 @@ export function GlobalShellLayout() {
 
         {/* Right: Window Controls & Profile */}
         <div className="global-top-bar__actions">
+          {['available', 'downloading', 'installing', 'restart-required'].includes(updateState) && (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'var(--color-primary)',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginRight: '8px'
+              }}
+              onClick={() => navigate('/updates')}
+            >
+              Update Available
+            </div>
+          )}
           <button 
             className="global-action-btn"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title="Toggle theme"
+            onClick={() => setIsGlobalSettingsOpen(true)}
+            title="Settings"
             type="button"
           >
-            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            <GearIcon width={14} height={14} />
           </button>
 
           <div className="global-top-bar__divider" />
@@ -213,7 +249,7 @@ export function GlobalShellLayout() {
             title={isMaximized ? "Restore Down" : "Maximize"}
             type="button"
           >
-            {isMaximized ? <Copy size={13} /> : <Square size={13} />}
+            {isMaximized ? <CopyIcon width={13} height={13} /> : <Square size={13} />}
           </button>
 
           {/* Tauri Window Close */}
@@ -223,7 +259,7 @@ export function GlobalShellLayout() {
             title="Close"
             type="button"
           >
-            <X size={14} />
+            <Cross2Icon width={14} height={14} />
           </button>
         </div>
       </header>
@@ -233,9 +269,15 @@ export function GlobalShellLayout() {
         <Outlet />
       </main>
       
+      <CreateProjectModal />
+      {/* Open Project Modal */}
       <OpenProjectModal 
         open={isOpenProjectModalOpen} 
         onClose={() => setIsOpenProjectModalOpen(false)} 
+      />
+      <GlobalSettingsModal 
+        isOpen={isGlobalSettingsOpen} 
+        onClose={() => setIsGlobalSettingsOpen(false)} 
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Minus } from 'lucide-react';
+import { Cross2Icon } from '@radix-ui/react-icons';
+import { Minus } from 'lucide-react';
 import './DraggableModal.css';
 
 interface DraggableModalProps {
@@ -132,7 +133,7 @@ export function DraggableModal({
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             title="Close completely"
           >
-            <X size={14}/>
+            <Cross2Icon width={14} height={14}/>
           </button>
         </div>
       </div>

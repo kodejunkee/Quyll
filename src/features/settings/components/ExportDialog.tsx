@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { FileTextIcon } from '@radix-ui/react-icons';
 import { Modal, Button, Checkbox, Dropdown, Input, type DropdownOption } from '@/components';
 import { useExport } from '../hooks/useExport';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import type { Chapter } from '@/types/database';
-import { FileText, FileType, Printer, FileOutput, Loader2, Package } from 'lucide-react';
+import { FileType, Printer, FileOutput, Loader2, Package } from 'lucide-react';
 import type { ExportFormat, ExportScope } from '@/services/exportService';
 import './ExportDialog.css';
 
@@ -25,7 +26,7 @@ const FORMATS: FormatConfig[] = [
     id: 'markdown',
     label: 'Markdown (.md)',
     description: 'Clean formatted text for editors and publishing',
-    icon: <FileText size={20} />,
+    icon: <FileTextIcon width={20} height={20} />,
   },
   {
     id: 'text',
@@ -59,7 +60,7 @@ const SCOPE_OPTIONS: DropdownOption[] = [
   { value: 'selected-chapters', label: 'Selected Chapters' },
   { value: 'characters', label: 'Characters' },
   { value: 'lore', label: 'Lore Entries' },
-  { value: 'timeline', label: 'Timeline Events' },
+  { value: 'outliner', label: 'Timeline Events' },
   { value: 'locations', label: 'Locations' },
   { value: 'organizations', label: 'Organizations' },
   { value: 'species', label: 'Species' },

@@ -1,6 +1,7 @@
 import { Modal, Button, Checkbox } from '@/components';
+import { UploadIcon, FileTextIcon } from '@radix-ui/react-icons';
 import { useImport } from '../hooks/useImport';
-import { Upload, FileText, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import './ImportDialog.css';
 
 interface ImportDialogProps {
@@ -41,7 +42,7 @@ export function ImportDialog({ isOpen, onClose }: ImportDialogProps) {
               <Loader2 size={36} className="import-dialog__spinner" />
             ) : (
               <>
-                <Upload size={36} className="import-dialog__upload-icon" />
+                <UploadIcon width={36} height={36} className="import-dialog__upload-icon" />
                 <p className="import-dialog__upload-text">Click to browse and select a document</p>
                 <p className="import-dialog__upload-hint">Supports Markdown (.md), Plain Text (.txt), and Word (.docx)</p>
               </>
@@ -51,7 +52,7 @@ export function ImportDialog({ isOpen, onClose }: ImportDialogProps) {
           <>
             <div className="import-dialog__file-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <FileText size={18} style={{ color: 'var(--color-accent)' }} />
+                <FileTextIcon width={18} height={18} style={{ color: 'var(--color-accent)' }} />
                 <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{preview.fileName}</span>
                 <span style={{ fontSize: 'var(--font-size-xs)', padding: '2px 6px', background: 'var(--color-surface-3)', borderRadius: 'var(--radius-sm)', textTransform: 'uppercase' }}>
                   {preview.format}

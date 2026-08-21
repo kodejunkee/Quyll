@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import { UploadIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { ImageIcon } from 'lucide-react';
 import { Button } from '@/components/Button';
 import './ImageUploader.css';
 
@@ -30,11 +31,11 @@ export function ImageUploader({ imageUrl, onUpload, onRemove, loading = false }:
           />
           <div className="image-uploader__overlay">
             <Button variant="secondary" size="sm" onClick={onUpload} disabled={loading}>
-              <Upload size={14} />
+              <UploadIcon width={14} height={14} />
               Replace
             </Button>
             <Button variant="danger" size="sm" onClick={onRemove} disabled={loading}>
-              <X size={14} />
+              <Cross2Icon width={14} height={14} />
               Remove
             </Button>
           </div>
@@ -48,7 +49,7 @@ export function ImageUploader({ imageUrl, onUpload, onRemove, loading = false }:
         >
           <ImageIcon size={32} className="image-uploader__empty-icon" />
           <span className="image-uploader__empty-text">
-            {loading ? 'Uploading...' : 'Upload Image'}
+            {loading ? 'Uploading...' : 'UploadIcon Image'}
           </span>
         </button>
       )}

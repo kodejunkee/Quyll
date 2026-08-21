@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Route as RouteIcon, Plus, ArrowUpDown, LayoutGrid, Share2 } from 'lucide-react';
+import { PlusIcon, CaretSortIcon, GridIcon } from '@radix-ui/react-icons';
+import { Route as RouteIcon, Share2 } from 'lucide-react';
 import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { usePlotPoints } from '../hooks/usePlotPoints';
 import { PlotPointCard } from '../components/PlotPointCard';
@@ -53,12 +54,12 @@ export default function PlotPlannerPage() {
               size="sm"
               onClick={() => { setSortKey(sortKey === 'title' ? 'created_at' : 'title'); toggleDirection(); }}
             >
-              <ArrowUpDown size={14} />
+              <CaretSortIcon width={14} height={14} />
               {sortKey === 'title' ? 'Title' : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
             </Button>
           )}
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
+            <PlusIcon width={16} height={16} />
             New Plot Point
           </Button>
         </div>
@@ -74,7 +75,7 @@ export default function PlotPlannerPage() {
             size="sm"
             onClick={() => setViewMode('details')}
           >
-            <LayoutGrid size={14} /> Details
+            <GridIcon width={14} height={14} /> Details
           </Button>
           <Button
             variant={viewMode === 'flowchart' ? 'primary' : 'ghost'}

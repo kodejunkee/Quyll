@@ -1,15 +1,6 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  MapPin, 
-  Building2, 
-  Dna, 
-  Package, 
-  Globe, 
-  ScrollText, 
-  Clock, 
-  Maximize2
-} from 'lucide-react';
+import { PersonIcon, DrawingPinIcon, GlobeIcon, ClockIcon } from '@radix-ui/react-icons';
+import { Building2, Dna, Package, ScrollText, Maximize2, StickyNote } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { select } from '@/database/databaseService';
 import { getImageById, getImageUrl } from '@/services/imageService';
@@ -30,14 +21,14 @@ interface CompactReferenceModalProps {
 }
 
 const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
-  character: { icon: Users, colorKey: 'character' },
-  location: { icon: MapPin, colorKey: 'location' },
+  character: { icon: PersonIcon, colorKey: 'character' },
+  location: { icon: DrawingPinIcon, colorKey: 'location' },
   organization: { icon: Building2, colorKey: 'organization' },
   species: { icon: Dna, colorKey: 'species' },
   item: { icon: Package, colorKey: 'item' },
-  world_system: { icon: Globe, colorKey: 'world_system' },
+  world_system: { icon: GlobeIcon, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
-  timeline_event: { icon: Clock, colorKey: 'timeline_event' },
+  outline: { icon: StickyNote, colorKey: 'outline' },
 };
 
 export function CompactReferenceModal({
@@ -72,7 +63,7 @@ export function CompactReferenceModal({
           case 'item': tableName = 'items'; break;
           case 'world_system': tableName = 'world_systems'; break;
           case 'lore': tableName = 'lore'; break;
-          case 'timeline_event': tableName = 'timeline_events'; break;
+          case 'outline': tableName = 'outlines'; break;
         }
 
         if (!tableName) return;
@@ -115,7 +106,7 @@ export function CompactReferenceModal({
               case 'item': otherTable = 'items'; break;
               case 'world_system': otherTable = 'world_systems'; break;
               case 'lore': otherTable = 'lore'; break;
-              case 'timeline_event': otherTable = 'timeline_events'; break;
+              case 'outline': otherTable = 'outlines'; break;
               case 'plot_point': otherTable = 'plot_points'; break;
               case 'chapter': otherTable = 'chapters'; break;
             }
@@ -124,7 +115,7 @@ export function CompactReferenceModal({
             if (otherTable) {
               const nameCol =
                 otherTable === 'lore' ||
-                otherTable === 'timeline_events' ||
+                otherTable === 'outlines' ||
                 otherTable === 'plot_points' ||
                 otherTable === 'chapters'
                   ? 'title'
@@ -157,7 +148,7 @@ export function CompactReferenceModal({
   }, [db, projectId, projectPath, entityId, entityType]);
 
   const title = data?.name || data?.title || entityType.replace('_', ' ');
-  const iconConfig = ENTITY_ICONS[entityType] || { icon: Users, colorKey: 'character' };
+  const iconConfig = ENTITY_ICONS[entityType] || { icon: PersonIcon, colorKey: 'character' };
   const IconComponent = iconConfig.icon;
 
   const excludeKeys = [

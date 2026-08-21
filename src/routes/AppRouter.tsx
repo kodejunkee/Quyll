@@ -5,6 +5,7 @@ import { HomeLayout } from '@/layouts/HomeLayout';
 import { GlobalShellLayout } from '@/layouts/GlobalShellLayout';
 import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 import { PlaceholderPage } from '@/features/app-tools/pages/PlaceholderPage';
+import { UpdatesPage } from '@/features/app-tools/pages/UpdatesPage';
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
@@ -26,11 +27,11 @@ const WorldSystemDetailPage = lazy(() => import('@/features/world-systems/pages/
 const GlossaryDirectoryPage = lazy(() => import('@/features/glossary/pages/GlossaryDirectoryPage').then(m => ({ default: m.GlossaryDirectoryPage })));
 const LorePage = lazy(() => import('@/features/lore/pages/LorePage'));
 const LoreDetailPage = lazy(() => import('@/features/lore/pages/LoreDetailPage'));
-const TimelinePage = lazy(() => import('@/features/timeline/pages/TimelinePage'));
-const TimelineEventDetailPage = lazy(() => import('@/features/timeline/pages/TimelineEventDetailPage'));
+const OutlinerPage = lazy(() => import('@/features/outliner/pages').then(m => ({ default: m.OutlinerPage })));
+const OutlineDetailPage = lazy(() => import('@/features/outliner/pages').then(m => ({ default: m.OutlineDetailPage })));
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
-const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
+
 const TrashPage = lazy(() => import('@/features/trash/pages/TrashPage').then(m => ({ default: m.TrashPage })));
 
 function PageLoader() {
@@ -55,10 +56,10 @@ const router = createBrowserRouter([
         element: <HomeLayout />,
         children: [
           { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
-          { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
+
           { path: 'import-export', element: <PlaceholderPage title="Import & Export" icon="download" /> },
           { path: 'trash', element: <SuspenseWrap><GlobalTrashPage /></SuspenseWrap> },
-          { path: 'updates', element: <PlaceholderPage title="Updates" icon="updates" /> },
+          { path: 'updates', element: <UpdatesPage /> },
           { path: 'about', element: <PlaceholderPage title="About" icon="about" /> },
           { path: 'support', element: <PlaceholderPage title="Support" icon="support" /> },
         ],
@@ -103,16 +104,16 @@ const router = createBrowserRouter([
           // Glossary
           { path: 'glossary', element: <SuspenseWrap><GlossaryDirectoryPage /></SuspenseWrap> },
 
-          // Timeline
-          { path: 'timeline', element: <SuspenseWrap><TimelinePage /></SuspenseWrap> },
-          { path: 'timeline/:entityId', element: <SuspenseWrap><TimelineEventDetailPage /></SuspenseWrap> },
+          // Outliner
+          { path: 'outliner', element: <SuspenseWrap><OutlinerPage /></SuspenseWrap> },
+          { path: 'outliner/:entityId', element: <SuspenseWrap><OutlineDetailPage /></SuspenseWrap> },
 
           // Plot Planner
           { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
           { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
 
           { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
-          { path: 'settings', element: <SuspenseWrap><SettingsPage /></SuspenseWrap> },
+
         ],
       },
     ]

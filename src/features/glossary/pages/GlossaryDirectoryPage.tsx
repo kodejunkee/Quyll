@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
+import { MagnifyingGlassIcon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { useParams } from 'react-router-dom';
 import { useGlossary } from '../hooks/useGlossary';
 import { GlossaryForm } from '../components/GlossaryForm';
-import { Search, Plus, BookA, Edit2, Trash2 } from 'lucide-react';
+import { BookA, Edit2 } from 'lucide-react';
 import { EmptyState, Modal, Dialog, Button } from '@/components';
 import type { GlossaryEntry } from '@/types/database';
 import './GlossaryDirectoryPage.css';
@@ -101,7 +102,7 @@ export function GlossaryDirectoryPage() {
         </div>
         <div className="glossary-page__actions">
           <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
-            <Plus size={16} />
+            <PlusIcon width={16} height={16} />
             <span>New Term</span>
           </Button>
         </div>
@@ -109,7 +110,7 @@ export function GlossaryDirectoryPage() {
 
       <div className="glossary-toolbar">
         <div className="glossary-search">
-          <Search size={16} className="glossary-search-icon" />
+          <MagnifyingGlassIcon width={16} height={16} className="glossary-search-icon" />
           <input 
             type="text" 
             placeholder="Search terms, aliases, or definitions..." 
@@ -144,7 +145,7 @@ export function GlossaryDirectoryPage() {
           />
         ) : filteredGlossary.length === 0 ? (
           <EmptyState 
-            icon={<Search size={48} />}
+            icon={<MagnifyingGlassIcon width={48} height={48} />}
             title="No terms found"
             description="Try adjusting your search or category filter."
             actionLabel="Clear Filters"
@@ -165,7 +166,7 @@ export function GlossaryDirectoryPage() {
                             <Edit2 size={14} />
                           </button>
                           <button className="icon-btn danger" onClick={() => setDeletingTerm(entry)} title="Delete term">
-                            <Trash2 size={14} />
+                            <TrashIcon width={14} height={14} />
                           </button>
                         </div>
                       </div>

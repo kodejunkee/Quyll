@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User } from 'lucide-react';
+import { PersonIcon } from '@radix-ui/react-icons';
+
 import { useLayoutStore } from '@/store/layoutStore';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { getImageById, getImageUrl } from '@/services/imageService';
@@ -43,7 +44,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
           <img src={imgUrl} alt={character.name} className="character-card__image" loading="lazy" />
         ) : (
           <div className="character-card__image-placeholder">
-            <User size={32} />
+            <PersonIcon width={32} height={32} />
           </div>
         )}
       </div>

@@ -42,6 +42,9 @@
       ]
     },
     "store:default",
-    "store:allow-load"
+    "store:allow-load",
+    "updater:default",
+    "updater:allow-check",
+    "updater:allow-download-and-install"
   ]
 }

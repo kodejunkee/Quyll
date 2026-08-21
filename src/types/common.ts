@@ -22,7 +22,7 @@ export enum EntityType {
   Item = 'item',
   WorldSystem = 'world_system',
   Lore = 'lore',
-  TimelineEvent = 'timeline_event',
+  Outline = 'outline',
   PlotPoint = 'plot_point',
   Glossary = 'glossary',
   Image = 'image',

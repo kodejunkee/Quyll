@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+
 import './GenreInput.css';
 
 interface GenreInputProps {
@@ -200,7 +201,7 @@ export function GenreInput({ label, genres, onChange, options, placeholder }: Ge
                 handleRemove(index);
               }}
             >
-              <X size={12} />
+              <Cross2Icon width={12} height={12} />
             </button>
           </span>
         ))}

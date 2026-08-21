@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { DownloadIcon, ResetIcon } from '@radix-ui/react-icons';
 import { useParams, useNavigate, useLocation, matchPath, useBlocker } from 'react-router-dom';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -18,7 +19,7 @@ import {
 } from 'lexical';
 import { createEmptyHistoryState } from '@lexical/react/LexicalHistoryPlugin';
 import type { HistoryState } from '@lexical/react/LexicalHistoryPlugin';
-import { Download, RotateCcw } from 'lucide-react';
+
 import { htmlToLexicalJson } from '@/services/htmlToMarkdown';
 import { Modal, Button } from '@/components';
 import { useSettings } from '@/features/settings';
@@ -739,7 +740,7 @@ export default function ChaptersPage() {
                   title="Export Chapter"
                   type="button"
                 >
-                  <Download size={15} />
+                  <DownloadIcon width={15} height={15} />
                   <span>Export</span>
                 </button>
                 <button
@@ -748,7 +749,7 @@ export default function ChaptersPage() {
                   title="Restore Draft or Version"
                   type="button"
                 >
-                  <RotateCcw size={15} />
+                  <ResetIcon width={15} height={15} />
                   <span>Restore</span>
                 </button>
               </div>

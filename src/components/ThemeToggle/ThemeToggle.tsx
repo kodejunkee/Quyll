@@ -1,5 +1,6 @@
-import { Moon, Sun } from 'lucide-react';
+
 import { useThemeStore } from '@/store/themeStore';
+import { MoonIcon, SunIcon } from '@radix-ui/react-icons';
 import './ThemeToggle.css';
 
 interface ThemeToggleProps {
@@ -20,7 +21,7 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
       aria-pressed={isLight}
       title={label}
     >
-      {isLight ? <Moon size={17} /> : <Sun size={17} />}
+      {isLight ? <MoonIcon width={17} height={17} /> : <SunIcon width={17} height={17} />}
     </button>
   );
 }

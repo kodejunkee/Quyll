@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { ChevronDownIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import type { KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Search } from 'lucide-react';
+
 import './Dropdown.css';
 
 export interface DropdownOption {
@@ -209,7 +210,7 @@ export function Dropdown({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="dropdown__search-box">
-            <Search size={14} style={{ position: 'absolute', left: '10px', color: 'var(--color-text-tertiary)' }} />
+            <MagnifyingGlassIcon width={14} height={14} style={{ position: 'absolute', left: '10px', color: 'var(--color-text-tertiary)' }} />
             <input
               ref={searchInputRef}
               type="text"
@@ -290,7 +291,7 @@ export function Dropdown({
         <span className={selectedOption ? 'dropdown__value' : 'dropdown__placeholder'}>
           {selectedOption?.label ?? placeholder}
         </span>
-        <ChevronDown size={16} className={`dropdown__icon ${isOpen ? 'dropdown__icon--open' : ''}`} />
+        <ChevronDownIcon width={16} height={16} className={`dropdown__icon ${isOpen ? 'dropdown__icon--open' : ''}`} />
       </button>
       {dropdownList && createPortal(dropdownList, portalContainer)}
       {error && <span className="dropdown__error">{error}</span>}

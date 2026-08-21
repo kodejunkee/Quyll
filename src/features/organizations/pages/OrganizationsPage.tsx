@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Building2, Plus, ArrowUpDown, LayoutGrid, Share2 } from 'lucide-react';
+import { PlusIcon, CaretSortIcon, GridIcon } from '@radix-ui/react-icons';
+import { Building2, Share2 } from 'lucide-react';
 import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { useOrganizations } from '../hooks/useOrganizations';
 import { OrganizationCard } from '../components/OrganizationCard';
@@ -25,15 +26,15 @@ export default function OrganizationsPage() {
         <div><h1 className="entity-list-page__title">Organizations</h1><p className="entity-list-page__count">{items.length} organization{items.length !== 1 ? 's' : ''}</p></div>
         <div className="entity-list-page__actions">
           {viewMode === 'details' && (
-            <Button variant="ghost" size="sm" onClick={() => { setSortKey(sortKey === 'name' ? 'created_at' : 'name'); toggleDirection(); }}><ArrowUpDown size={14} />{sortKey === 'name' ? 'Name' : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setSortKey(sortKey === 'name' ? 'created_at' : 'name'); toggleDirection(); }}><CaretSortIcon width={14} height={14} />{sortKey === 'name' ? 'Name' : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}</Button>
           )}
-          <Button variant="primary" onClick={() => setCreateOpen(true)}><Plus size={16} />New Organization</Button>
+          <Button variant="primary" onClick={() => setCreateOpen(true)}><PlusIcon width={16} height={16} />New Organization</Button>
         </div>
       </header>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <div className="entity-list-page__search" style={{ marginBottom: 0, flex: 1, maxWidth: "400px" }}><SearchBar value={query} onChange={setQuery} placeholder="Search organizations..." /></div>
         <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '6px' }}>
-            <Button variant={viewMode === 'details' ? 'primary' : 'ghost'} size="sm" onClick={() => setViewMode('details')}><LayoutGrid size={14} /> Details</Button>
+            <Button variant={viewMode === 'details' ? 'primary' : 'ghost'} size="sm" onClick={() => setViewMode('details')}><GridIcon width={14} height={14} /> Details</Button>
             <Button variant={viewMode === 'flowchart' ? 'primary' : 'ghost'} size="sm" onClick={() => setViewMode('flowchart')}><Share2 size={14} /> Flowchart</Button>
           </div>
       </div>

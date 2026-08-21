@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ArrowLeftIcon, TrashIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, Card, Dialog, Modal, EntityReferences } from '@/components';
 import { ImageUploader } from '@/components/ImageUploader';
@@ -45,10 +46,10 @@ export default function LocationDetailPage() {
   return (
     <div className="entity-detail">
       <header className="entity-detail__header">
-        <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${projectId}/locations`)}><ArrowLeft size={16} />Locations</Button>
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${projectId}/locations`)}><ArrowLeftIcon width={16} height={16} />Locations</Button>
         <div className="entity-detail__header-actions">
-          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Edit size={14} />Edit</Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 size={14} /></Button>
+          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Pencil2Icon width={14} height={14} />Pencil2Icon</Button>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><TrashIcon width={14} height={14} /></Button>
         </div>
       </header>
       <div className="entity-detail__content">
@@ -60,7 +61,7 @@ export default function LocationDetailPage() {
           <EntityReferences entityId={entity.id} entityType={EntityType.Location} />
         </div>
       </div>
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Location" size="lg"><LocationForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" /></Modal>
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Pencil2Icon Location" size="lg"><LocationForm defaultValues={{ ...entity, keyword_enabled: Boolean(entity.keyword_enabled) }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" /></Modal>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.name}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" />
     </div>
   );

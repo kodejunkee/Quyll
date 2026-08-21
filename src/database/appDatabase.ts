@@ -173,11 +173,11 @@ export async function editProject(projectId: string, updates: {
   );
 }
 
-/** Soft delete a project by setting deleted_at timestamp. */
+/** Soft delete a project by setting deleted_at timestamp and clearing last_opened_at. */
 export async function softDeleteProject(projectId: string): Promise<void> {
   const db = await initAppDatabase();
   const now = new Date().toISOString();
-  await execute(db, 'UPDATE projects SET deleted_at = $1 WHERE id = $2', [now, projectId]);
+  await execute(db, 'UPDATE projects SET deleted_at = $1, last_opened_at = NULL WHERE id = $2', [now, projectId]);
 }
 
 /** Restore a soft deleted project. */
@@ -192,7 +192,7 @@ export async function hardDeleteProject(projectId: string): Promise<void> {
   const row = await getProject(projectId);
   if (row) {
     try {
-      await remove(row.path);
+      await remove(row.path, { recursive: true });
     } catch (e) {
       console.warn('Failed to delete physical project file:', e);
     }
@@ -222,7 +222,7 @@ export async function autoDeleteOldProjects(): Promise<void> {
   );
   for (const row of rows) {
     try {
-      await remove(row.path);
+      await remove(row.path, { recursive: true });
     } catch (e) {
       console.warn('Failed to auto-delete physical project file:', e);
     }

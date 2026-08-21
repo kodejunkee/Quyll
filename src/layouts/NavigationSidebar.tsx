@@ -20,7 +20,7 @@ import {
   BookA,
   Settings,
   Search
-} from 'lucide-react';
+, StickyNote } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import './NavigationSidebar.css';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -55,7 +55,7 @@ const NAV_SECTIONS = [
   {
     title: 'TOOLS',
     items: [
-      { path: 'timeline', label: 'Timeline', icon: Clock, colorKey: 'timeline_event' },
+      { path: 'outliner', label: 'Outliner', icon: StickyNote, colorKey: 'outline' },
       { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner' },
       { path: 'trash', label: 'Trash Bin', icon: Trash2, colorKey: 'trash' },
     ],

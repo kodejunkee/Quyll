@@ -8,7 +8,7 @@ import { speciesService } from '@/features/species/services/speciesService';
 import { itemService } from '@/features/items/services/itemService';
 import { worldSystemService } from '@/features/world-systems/services/worldSystemService';
 import { loreService } from '@/features/lore/services/loreService';
-import { timelineEventService } from '@/features/timeline/services/timelineEventService';
+import { outlineService } from '@/features/outliner/services/outlineService';
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
 
 export interface TrashedItem {
@@ -38,7 +38,7 @@ export const trashService = {
       UNION ALL
       SELECT id, title as name, 'lore' as type, deleted_at FROM lore WHERE project_id = $1 AND deleted_at IS NOT NULL
       UNION ALL
-      SELECT id, title as name, 'timeline_event' as type, deleted_at FROM timeline_events WHERE project_id = $1 AND deleted_at IS NOT NULL
+      SELECT id, title as name, 'outline' as type, deleted_at FROM outlines WHERE project_id = $1 AND deleted_at IS NOT NULL
       UNION ALL
       SELECT id, title as name, 'plot_point' as type, deleted_at FROM plot_points WHERE project_id = $1 AND deleted_at IS NOT NULL
       ORDER BY deleted_at DESC
@@ -57,7 +57,7 @@ export const trashService = {
       case 'item': return itemService.restore(db, id);
       case 'world_system': return worldSystemService.restore(db, id);
       case 'lore': return loreService.restore(db, id);
-      case 'timeline_event': return timelineEventService.restore(db, id);
+      case 'outline': return outlineService.restore(db, id);
       case 'plot_point': return plotPointService.restore(db, id);
       case 'chapter': {
         const chapter = await chapterService.getById(db, id);
@@ -96,7 +96,7 @@ export const trashService = {
       case 'item': return itemService.hardDelete(db, id);
       case 'world_system': return worldSystemService.hardDelete(db, id);
       case 'lore': return loreService.hardDelete(db, id);
-      case 'timeline_event': return timelineEventService.hardDelete(db, id);
+      case 'outline': return outlineService.hardDelete(db, id);
       case 'plot_point': return plotPointService.hardDelete(db, id);
       default:
         console.error(`Unknown type: ${type}`);
@@ -131,7 +131,7 @@ export const trashService = {
       UNION ALL
       SELECT id, 'lore' as type FROM lore WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
-      SELECT id, 'timeline_event' as type FROM timeline_events WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
+      SELECT id, 'outline' as type FROM outlines WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
       UNION ALL
       SELECT id, 'plot_point' as type FROM plot_points WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', '-60 days')
     `;

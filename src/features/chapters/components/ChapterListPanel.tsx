@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, FileText, PanelRight, PanelRightClose, BookOpen, LayoutGrid } from 'lucide-react';
+import { PlusIcon, FileTextIcon, ReaderIcon, GridIcon } from '@radix-ui/react-icons';
+import { PanelRight, PanelRightClose } from 'lucide-react';
 import { Button, SearchBar, Modal, Dialog } from '@/components';
 import { ChapterForm } from './ChapterForm';
 import { ChapterListItem } from './ChapterListItem';
@@ -95,10 +96,10 @@ export function ChapterListPanel({
           {!chapterListCollapsed && (
             <>
               <Button variant="ghost" size="sm" onClick={() => onSelect('')} title="Chapter Directory">
-                <LayoutGrid size={14} />
+                <GridIcon width={14} height={14} />
               </Button>
               <Button variant="primary" size="sm" onClick={() => onCreateOpenChange(true)} title="New Chapter">
-                <Plus size={14} />
+                <PlusIcon width={14} height={14} />
               </Button>
             </>
           )}
@@ -120,7 +121,7 @@ export function ChapterListPanel({
             onClick={() => onCreateOpenChange(true)}
             title="New Chapter"
           >
-            <Plus size={18} />
+            <PlusIcon width={18} height={18} />
           </button>
           <div className="chapter-list-panel__rail-divider" />
           <div className="chapter-list-panel__rail-items">
@@ -133,7 +134,7 @@ export function ChapterListPanel({
                   onClick={() => onSelect(chapter.id)}
                   title={`Ch. ${chapter.chapter_number}: ${chapter.title}`}
                 >
-                  <BookOpen size={16} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-icon-chapters)' }} />
+                  <ReaderIcon width={16} height={16} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-icon-chapters)' }} />
                   <span className="chapter-list-panel__rail-num">{chapter.chapter_number}</span>
                 </button>
               );
@@ -168,10 +169,10 @@ export function ChapterListPanel({
                 <div className="chapter-list-panel__empty-search">No matches</div>
               ) : (
                 <div className="chapter-list-panel__empty">
-                  <FileText size={24} className="chapter-list-panel__empty-icon" />
+                  <FileTextIcon width={24} height={24} className="chapter-list-panel__empty-icon" />
                   <p>No chapters yet</p>
                   <Button variant="primary" size="sm" onClick={() => onCreateOpenChange(true)}>
-                    <Plus size={14} />
+                    <PlusIcon width={14} height={14} />
                     New Chapter
                   </Button>
                 </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Cross2Icon, ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $createRangeSelection, $setSelection, $isTextNode, $isElementNode, LexicalNode } from 'lexical';
-import { X, ChevronUp, ChevronDown } from 'lucide-react';
+
 import { Button } from '@/components';
 import './FindAndReplacePlugin.css';
 
@@ -252,14 +253,14 @@ export function FindAndReplacePlugin() {
         </span>
         <div className="find-replace-panel__nav">
           <Button variant="ghost" size="sm" onClick={handlePrev} disabled={matches.length === 0} title="Previous (Shift+Enter)">
-            <ChevronUp size={16} />
+            <ChevronUpIcon width={16} height={16} />
           </Button>
           <Button variant="ghost" size="sm" onClick={handleNext} disabled={matches.length === 0} title="Next (Enter)">
-            <ChevronDown size={16} />
+            <ChevronDownIcon width={16} height={16} />
           </Button>
         </div>
         <button className="find-replace-panel__close" onClick={handleClose} title="Close (Esc)">
-          <X size={16} />
+          <Cross2Icon width={16} height={16} />
         </button>
       </div>
       <div className="find-replace-panel__row">

@@ -8,7 +8,7 @@ import type {
   Chapter,
   Character,
   LoreEntry,
-  TimelineEvent,
+  Outline,
   Location,
   Organization,
   Species,
@@ -34,7 +34,7 @@ export type ExportScope =
   | 'selected-chapters'
   | 'characters'
   | 'lore'
-  | 'timeline'
+  | 'outliner'
   | 'locations'
   | 'organizations'
   | 'species'
@@ -117,7 +117,7 @@ export interface QuyllExportData {
   chapters: Chapter[];
   characters: Character[];
   lore: LoreEntry[];
-  timelineEvents: TimelineEvent[];
+  outlines: Outline[];
   locations: Location[];
   organizations: Organization[];
   species: Species[];
@@ -150,7 +150,7 @@ export async function buildQuyllExport(
   const chapters = await select<Chapter>(db, 'SELECT * FROM chapters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const characters = await select<Character>(db, 'SELECT * FROM characters WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const lore = await select<LoreEntry>(db, 'SELECT * FROM lore WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
-  const timelineEvents = await select<TimelineEvent>(db, 'SELECT * FROM timeline_events WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
+  const outlines = await select<Outline>(db, 'SELECT * FROM outlines WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const locations = await select<Location>(db, 'SELECT * FROM locations WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const organizations = await select<Organization>(db, 'SELECT * FROM organizations WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
   const species = await select<Species>(db, 'SELECT * FROM species WHERE project_id = $1 AND deleted_at IS NULL', [projectId]);
@@ -219,7 +219,7 @@ export async function buildQuyllExport(
     chapters,
     characters,
     lore,
-    timelineEvents,
+    outlines,
     locations,
     organizations,
     species,
@@ -620,7 +620,7 @@ function getScopeTitle(scope: ExportScope): string {
       return 'Characters';
     case 'lore':
       return 'Lore Entries';
-    case 'timeline':
+    case 'outliner':
       return 'Timeline Events';
     case 'locations':
       return 'Locations';
@@ -719,16 +719,16 @@ async function getEntitiesForExport(
         ],
       }));
     }
-    case 'timeline': {
-      const rows = await select<TimelineEvent>(
+    case 'outliner': {
+      const rows = await select<Outline>(
         db,
-        'SELECT * FROM timeline_events WHERE project_id = $1 AND deleted_at IS NULL ORDER BY event_date ASC, title ASC',
+        'SELECT * FROM outlines WHERE project_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC, title ASC',
         [projectId],
       );
       return rows.map((r) => ({
         name: r.title,
         fields: [
-          { label: 'Date', value: r.event_date },
+          { label: 'Category', value: r.category },
           { label: 'Description', value: r.description, isLong: true },
         ],
       }));

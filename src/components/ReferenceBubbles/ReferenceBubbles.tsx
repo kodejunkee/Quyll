@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { Users, MapPin, Building2, Dna, Package, Globe, ScrollText, Clock } from 'lucide-react';
+import { PersonIcon, DrawingPinIcon, GlobeIcon, ClockIcon } from '@radix-ui/react-icons';
+import { Building2, Dna, Package, ScrollText, StickyNote } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { relationshipService } from '@/services/relationshipService';
 import type { PinnedReference } from '@/types/database';
@@ -16,14 +17,14 @@ interface BubbleState extends PinnedReference {
 }
 
 const ENTITY_ICONS: Record<string, { icon: any; colorKey: string }> = {
-  character: { icon: Users, colorKey: 'character' },
-  location: { icon: MapPin, colorKey: 'location' },
+  character: { icon: PersonIcon, colorKey: 'character' },
+  location: { icon: DrawingPinIcon, colorKey: 'location' },
   organization: { icon: Building2, colorKey: 'organization' },
   species: { icon: Dna, colorKey: 'species' },
   item: { icon: Package, colorKey: 'item' },
-  world_system: { icon: Globe, colorKey: 'world_system' },
+  world_system: { icon: GlobeIcon, colorKey: 'world_system' },
   lore: { icon: ScrollText, colorKey: 'lore' },
-  timeline_event: { icon: Clock, colorKey: 'timeline_event' },
+  outline: { icon: StickyNote, colorKey: 'outline' },
 };
 
 export function ReferenceBubbles() {
@@ -53,7 +54,7 @@ export function ReferenceBubbles() {
         case 'item': tableName = 'items'; break;
         case 'world_system': tableName = 'world_systems'; break;
         case 'lore': tableName = 'lore'; break;
-        case 'timeline_event': tableName = 'timeline_events'; nameCol = 'title'; break;
+        case 'outline': tableName = 'outlines'; nameCol = 'title'; break;
       }
 
       if (tableName) {
@@ -182,7 +183,7 @@ export function ReferenceBubbles() {
           return null;
         }
 
-        const iconConfig = ENTITY_ICONS[bubble.entity_type] || { icon: Users, colorKey: 'character' };
+        const iconConfig = ENTITY_ICONS[bubble.entity_type] || { icon: PersonIcon, colorKey: 'character' };
         const IconComponent = iconConfig.icon;
 
         return (

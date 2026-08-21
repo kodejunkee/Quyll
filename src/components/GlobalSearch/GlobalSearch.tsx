@@ -92,7 +92,7 @@ export function GlobalSearch() {
       case 'item': route = `items/${result.id}`; break;
       case 'world_system': route = `world-systems/${result.id}`; break;
       case 'lore': route = `lore/${result.id}`; break;
-      case 'timeline_event': route = `timeline/${result.id}`; break;
+      case 'outline': route = `timeline/${result.id}`; break;
       case 'plot_point': route = `plot-planner/${result.id}`; break;
     }
     
@@ -114,7 +114,7 @@ export function GlobalSearch() {
       case 'item': return <Box size={16} className="text-orange-500" />;
       case 'world_system': return <Globe size={16} className="text-yellow-500" />;
       case 'lore': return <Book size={16} className="text-amber-700" />;
-      case 'timeline_event': return <Clock size={16} className="text-red-500" />;
+      case 'outline': return <Clock size={16} className="text-red-500" />;
       case 'plot_point': return <Map size={16} className="text-pink-500" />;
       default: return <Search size={16} />;
     }

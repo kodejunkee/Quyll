@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ArrowLeftIcon, TrashIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Edit } from 'lucide-react';
+
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { Button, Card, Dialog, Modal } from '@/components';
 import { useProjectDb } from '@/hooks/useProjectDb';
@@ -52,11 +53,11 @@ export default function PlotPointDetailPage() {
     <div className="entity-detail">
       <header className="entity-detail__header">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${projectId}/plot-planner`)}>
-          <ArrowLeft size={16} />Plot Planner
+          <ArrowLeftIcon width={16} height={16} />Plot Planner
         </Button>
         <div className="entity-detail__header-actions">
-          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Edit size={14} />Edit</Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 size={14} /></Button>
+          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}><Pencil2Icon width={14} height={14} />Pencil2Icon</Button>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}><TrashIcon width={14} height={14} /></Button>
         </div>
       </header>
       <div className="entity-detail__content" style={{ gridTemplateColumns: '1fr' }}>
@@ -81,8 +82,8 @@ export default function PlotPointDetailPage() {
           ))}
         </div>
       </div>
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Plot Point" size="md">
-        <PlotPointForm defaultValues={{ ...entity, status: entity.status as PlotPointFormData['status'] }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Pencil2Icon Plot Point" size="md">
+        <PlotPointForm defaultValues={{ ...entity }} onSubmit={handleUpdate} onCancel={() => setEditOpen(false)} submitLabel="Save Changes" />
       </Modal>
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Move to Trash" description={`Move "${entity.title}" to trash?`} confirmLabel="Move to Trash" onConfirm={handleDelete} variant="danger" />
     </div>

@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { DrawingPinIcon } from '@radix-ui/react-icons';
+
 import type { Location } from '@/types/database';
 import './LocationCard.css';
 
@@ -13,7 +14,7 @@ export function LocationCard({ location }: LocationCardProps) {
     <div className="location-card" role="button" tabIndex={0}
       onClick={() => navigate(`/project/${projectId}/locations/${location.id}`)}
       onKeyDown={(e) => e.key === 'Enter' && navigate(`/project/${projectId}/locations/${location.id}`)}>
-      <div className="location-card__icon"><MapPin size={22} /></div>
+      <div className="location-card__icon"><DrawingPinIcon width={22} height={22} /></div>
       <div className="location-card__info">
         <h3 className="location-card__name">{location.name || 'Unnamed'}</h3>
         {location.type && <span className="location-card__type">{location.type}</span>}

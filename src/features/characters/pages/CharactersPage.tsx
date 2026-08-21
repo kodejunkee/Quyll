@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Users, Plus, ArrowUpDown, LayoutGrid, Share2 } from 'lucide-react';
+import { PersonIcon, PlusIcon, CaretSortIcon, GridIcon } from '@radix-ui/react-icons';
+import { Share2 } from 'lucide-react';
 import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { useCharacters } from '../hooks/useCharacters';
 import { CharacterCard } from '../components/CharacterCard';
@@ -43,12 +44,12 @@ export default function CharactersPage() {
               size="sm"
               onClick={() => { setSortKey(sortKey === 'name' ? 'created_at' : 'name'); toggleDirection(); }}
             >
-              <ArrowUpDown size={14} />
+              <CaretSortIcon width={14} height={14} />
               {sortKey === 'name' ? 'Name' : 'Date'} {sortDirection === 'asc' ? '↑' : '↓'}
             </Button>
           )}
           <Button variant="primary" onClick={() => { setCreateTab('identity'); setCreateOpen(true); }}>
-            <Plus size={16} />
+            <PlusIcon width={16} height={16} />
             New Character
           </Button>
         </div>
@@ -63,7 +64,7 @@ export default function CharactersPage() {
               size="sm"
               onClick={() => setViewMode('details')}
             >
-              <LayoutGrid size={14} /> Details
+              <GridIcon width={14} height={14} /> Details
             </Button>
             <Button
               variant={viewMode === 'flowchart' ? 'primary' : 'ghost'}
@@ -83,10 +84,10 @@ export default function CharactersPage() {
         </div>
       ) : sorted.length === 0 ? (
         query ? (
-          <EmptyState icon={Users} title="No matches" description={`No characters matching "${query}"`} />
+          <EmptyState icon={PersonIcon} title="No matches" description={`No characters matching "${query}"`} />
         ) : (
           <EmptyState
-            icon={Users}
+            icon={PersonIcon}
             title="No characters yet"
             description="Build your cast of characters. Track their traits, relationships, and story arcs."
             actionLabel="Create Character"

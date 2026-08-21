@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle, AlertTriangle, Info, XCircle, X } from 'lucide-react';
+import { InfoCircledIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import type { Notification, NotificationVariant } from './NotificationProvider';
 import './NotificationToast.css';
 
@@ -8,11 +9,11 @@ interface NotificationToastProps {
   onDismiss: (id: string) => void;
 }
 
-const VARIANT_ICONS: Record<NotificationVariant, typeof CheckCircle> = {
+const VARIANT_ICONS: Record<NotificationVariant, React.ElementType> = {
   success: CheckCircle,
   error: XCircle,
   warning: AlertTriangle,
-  info: Info,
+  info: InfoCircledIcon,
 };
 
 export function NotificationToast({ notification, onDismiss }: NotificationToastProps) {
@@ -57,7 +58,7 @@ export function NotificationToast({ notification, onDismiss }: NotificationToast
         onClick={handleDismiss}
         aria-label="Dismiss notification"
       >
-        <X size={14} />
+        <Cross2Icon width={14} height={14} />
       </button>
       <div
         className="notification-toast__progress"

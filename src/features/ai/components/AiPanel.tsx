@@ -1,11 +1,12 @@
-import { Sparkles, MessageSquare, Wand2, Lightbulb, User } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
+import { MagicWandIcon, ChatBubbleIcon, LightningBoltIcon, PersonIcon } from '@radix-ui/react-icons';
 import './AiPanel.css';
 
 const AI_FEATURES = [
-  { icon: User, label: 'Character Assistant', desc: 'Get help developing characters' },
+  { icon: PersonIcon, label: 'Character Assistant', desc: 'Get help developing characters' },
   { icon: Wand2, label: 'Description Assistant', desc: 'Expand and refine descriptions' },
-  { icon: MessageSquare, label: 'Dialogue Assistant', desc: 'Improve character dialogue' },
-  { icon: Lightbulb, label: 'Brainstorm Assistant', desc: 'Generate ideas and inspiration' },
+  { icon: ChatBubbleIcon, label: 'Dialogue Assistant', desc: 'Improve character dialogue' },
+  { icon: LightningBoltIcon, label: 'Brainstorm Assistant', desc: 'Generate ideas and inspiration' },
 ];
 
 /** Placeholder AI panel showing upcoming features. */
@@ -13,7 +14,7 @@ export function AiPanel() {
   return (
     <div className="ai-panel">
       <div className="ai-panel__header">
-        <Sparkles size={18} className="ai-panel__header-icon" />
+        <MagicWandIcon width={18} height={18} className="ai-panel__header-icon" />
         <span className="ai-panel__header-title">AI Features</span>
         <span className="ai-panel__header-badge">Coming Soon</span>
       </div>

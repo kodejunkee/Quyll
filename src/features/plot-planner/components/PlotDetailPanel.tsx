@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Trash2 } from 'lucide-react';
+import { Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
+import { Save } from 'lucide-react';
 import { Button, Input, TextArea } from '@/components';
 import { Dropdown } from '@/components/Dropdown';
 import { usePlotPoints } from '../hooks/usePlotPoints';
@@ -69,7 +70,7 @@ export function PlotDetailPanel({ plotPointId, onClose }: PlotDetailPanelProps) 
       <div className="plot-detail-panel__header">
         <h2>Edit Plot Point</h2>
         <button onClick={onClose} className="plot-detail-panel__close" title="Close" style={{background: 'transparent', border: 'none', color: 'var(--color-text)', cursor: 'pointer'}}>
-          <X size={18} />
+          <Cross2Icon width={18} height={18} />
         </button>
       </div>
 
@@ -142,7 +143,7 @@ export function PlotDetailPanel({ plotPointId, onClose }: PlotDetailPanelProps) 
 
       <div className="plot-detail-panel__footer">
         <Button onClick={handleDelete} variant="ghost" style={{ color: 'var(--color-danger)' }}>
-          <Trash2 size={16} /> Delete
+          <TrashIcon width={16} height={16} /> Delete
         </Button>
         <Button onClick={handleSave} variant="primary">
           <Save size={16} /> Save Changes

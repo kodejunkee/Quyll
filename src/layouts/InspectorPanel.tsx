@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link2Icon, ClockIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
-import { PanelRightClose, PanelRight, Pin, Link, Clock } from 'lucide-react';
+import { PanelRightClose, PanelRight, Pin } from 'lucide-react';
 import { useProjectDb } from '@/hooks/useProjectDb';
 import { relationshipService } from '@/services/relationshipService';
 import type { PinnedReference } from '@/types/database';
@@ -44,7 +45,7 @@ export function InspectorPanel({ collapsed, onToggle }: InspectorPanelProps) {
       case 'item': route = 'items'; break;
       case 'world_system': route = 'world-systems'; break;
       case 'lore': route = 'lore'; break;
-      case 'timeline_event': route = 'timeline'; break;
+      case 'outline': route = 'outliner'; break;
     }
     if (route && projectId) {
        navigate(`/project/${projectId}/${route}/${id}`);
@@ -67,14 +68,14 @@ export function InspectorPanel({ collapsed, onToggle }: InspectorPanelProps) {
             onClick={() => setActiveTab('related')}
             title="Related Entities"
           >
-            <Link size={16} />
+            <Link2Icon width={16} height={16} />
           </button>
           <button 
             className={`inspector-panel__tab ${activeTab === 'recent' ? 'active' : ''}`}
             onClick={() => setActiveTab('recent')}
             title="Recently Viewed"
           >
-            <Clock size={16} />
+            <ClockIcon width={16} height={16} />
           </button>
         </div>
         <button

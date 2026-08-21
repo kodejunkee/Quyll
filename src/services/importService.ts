@@ -363,12 +363,12 @@ export async function pickAndImportQuyllProject(): Promise<string | null> {
     }
 
     // Timeline Events
-    if (data.timelineEvents) {
-      for (const t of data.timelineEvents) {
+    if (data.outlines) {
+      for (const t of data.outlines) {
         await execute(db, `
-          INSERT INTO timeline_events (id, project_id, title, event_date, description, created_at, updated_at, deleted_at)
+          INSERT INTO outlines (id, project_id, title, category, description, created_at, updated_at, deleted_at)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [t.id, newProjectId, t.title, t.event_date, t.description, t.created_at, t.updated_at, t.deleted_at]);
+        `, [t.id, newProjectId, t.title, t.category || 'event', t.description, t.created_at, t.updated_at, t.deleted_at]);
       }
     }
 

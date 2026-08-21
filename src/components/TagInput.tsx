@@ -1,6 +1,7 @@
 import { useState, useRef, KeyboardEvent } from 'react';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import './TagInput.css';
-import { X } from 'lucide-react';
+
 
 interface TagInputProps {
   label?: string;
@@ -56,7 +57,7 @@ export function TagInput({ label, tags, onChange, placeholder }: TagInputProps) 
                 handleRemove(index);
               }}
             >
-              <X size={12} />
+              <Cross2Icon width={12} height={12} />
             </button>
           </span>
         ))}

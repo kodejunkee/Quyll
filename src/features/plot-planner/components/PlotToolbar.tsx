@@ -1,4 +1,5 @@
-import { Plus, LayoutTemplate } from 'lucide-react';
+import { LayoutTemplate } from 'lucide-react';
+import { PlusIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components';
 import './PlotToolbar.css';
 
@@ -12,7 +13,7 @@ export function PlotToolbar({ onAddNode, onRelayout }: PlotToolbarProps) {
     <div className="plot-toolbar">
       <div className="plot-toolbar__left">
         <Button variant="primary" onClick={onAddNode}>
-          <Plus size={16} /> Add Plot Point
+          <PlusIcon width={16} height={16} /> Add Plot Point
         </Button>
         <Button variant="ghost" onClick={onRelayout} title="Auto-layout Canvas">
           <LayoutTemplate size={16} /> Re-layout

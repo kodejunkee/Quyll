@@ -39,7 +39,7 @@ function EntityDetailsModalInner({ modalData }: { modalData: EntityModalData }) 
           case 'item': tableName = 'items'; break;
           case 'world_system': tableName = 'world_systems'; break;
           case 'lore': tableName = 'lore'; break;
-          case 'timeline_event': tableName = 'timeline_events'; break;
+          case 'outline': tableName = 'outlines'; break;
         }
 
         if (tableName) {

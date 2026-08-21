@@ -1,4 +1,4 @@
-export { default as SettingsPage } from './pages/SettingsPage';
+
 export { useSettings } from './hooks/useSettings';
 export { useImport } from './hooks/useImport';
 export { ImportDialog } from './components/ImportDialog';

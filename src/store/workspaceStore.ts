@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type Database from '@tauri-apps/plugin-sql';
 import type { Timestamp } from '@/types/common';
-import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, TimelineEvent, PlotPoint, PlotGroup, PlotEdge, GlossaryEntry } from '@/types/database';
+import type { Character, Chapter, Location, Organization, Species, Item, WorldSystem, LoreEntry, Outline, PlotPoint, PlotGroup, PlotEdge, GlossaryEntry } from '@/types/database';
 import { characterService } from '@/features/characters/services/characterService';
 
 import { chapterService } from '@/features/chapters/services/chapterService';
@@ -11,7 +11,7 @@ import { speciesService } from '@/features/species/services/speciesService';
 import { itemService } from '@/features/items/services/itemService';
 import { worldSystemService } from '@/features/world-systems/services/worldSystemService';
 import { loreService } from '@/features/lore/services/loreService';
-import { timelineEventService } from '@/features/timeline/services/timelineEventService';
+import { outlineService } from '@/features/outliner/services/outlineService';
 import { plotPointService } from '@/features/plot-planner/services/plotPointService';
 import { plotGroupService } from '@/features/plot-planner/services/plotGroupService';
 import { plotEdgeService } from '@/features/plot-planner/services/plotEdgeService';
@@ -27,7 +27,7 @@ interface ProjectSnapshot {
   items: Item[];
   worldSystems: WorldSystem[];
   lore: LoreEntry[];
-  timeline: TimelineEvent[];
+  outlines: Outline[];
   plotPoints: PlotPoint[];
   plotGroups: PlotGroup[];
   plotEdges: PlotEdge[];
@@ -52,7 +52,7 @@ interface WorkspaceState {
   items: Item[];
   worldSystems: WorldSystem[];
   lore: LoreEntry[];
-  timeline: TimelineEvent[];
+  outlines: Outline[];
   plotPoints: PlotPoint[];
   plotGroups: PlotGroup[];
   plotEdges: PlotEdge[];
@@ -106,16 +106,16 @@ interface WorkspaceState {
   softDeleteWorldSystem: (db: Database, id: string) => Promise<void>;
   restoreWorldSystem: (db: Database, id: string) => Promise<void>;
 
-  // Phase 4: Lore, Timeline, Plot Points
+  // Phase 4: Lore, outlines, Plot Points
   createLore: (db: Database, projectId: string, data: Partial<LoreEntry>) => Promise<LoreEntry>;
   updateLore: (db: Database, id: string, data: Partial<LoreEntry>) => Promise<void>;
   softDeleteLore: (db: Database, id: string) => Promise<void>;
   restoreLore: (db: Database, id: string) => Promise<void>;
 
-  createTimelineEvent: (db: Database, projectId: string, data: Partial<TimelineEvent>) => Promise<TimelineEvent>;
-  updateTimelineEvent: (db: Database, id: string, data: Partial<TimelineEvent>) => Promise<void>;
-  softDeleteTimelineEvent: (db: Database, id: string) => Promise<void>;
-  restoreTimelineEvent: (db: Database, id: string) => Promise<void>;
+  createOutline: (db: Database, projectId: string, data: Partial<Outline>) => Promise<Outline>;
+  updateOutline: (db: Database, id: string, data: Partial<Outline>) => Promise<void>;
+  softDeleteOutline: (db: Database, id: string) => Promise<void>;
+  restoreOutline: (db: Database, id: string) => Promise<void>;
 
   createPlotPoint: (db: Database, projectId: string, data: Partial<PlotPoint>) => Promise<PlotPoint>;
   updatePlotPoint: (db: Database, id: string, data: Partial<PlotPoint>) => Promise<void>;
@@ -153,7 +153,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   items: [],
   worldSystems: [],
   lore: [],
-  timeline: [],
+  outlines: [],
   plotPoints: [],
   plotGroups: [],
   plotEdges: [],
@@ -178,7 +178,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         items: state.items,
         worldSystems: state.worldSystems,
         lore: state.lore,
-        timeline: state.timeline,
+        outlines: state.outlines,
         plotPoints: state.plotPoints,
         plotGroups: state.plotGroups,
         plotEdges: state.plotEdges,
@@ -203,7 +203,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
     try {
       // Load all entities concurrently from DB
-      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, plotGroups, plotEdges, glossary] = await Promise.all([
+      const [characters, chapters, locations, organizations, species, items, worldSystems, lore, outlines, plotPoints, plotGroups, plotEdges, glossary] = await Promise.all([
         characterService.list(db, projectId),
         chapterService.list(db, projectId),
         locationService.list(db, projectId),
@@ -212,14 +212,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         itemService.list(db, projectId),
         worldSystemService.list(db, projectId),
         loreService.list(db, projectId),
-        timelineEventService.list(db, projectId),
+        outlineService.list(db, projectId),
         plotPointService.list(db, projectId),
         plotGroupService.list(db, projectId),
         plotEdgeService.list(db, projectId),
         glossaryService.list(db, projectId),
       ]);
 
-      const snapshot = { characters, chapters, locations, organizations, species, items, worldSystems, lore, timeline, plotPoints, plotGroups, plotEdges, glossary };
+      const snapshot = { characters, chapters, locations, organizations, species, items, worldSystems, lore, outlines, plotPoints, plotGroups, plotEdges, glossary };
 
       // Cache the freshly loaded data
       projectCache.set(projectId, snapshot);
@@ -259,7 +259,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         items: [],
         worldSystems: [],
         lore: [],
-        timeline: [],
+        outlines: [],
         plotPoints: [],
         plotGroups: [],
         plotEdges: [],
@@ -495,7 +495,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try { await worldSystemService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 
-  // Phase 4: Lore, Timeline, Plot Points
+  // Phase 4: Lore, outlines, Plot Points
   createLore: async (db, projectId, data) => {
     const newEntry = await loreService.create(db, projectId, data as Record<string, unknown>);
     set((state) => ({ lore: [newEntry, ...state.lore] }));
@@ -521,29 +521,29 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try { await loreService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 
-  createTimelineEvent: async (db, projectId, data) => {
-    const newEvent = await timelineEventService.create(db, projectId, data as Record<string, unknown>);
-    set((state) => ({ timeline: [newEvent, ...state.timeline] }));
+  createOutline: async (db, projectId, data) => {
+    const newEvent = await outlineService.create(db, projectId, data as Record<string, unknown>);
+    set((state) => ({ outlines: [newEvent, ...state.outlines] }));
     return newEvent;
   },
-  updateTimelineEvent: async (db, id, data) => {
+  updateOutline: async (db, id, data) => {
     set((state) => ({
-      timeline: state.timeline.map((te) => (te.id === id ? { ...te, ...data } : te)),
+      outlines: state.outlines.map((o) => (o.id === id ? { ...o, ...data } : o)),
     }));
-    try { await timelineEventService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
+    try { await outlineService.update(db, id, data as Record<string, unknown>); } catch (error) { console.error('Sync failed:', error); }
   },
-  softDeleteTimelineEvent: async (db, id) => {
+  softDeleteOutline: async (db, id) => {
     const deletedAt = (new Date().toISOString() as Timestamp);
     set((state) => ({
-      timeline: state.timeline.map((te) => (te.id === id ? { ...te, deleted_at: deletedAt } : te)),
+      outlines: state.outlines.map((o) => (o.id === id ? { ...o, deleted_at: deletedAt } : o)),
     }));
-    try { await timelineEventService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
+    try { await outlineService.softDelete(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
-  restoreTimelineEvent: async (db, id) => {
+  restoreOutline: async (db, id) => {
     set((state) => ({
-      timeline: state.timeline.map((te) => (te.id === id ? { ...te, deleted_at: null } : te)),
+      outlines: state.outlines.map((o) => (o.id === id ? { ...o, deleted_at: null } : o)),
     }));
-    try { await timelineEventService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
+    try { await outlineService.restore(db, id); } catch (error) { console.error('Sync failed:', error); }
   },
 
   createPlotPoint: async (db, projectId, data) => {
