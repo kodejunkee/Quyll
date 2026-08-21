@@ -12,6 +12,30 @@ export function UpdatesPage() {
   const [update, setUpdate] = useState<Update | null>(null);
   const [currentVersion, setCurrentVersion] = useState<string>('');
 
+  const styles = `
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes ellipsis {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+    .animated-ellipsis::after {
+      content: '';
+      animation: ellipsis 1.5s infinite;
+      display: inline-block;
+      width: 1em;
+      text-align: left;
+    }
+  `;
+
   useEffect(() => {
     UpdateService.getCurrentVersion().then(setCurrentVersion);
     const unsubscribe = UpdateService.subscribe((s, p, e, u) => {
@@ -53,6 +77,7 @@ export function UpdatesPage() {
       maxWidth: '600px',
       gap: '24px'
     }}>
+      <style>{styles}</style>
       <div>
         <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#E2E8F0', marginBottom: '8px' }}>Updates</h2>
         <p style={{ color: '#94A3B8' }}>Keep Quyll up to date with the latest features and fixes.</p>
@@ -67,7 +92,7 @@ export function UpdatesPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: 500, margin: 0 }}>
-              {state === 'checking' && 'Checking for Updates...'}
+              {state === 'checking' && <span>Checking for Updates<span className="animated-ellipsis" /></span>}
               {state === 'up-to-date' && 'You\'re Up to Date'}
               {(state === 'available' || state === 'downloading' || state === 'installing' || state === 'restart-required') && 'Update Available'}
               {state === 'error' && 'Update Failed'}
@@ -97,7 +122,7 @@ export function UpdatesPage() {
         {state === 'downloading' && (
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-              <span>Downloading Update...</span>
+              <span>Downloading Update<span className="animated-ellipsis" /></span>
               <span>{progress}%</span>
             </div>
             <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -108,7 +133,7 @@ export function UpdatesPage() {
 
         {state === 'installing' && (
           <div style={{ marginBottom: '24px', fontSize: '14px', color: '#94A3B8' }}>
-            Installing Update...
+            Installing Update<span className="animated-ellipsis" />
           </div>
         )}
 
@@ -126,8 +151,15 @@ export function UpdatesPage() {
 
         <div style={{ display: 'flex', gap: '12px' }}>
           {(state === 'idle' || state === 'up-to-date' || state === 'error' || state === 'checking') && (
-            <Button onClick={handleCheck} disabled={state === 'checking'}>
-              Check for Updates
+            <Button onClick={handleCheck} disabled={state === 'checking'} style={{ minWidth: '170px' }}>
+              {state === 'checking' ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <ReloadIcon width={14} height={14} className="spin" />
+                  <span>Checking<span className="animated-ellipsis" /></span>
+                </div>
+              ) : (
+                'Check for Updates'
+              )}
             </Button>
           )}
           
