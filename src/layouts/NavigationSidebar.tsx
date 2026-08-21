@@ -56,7 +56,7 @@ const NAV_SECTIONS = [
     title: 'TOOLS',
     items: [
       { path: 'outliner', label: 'Outliner', icon: StickyNote, colorKey: 'outline' },
-      { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner' },
+      { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner', disabled: true },
       { path: 'trash', label: 'Trash Bin', icon: Trash2, colorKey: 'trash' },
     ],
   },
@@ -116,6 +116,7 @@ export function NavigationSidebar({ collapsed, onToggle, onOpenSettings }: Navig
             {section.items.map((item) => {
               const { path, label, icon: Icon, colorKey } = item;
               const useLastActive = 'useLastActive' in item ? item.useLastActive : false;
+              const isDisabled = 'disabled' in item ? item.disabled : false;
               
               const targetPath = useLastActive && lastActiveChapterId 
                 ? `/project/${projectId}/${path}/${lastActiveChapterId}`
@@ -129,14 +130,22 @@ export function NavigationSidebar({ collapsed, onToggle, onOpenSettings }: Navig
                     `nav-sidebar__link ${isActive ? 'nav-sidebar__link--active' : ''}`
                   }
                   title={collapsed ? label : undefined}
-                  style={accentStyle(colorKey)}
+                  style={{
+                    ...accentStyle(colorKey),
+                    opacity: isDisabled ? 0.5 : 1,
+                    pointerEvents: isDisabled ? 'none' : 'auto'
+                  } as CSSProperties}
                 >
                   <Icon
                     size={18}
                     className="nav-sidebar__link-icon"
                     style={{ color: `var(--color-icon-${colorKey})` }}
                   />
-                  {!collapsed && <span className="nav-sidebar__link-label">{label}</span>}
+                  {!collapsed && (
+                    <span className="nav-sidebar__link-label">
+                      {label} {isDisabled && <span style={{ fontSize: '10px', marginLeft: '6px', opacity: 0.7 }}>(WIP)</span>}
+                    </span>
+                  )}
                 </NavLink>
               );
             })}

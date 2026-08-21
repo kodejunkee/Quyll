@@ -28,7 +28,6 @@ const GlossaryDirectoryPage = lazy(() => import('@/features/glossary/pages/Gloss
 const LorePage = lazy(() => import('@/features/lore/pages/LorePage'));
 const LoreDetailPage = lazy(() => import('@/features/lore/pages/LoreDetailPage'));
 const OutlinerPage = lazy(() => import('@/features/outliner/pages').then(m => ({ default: m.OutlinerPage })));
-const OutlineDetailPage = lazy(() => import('@/features/outliner/pages').then(m => ({ default: m.OutlineDetailPage })));
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
 
@@ -106,7 +105,7 @@ const router = createBrowserRouter([
 
           // Outliner
           { path: 'outliner', element: <SuspenseWrap><OutlinerPage /></SuspenseWrap> },
-          { path: 'outliner/:entityId', element: <SuspenseWrap><OutlineDetailPage /></SuspenseWrap> },
+
 
           // Plot Planner
           { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
@@ -123,3 +122,4 @@ const router = createBrowserRouter([
 export function AppRouter() {
   return <RouterProvider router={router} />;
 }
+
