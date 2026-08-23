@@ -16,6 +16,8 @@
 }
 
 .draggable-modal__header {
+  border-top-left-radius: calc(var(--radius-lg) - 1px);
+  border-top-right-radius: calc(var(--radius-lg) - 1px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -81,10 +83,16 @@
 @keyframes modalPop {
   0% {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: translate3d(var(--x, 0px), calc(var(--y, 0px) + 10px), 0) scale(0.95);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate3d(var(--x, 0px), var(--y, 0px), 0) scale(1);
   }
+}
+
+.draggable-modal__header--collapsed {
+  border-bottom-left-radius: calc(var(--radius-lg) - 1px);
+  border-bottom-right-radius: calc(var(--radius-lg) - 1px);
+  border-bottom: none;
 }

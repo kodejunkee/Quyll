@@ -22,22 +22,78 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  color: var(--color-danger, #ef4444);
 }
 
-.trash-header-icon {
-  filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4));
+.trash-header-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.global-trash-page__header-title h1 {
-  font-size: 2rem;
+.trash-header-text h1 {
+  font-size: 1.8rem;
   font-weight: 700;
   margin: 0;
   color: var(--color-text, #F3F4F6);
   letter-spacing: -0.02em;
 }
 
+.trash-header-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #9CA3AF);
+}
+
+.trash-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trash-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.trash-action-btn--restore {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.trash-action-btn--restore:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.trash-action-btn--delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.trash-action-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
 .trash-empty-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(239, 68, 68, 0.1);
   color: #F87171;
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -53,11 +109,9 @@
 .trash-empty-btn:hover {
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.4);
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.15);
-  transform: translateY(-1px);
 }
 
-/* ================= Content & Notice ================= */
+/* ================= Content ================= */
 .global-trash-page__content {
   padding: 0 48px 48px;
   flex-grow: 1;
@@ -66,21 +120,75 @@
   width: 100%;
 }
 
-.global-trash-page__notice {
+.trash-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.9rem;
-  color: var(--color-text-secondary, #9CA3AF);
-  background-color: var(--color-bg-elevated, rgba(255, 255, 255, 0.05));
-  padding: 16px 24px;
-  border-radius: 12px;
-  margin-bottom: 32px;
-  box-shadow: var(--shadow-neumorphic-inset);
+  justify-content: space-between;
+  margin-bottom: 24px;
 }
 
-.global-trash-page__notice svg {
+.trash-select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.trash-checkbox-icon {
   color: var(--color-text-tertiary);
+  transition: color 0.2s;
+}
+
+.trash-checkbox-icon.active {
+  color: #10b981;
+}
+
+.trash-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.trash-sort-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.trash-view-toggles {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.trash-view-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.trash-view-toggle.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ef4444; /* matching the active color in the image, red-ish */
 }
 
 /* ================= Empty State ================= */
@@ -113,153 +221,48 @@
   color: var(--color-text-secondary);
 }
 
-.global-trash-page__empty h2 {
-  color: var(--color-text-secondary);
-  font-size: 1.5rem;
-  margin: 0;
-}
-
-/* ================= Trash Grid & Cards ================= */
+/* ================= Grid / Cards ================= */
 .trash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
+  margin-bottom: 48px;
+}
+
+.trash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 48px;
 }
 
 .trash-card {
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.05));
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: var(--shadow-elevated);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.trash-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-border, rgba(255, 255, 255, 0.1));
-  box-shadow: var(--shadow-xl, 0 16px 32px rgba(0, 0, 0, 0.4));
+.trash-card.selected {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.5);
 }
 
-/* ================= Cover Art ================= */
-.trash-card__cover-wrap {
-  position: relative;
-  width: 100%;
-  height: 160px;
-  z-index: 20;
-  overflow: hidden;
-  background: #000;
-}
-
-.trash-card__cover {
-  width: 100%;
-  height: 100%;
-  position: relative;
+.trash-card__header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
-  filter: grayscale(80%) opacity(0.7) brightness(0.8);
+  justify-content: space-between;
+  padding: 16px 16px 0 16px;
 }
 
-.trash-card__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.trash-card:hover .trash-card__cover {
-  transform: scale(1.05);
-  filter: grayscale(30%) opacity(0.9) brightness(1);
-}
-
-/* Placeholder book styling */
-.trash-cover__spine {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 12px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.05) 100%);
-  border-right: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-}
-
-.trash-cover__frame {
-  position: absolute;
-  inset: 12px 14px 12px 24px;
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.15));
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.trash-cover__emblem {
-  color: rgba(255,255,255,0.9);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-/* ================= Hover Actions Overlay ================= */
-.trash-card__actions-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 30;
-}
-
-.trash-card:hover .trash-card__actions-overlay {
-  opacity: 1;
-}
-
-.trash-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.trash-card__checkbox, .trash-card__more {
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(8px);
-}
-
-.trash-btn--restore {
-  background: rgba(16, 185, 129, 0.2); /* Emerald */
-  color: #34D399;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.trash-btn--restore:hover {
-  background: rgba(16, 185, 129, 0.4);
-  border-color: rgba(16, 185, 129, 0.6);
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-  color: #FFF;
-}
-
-.trash-btn--delete {
-  background: rgba(239, 68, 68, 0.2); /* Red */
-  color: #F87171;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.trash-btn--delete:hover {
-  background: rgba(239, 68, 68, 0.4);
-  border-color: rgba(239, 68, 68, 0.6);
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
-  color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ================= Card Content ================= */
@@ -281,12 +284,72 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.01em;
 }
 
 .trash-card__date {
   font-size: 0.8rem;
-  color: var(--color-danger, #ef4444);
+  color: #ef4444; /* red text for deletion date */
   font-weight: 500;
-  opacity: 0.9;
+}
+
+.trash-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.trash-card__buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.trash-card-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.trash-card-btn--restore {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+}
+
+.trash-card-btn--restore:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+.trash-card-btn--delete {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.trash-card-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ================= Shield Footer ================= */
+.trash-shield-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
 }

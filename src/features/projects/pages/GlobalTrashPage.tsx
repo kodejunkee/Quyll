@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Dialog } from '@/components';
+import { Dialog } from '@/components';
 import { useProjectStore } from '@/store/projectStore';
 import { 
   listProjects, 
@@ -8,68 +8,15 @@ import {
   hardDeleteProject, 
   autoDeleteOldProjects 
 } from '@/database/appDatabase';
-import {
-  MagicWandIcon,
-  GlobeIcon,
-  DrawingPinIcon,
-  LightningBoltIcon,
-  StarIcon,
-  TrashIcon,
-  ResetIcon,
-  InfoCircledIcon,
-  ArchiveIcon,
-} from '@radix-ui/react-icons';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { ArchiveIcon } from '@radix-ui/react-icons';
+import { Trash2, RotateCcw, Clock, List, Grid, ChevronDown, MoreHorizontal, Square, CheckSquare, ShieldCheck } from 'lucide-react';
 import './GlobalTrashPage.css';
-
-// Deterministic book cover themes matching the Home screen
-const BOOK_COVER_THEMES = [
-  {
-    type: 'purple',
-    name: 'Fantasy',
-    gradient: 'linear-gradient(135deg, #3B0764 0%, #1E1B4B 100%)',
-    icon: MagicWandIcon,
-  },
-  {
-    type: 'green',
-    name: 'Fantasy / Adventure',
-    gradient: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
-    icon: GlobeIcon,
-  },
-  {
-    type: 'blue',
-    name: 'Historical Fiction',
-    gradient: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
-    icon: DrawingPinIcon,
-  },
-  {
-    type: 'brown',
-    name: 'Epic Fantasy',
-    gradient: 'linear-gradient(135deg, #451A03 0%, #291307 100%)',
-    icon: LightningBoltIcon,
-  },
-  {
-    type: 'black',
-    name: 'Mystery / Dark',
-    gradient: 'linear-gradient(135deg, #18181B 0%, #09090B 100%)',
-    icon: StarIcon,
-  },
-];
-
-function getBookTheme(index: number, genre?: string[]) {
-  if (genre && genre.length > 0) {
-    const g = genre.join(' ').toLowerCase();
-    if (g.includes('myst') || g.includes('dark') || g.includes('thrill')) return BOOK_COVER_THEMES[4]!;
-    if (g.includes('hist') || g.includes('sci') || g.includes('space')) return BOOK_COVER_THEMES[2]!;
-    if (g.includes('epic') || g.includes('dragon') || g.includes('war')) return BOOK_COVER_THEMES[3]!;
-    if (g.includes('adv') || g.includes('nature') || g.includes('wander')) return BOOK_COVER_THEMES[1]!;
-  }
-  return BOOK_COVER_THEMES[index % BOOK_COVER_THEMES.length]!;
-}
 
 export function GlobalTrashPage() {
   const { deletedProjects, setDeletedProjects, setProjects, closeTab } = useProjectStore();
   const [emptyDialogOpen, setEmptyDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const mapRowToInfo = (r: any) => ({
     id: r.id,
@@ -91,6 +38,7 @@ export function GlobalTrashPage() {
     const deleted = await listDeletedProjects();
     setProjects(active.map(mapRowToInfo));
     setDeletedProjects(deleted.map(mapRowToInfo));
+    setSelectedIds(new Set());
   };
 
   useEffect(() => {
@@ -117,36 +65,89 @@ export function GlobalTrashPage() {
     await loadData();
     setEmptyDialogOpen(false);
   };
+  
+  const handleBulkRestore = async () => {
+    for (const id of Array.from(selectedIds)) {
+      await restoreProject(id);
+    }
+    await loadData();
+  };
+  
+  const handleBulkDelete = async () => {
+    for (const id of Array.from(selectedIds)) {
+      await hardDeleteProject(id);
+      closeTab(id);
+    }
+    await loadData();
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedIds.size === deletedProjects.length && deletedProjects.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(deletedProjects.map(p => p.id)));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Unknown date';
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    const d = new Date(dateStr);
+    const datePart = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return `${datePart} • ${timePart}`;
+  };
+
+  const getDaysRemaining = (deletedAt: string | null) => {
+    if (!deletedAt) return 60;
+    const deletedDate = new Date(deletedAt).getTime();
+    const now = new Date().getTime();
+    const elapsedDays = Math.floor((now - deletedDate) / (1000 * 60 * 60 * 24));
+    return Math.max(0, 60 - elapsedDays);
   };
 
   return (
     <div className="global-trash-page">
       <header className="global-trash-page__header">
         <div className="global-trash-page__header-title">
-          <TrashIcon width={24} height={24} className="trash-header-icon" />
-          <h1>Trash</h1>
+          <div className="trash-header-icon-box">
+            <Trash2 size={24} color="#ef4444" />
+          </div>
+          <div className="trash-header-text">
+            <h1>Trash</h1>
+            <p className="trash-header-subtitle">Items in the trash are automatically deleted after 60 days.</p>
+          </div>
         </div>
-        {deletedProjects.length > 0 && (
-          <button className="trash-empty-btn" onClick={() => setEmptyDialogOpen(true)}>
-            Empty Trash
-          </button>
-        )}
+        
+        <div className="trash-header-actions">
+          {selectedIds.size > 0 && (
+            <>
+              <button className="trash-action-btn trash-action-btn--restore" onClick={handleBulkRestore}>
+                <RotateCcw size={16} /> Restore Selected
+              </button>
+              <button className="trash-action-btn trash-action-btn--delete" onClick={handleBulkDelete}>
+                <Trash2 size={16} /> Delete Selected
+              </button>
+            </>
+          )}
+          {deletedProjects.length > 0 && selectedIds.size === 0 && (
+            <button className="trash-empty-btn" onClick={() => setEmptyDialogOpen(true)}>
+              <Trash2 size={16} /> Empty Trash
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="global-trash-page__content">
-        <div className="global-trash-page__notice">
-          <InfoCircledIcon width={16} height={16} />
-          Items in the trash are automatically permanently deleted after 60 days.
-        </div>
-
         {deletedProjects.length === 0 ? (
           <div className="global-trash-page__empty">
             <div className="global-trash-page__empty-icon-wrap">
@@ -156,63 +157,78 @@ export function GlobalTrashPage() {
             <p>Deleted projects will rest here.</p>
           </div>
         ) : (
-          <div className="trash-grid">
-            {deletedProjects.map((project, idx) => {
-              const theme = getBookTheme(idx, project.genre);
-              const CoverIcon = theme.icon;
+          <>
+            <div className="trash-toolbar">
+              <label className="trash-select-all">
+                {selectedIds.size === deletedProjects.length ? (
+                  <CheckSquare size={16} className="trash-checkbox-icon active" onClick={handleToggleSelectAll} />
+                ) : (
+                  <Square size={16} className="trash-checkbox-icon" onClick={handleToggleSelectAll} />
+                )}
+                <span>Select All</span>
+              </label>
+              
+              <div className="trash-toolbar-right">
+                <div className="trash-sort-dropdown">
+                  <span>Date deleted (newest)</span>
+                  <ChevronDown size={14} />
+                </div>
+                
+                <div className="trash-view-toggles">
+                  <button className={`trash-view-toggle ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
+                    <Grid size={16} />
+                  </button>
+                  <button className={`trash-view-toggle ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
+                    <List size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
 
-              return (
-                <div key={project.id} className="trash-card">
-                  <div className="trash-card__cover-wrap">
-                    {project.cover_image ? (
-                      <div className="trash-card__cover custom-cover">
-                        <img 
-                          src={convertFileSrc(project.cover_image)} 
-                          alt="Project Cover"
-                          className="trash-card__image"
-                          onError={() => console.error("Image failed to load:", convertFileSrc(project.cover_image!))}
-                        />
+            <div className={`trash-${viewMode}`}>
+              {deletedProjects.map((project) => {
+                const isSelected = selectedIds.has(project.id);
+                const daysRemaining = getDaysRemaining(project.deleted_at);
+
+                return (
+                  <div key={project.id} className={`trash-card ${isSelected ? 'selected' : ''}`}>
+                    <div className="trash-card__header">
+                      <div className="trash-card__checkbox" onClick={() => handleToggleSelect(project.id)}>
+                        {isSelected ? <CheckSquare size={18} className="active" color="#10b981" /> : <Square size={18} color="#6b7280" />}
                       </div>
-                    ) : (
-                      <div className="trash-card__cover" style={{ background: theme.gradient }}>
-                        <div className="trash-cover__spine" />
-                        <div className="trash-cover__frame">
-                          <div className="trash-cover__emblem">
-                            <CoverIcon width={24} height={24} />
-                          </div>
-                        </div>
+                      <div className="trash-card__more">
+                        <MoreHorizontal size={18} color="#6b7280" />
                       </div>
-                    )}
-                    
-                    {/* Glassmorphism actions overlay on hover */}
-                    <div className="trash-card__actions-overlay">
-                      <button 
-                        className="trash-btn trash-btn--restore"
-                        onClick={() => handleRestore(project.id)}
-                        title="Restore Project"
-                      >
-                        <ResetIcon width={16} height={16} />
-                      </button>
-                      <button 
-                        className="trash-btn trash-btn--delete"
-                        onClick={() => handleHardDelete(project.id)}
-                        title="Permanently Delete"
-                      >
-                        <TrashIcon width={16} height={16} />
-                      </button>
+                    </div>
+
+                    <div className="trash-card__content">
+                      <h3 className="trash-card__title">{project.name}</h3>
+                      <span className="trash-card__date">
+                        Deleted: {formatDate(project.deleted_at)}
+                      </span>
+                      <div className="trash-card__meta">
+                        <Clock size={14} color="#6b7280" /> <span>{daysRemaining} days remaining</span>
+                      </div>
+                      
+                      <div className="trash-card__buttons">
+                        <button className="trash-card-btn trash-card-btn--restore" onClick={() => handleRestore(project.id)}>
+                          <RotateCcw size={14} /> Restore
+                        </button>
+                        <button className="trash-card-btn trash-card-btn--delete" onClick={() => handleHardDelete(project.id)}>
+                          <Trash2 size={14} /> Delete Forever
+                        </button>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="trash-card__content">
-                    <h3 className="trash-card__title">{project.name}</h3>
-                    <span className="trash-card__date">
-                      Deleted: {formatDate(project.deleted_at)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            <div className="trash-shield-footer">
+              <ShieldCheck size={20} color="#ef4444" />
+              <span>Deleted items are securely stored and cannot be recovered after the 60-day period.</span>
+            </div>
+          </>
         )}
       </div>
 

@@ -76,7 +76,8 @@ export function OutlinerPage() {
                 outline={l} 
                 onClick={() => {
                   if (!openNotesIds.includes(l.id)) setOpenNotesIds([...openNotesIds, l.id]);
-                }} 
+                }}
+                onEdit={() => setEditingNoteId(l.id)}
               />
             ))}
           </div>

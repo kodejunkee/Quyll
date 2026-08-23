@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { Minus } from 'lucide-react';
+import { Minus, Square } from 'lucide-react';
 import './DraggableModal.css';
 
 interface DraggableModalProps {
   title: React.ReactNode;
+  headerLeftActions?: React.ReactNode;
   centerHeader?: React.ReactNode;
   onClose: () => void;
   onMinimize?: (x: number, y: number) => void;
+  onToggleCollapse?: () => void;
+  isCollapsed?: boolean;
   children: React.ReactNode;
   initialX?: number;
   initialY?: number;
@@ -16,13 +19,17 @@ interface DraggableModalProps {
   maxHeight?: string;
   closeOnClickOutside?: boolean;
   contentStyle?: React.CSSProperties;
+  modalStyle?: React.CSSProperties;
 }
 
 export function DraggableModal({
   title,
+  headerLeftActions,
   centerHeader,
   onClose,
   onMinimize,
+  onToggleCollapse,
+  isCollapsed,
   children,
   initialX,
   initialY,
@@ -31,13 +38,13 @@ export function DraggableModal({
   maxHeight,
   closeOnClickOutside = false,
   contentStyle,
+  modalStyle,
 }: DraggableModalProps) {
   const [position, setPosition] = useState({ 
     x: initialX ?? Math.max(20, window.innerWidth / 2 - (width ? parseInt(width, 10) / 2 : 200)), 
     y: initialY ?? Math.max(20, window.innerHeight / 2 - 340) 
   });
 
-  // Update position if opened from a new location (e.g. clicking a different bubble)
   useEffect(() => {
     if (initialX !== undefined && initialY !== undefined) {
       setPosition({ x: initialX, y: initialY });
@@ -48,11 +55,8 @@ export function DraggableModal({
   const modalRef = useRef<HTMLDivElement>(null);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Only drag on left click
     if (e.button !== 0) return;
-    
-    // Prevent dragging if clicking a button
-    if ((e.target as HTMLElement).closest('button, .draggable-modal__btn')) return;
+    if ((e.target as HTMLElement).closest('button, .draggable-modal__btn, .no-drag')) return;
 
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
@@ -66,10 +70,12 @@ export function DraggableModal({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragRef.current) return;
-    const { startX, startY, initPosX, initPosY } = dragRef.current;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    setPosition({ x: initPosX + dx, y: initPosY + dy });
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPosition({
+      x: dragRef.current.initPosX + dx,
+      y: Math.max(0, dragRef.current.initPosY + dy),
+    });
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -81,44 +87,56 @@ export function DraggableModal({
 
   useEffect(() => {
     if (!closeOnClickOutside) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      // Don't close if clicking a ReferenceBubble, to allow opening the modal
-      if ((e.target as HTMLElement).closest('.reference-bubble')) return;
-      
+    const handleDocClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, [closeOnClickOutside, onClose]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose, closeOnClickOutside]);
   return (
     <div 
-      className="draggable-modal" 
       ref={modalRef}
-      style={{ 
-        left: `${position.x}px`, 
-        top: `${position.y}px`,
-        width: width || undefined,
-        height: height || undefined,
-        maxHeight: maxHeight || undefined,
-      }}
+      className="draggable-modal"
+      style={{
+        '--x': `${position.x}px`,
+        '--y': `${position.y}px`,
+        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+        width,
+        height: isCollapsed ? 'auto' : height,
+        maxHeight: isCollapsed ? 'none' : maxHeight,
+        ...modalStyle
+      } as React.CSSProperties}
     >
       <div 
-        className="draggable-modal__header"
+        className={`draggable-modal__header ${isCollapsed ? 'draggable-modal__header--collapsed' : ''}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
-        <div className="draggable-modal__title">{title}</div>
+        {headerLeftActions && (
+          <div className="draggable-modal__actions" style={{ marginRight: '8px' }}>
+            {headerLeftActions}
+          </div>
+        )}
+        <div className="draggable-modal__title" style={{ flex: 1 }}>{title}</div>
         {centerHeader && (
           <div className="draggable-modal__center">
             {centerHeader}
           </div>
         )}
         <div className="draggable-modal__actions">
+          {onToggleCollapse && (
+            <button 
+              className="draggable-modal__btn" 
+              onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+              title={isCollapsed ? "Maximize" : "Minimize"}
+            >
+              {isCollapsed ? <Square size={12}/> : <Minus size={14}/>}
+            </button>
+          )}
           {onMinimize && (
             <button 
               className="draggable-modal__btn" 
@@ -137,9 +155,11 @@ export function DraggableModal({
           </button>
         </div>
       </div>
-      <div className="draggable-modal__content" style={contentStyle}>
-        {children}
-      </div>
+      {!isCollapsed && (
+        <div className="draggable-modal__content" style={contentStyle}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
