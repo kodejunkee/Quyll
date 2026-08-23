@@ -56,7 +56,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
 
-          { path: 'import-export', element: <PlaceholderPage title="Import & Export" icon="download" /> },
+          { path: 'online-backup', element: <PlaceholderPage title="Online Backup" icon="download" /> },
           { path: 'trash', element: <SuspenseWrap><GlobalTrashPage /></SuspenseWrap> },
           { path: 'updates', element: <UpdatesPage /> },
           { path: 'about', element: <PlaceholderPage title="About" icon="about" /> },

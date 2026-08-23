@@ -59,9 +59,9 @@ export function HomeLayout() {
 
           <div className="home-sidebar__section-title">App Tools</div>
 
-          <NavLink to="/import-export" className={({ isActive }) => `home-sidebar__link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/online-backup" className={({ isActive }) => `home-sidebar__link ${isActive ? 'active' : ''}`}>
             <DownloadIcon width={18} height={18} color="#10B981" />
-            <span>Import & Export</span>
+            <span>Online Backup</span>
           </NavLink>
 
           <NavLink to="/updates" className={({ isActive }) => `home-sidebar__link ${isActive ? 'active' : ''}`}>

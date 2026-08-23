@@ -9,6 +9,7 @@ import { InspectorPanel } from './InspectorPanel';
 import { GlobalKeywordHoverCard } from '@/components/HoverCard';
 import { ReferenceBubbles } from '@/components/ReferenceBubbles';
 import { EntityDetailsModal } from '@/components/EntityDetailsModal';
+import { GlobalOutlineNotes } from '@/features/outliner/components/GlobalOutlineNotes';
 import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import { useNotification } from '@/components/Notification';
 import { ProjectSettingsModal } from '@/features/settings/components';
@@ -115,6 +116,7 @@ export function AppLayout() {
         <GlobalKeywordHoverCard />
         {isWritingWorkspace && <ReferenceBubbles />}
         <EntityDetailsModal />
+        <GlobalOutlineNotes />
         <ProjectSettingsModal 
           isOpen={isSettingsModalOpen}
           onClose={() => setIsSettingsModalOpen(false)}

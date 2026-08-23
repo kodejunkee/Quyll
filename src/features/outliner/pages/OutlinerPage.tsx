@@ -1,15 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { PlusIcon, CaretSortIcon } from '@radix-ui/react-icons';
 import { StickyNote } from 'lucide-react';
 import { Button, EmptyState, Modal, SearchBar } from '@/components';
 import { useOutlines } from '../hooks/useOutlines';
 import { OutlineCard } from '../components/OutlineCard';
 import { OutlineForm } from '../components/OutlineForm';
-import { OutlineStickyNote } from '../components/OutlineStickyNote';
 import { useSearch, useSort } from '@/hooks';
 import type { Outline } from '@/types/database';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useProjectDb } from '@/hooks/useProjectDb';
+import { useLayoutStore } from '@/store/layoutStore';
 import '../../locations/pages/LocationsPage.css';
 
 export function OutlinerPage() {
@@ -17,17 +17,14 @@ export function OutlinerPage() {
   const { items, isLoading, create } = useOutlines(); 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [openNotesIds, setOpenNotesIds] = useState<string[]>([]);
+  
+  const { openOutlineNote } = useLayoutStore();
   
   const { query, setQuery, filterItems } = useSearch();
   const { sortKey, sortDirection, setSortKey, toggleDirection, sortItems } = useSort<'title' | 'created_at'>('title');
   
   const filtered = filterItems(items, l => l.title + ' ' + l.category + ' ' + l.description);
   const sorted = sortItems(filtered, (l: Outline, k) => k === 'title' ? l.title : l.created_at);
-  
-  const openNotes = useMemo(() => {
-    return openNotesIds.map(id => items.find(i => i.id === id)).filter(Boolean) as Outline[];
-  }, [openNotesIds, items]);
 
   async function handleCreate(d: any) { 
     await create(d); 
@@ -74,26 +71,13 @@ export function OutlinerPage() {
               <OutlineCard 
                 key={l.id} 
                 outline={l} 
-                onClick={() => {
-                  if (!openNotesIds.includes(l.id)) setOpenNotesIds([...openNotesIds, l.id]);
-                }}
+                onClick={() => openOutlineNote(l.id)}
                 onEdit={() => setEditingNoteId(l.id)}
               />
             ))}
           </div>
         )
       }
-      
-      {openNotes.map((note, idx) => (
-        <OutlineStickyNote 
-          key={note.id} 
-          outline={note} 
-          initialX={100 + (idx * 30)}
-          initialY={100 + (idx * 30)}
-          onClose={() => setOpenNotesIds(prev => prev.filter(id => id !== note.id))}
-          onEdit={() => setEditingNoteId(note.id)}
-        />
-      ))}
       
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Outline" size="lg">
         <OutlineForm onSubmit={handleCreate} onCancel={() => setCreateOpen(false)} submitLabel="Create" />

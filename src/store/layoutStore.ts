@@ -25,6 +25,9 @@ interface LayoutState {
   closeEntityModal: (entityId: string) => void;
   bringToFront: (entityId: string) => void;
   lastActiveChapterId: string | null;
+  openOutlineNotes: string[];
+  openOutlineNote: (id: string) => void;
+  closeOutlineNote: (id: string) => void;
   setLastActiveChapterId: (id: string | null) => void;
 }
 
@@ -40,8 +43,11 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   showKeywords: loadBool('quyll-show-keywords', true),
   activeEntityModals: [],
   lastActiveChapterId: null,
+  openOutlineNotes: [],
 
   setLastActiveChapterId: (id) => set({ lastActiveChapterId: id }),
+  openOutlineNote: (id) => set((s) => ({ openOutlineNotes: s.openOutlineNotes.includes(id) ? s.openOutlineNotes : [...s.openOutlineNotes, id] })),
+  closeOutlineNote: (id) => set((s) => ({ openOutlineNotes: s.openOutlineNotes.filter(n => n !== id) })),
 
   toggleShowKeywords: () =>
     set((s) => {
