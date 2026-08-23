@@ -64,11 +64,11 @@ export function UpdatesPage() {
   };
 
   const handleInstall = () => {
-    UpdateService.downloadAndInstallUpdate();
+    UpdateService.downloadUpdate();
   };
 
   const handleRestart = () => {
-    UpdateService.restartApp();
+    UpdateService.installAndRestart();
   };
 
   const getRemainingTime = () => {

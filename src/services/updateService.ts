@@ -55,7 +55,7 @@ export class UpdateService {
     }
   }
 
-  public static async downloadAndInstallUpdate() {
+  public static async downloadUpdate() {
     if (!this.currentUpdate) return;
     
     try {
@@ -65,7 +65,7 @@ export class UpdateService {
       let lastBytes = 0;
       let speedBytesPerSec = 0;
       
-      await this.currentUpdate.downloadAndInstall((event) => {
+      await this.currentUpdate.download((event) => {
         switch (event.event) {
           case 'Started':
             contentLength = event.data.contentLength || 0;
@@ -87,19 +87,26 @@ export class UpdateService {
             }
             break;
           case 'Finished':
-            this.emit('installing');
             break;
         }
       });
       
       this.emit('restart-required');
     } catch (err) {
-      console.error('Failed to download and install update:', err);
+      console.error('Failed to download update:', err);
       this.emit('error', undefined, String(err));
     }
   }
 
-  public static async restartApp() {
-    await relaunch();
+  public static async installAndRestart() {
+    if (!this.currentUpdate) return;
+    try {
+      this.emit('installing');
+      await this.currentUpdate.install();
+      await relaunch();
+    } catch (err) {
+      console.error('Failed to install update:', err);
+      this.emit('error', undefined, String(err));
+    }
   }
 }
