@@ -18,7 +18,10 @@ function formatBytes(bytes: number, decimals = 1) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+import { useUpdateStore } from '@/store/updateStore';
+
 export function UpdatesPage() {
+  const { history, setHistory } = useUpdateStore();
   const [state, setState] = useState<UpdateState>('idle');
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,6 @@ export function UpdatesPage() {
   const [stats, setStats] = useState<UpdateStats | null>(null);
   const [currentVersion, setCurrentVersion] = useState<string>('');
   const [expandedNotes, setExpandedNotes] = useState<string | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
     UpdateService.getCurrentVersion().then(setCurrentVersion);

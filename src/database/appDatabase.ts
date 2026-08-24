@@ -192,6 +192,11 @@ export async function hardDeleteProject(projectId: string): Promise<void> {
   const row = await getProject(projectId);
   if (row) {
     try {
+      try {
+        const Database = (await import('@tauri-apps/plugin-sql')).default;
+        const pDb = await Database.load(`sqlite:${row.path}/project.db`);
+        await pDb.close();
+      } catch (e) {}
       await remove(row.path, { recursive: true });
     } catch (e) {
       console.warn('Failed to delete physical project file:', e);

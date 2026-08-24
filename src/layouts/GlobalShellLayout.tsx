@@ -24,6 +24,7 @@ export function GlobalShellLayout() {
   const [isOpenProjectModalOpen, setIsOpenProjectModalOpen] = useState(false);
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false);
   const [updateState, setUpdateState] = useState<UpdateState>('idle');
+  const [updateProgress, setUpdateProgress] = useState(0);
 
   const isHome = location.pathname === '/' || !location.pathname.startsWith('/project/');
 
@@ -62,8 +63,9 @@ export function GlobalShellLayout() {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    const unsubscribe = UpdateService.subscribe((state) => {
+    const unsubscribe = UpdateService.subscribe((state, progress) => {
       setUpdateState(state);
+      if (progress !== undefined) setUpdateProgress(progress);
     });
     
     // Auto check on startup
@@ -71,6 +73,7 @@ export function GlobalShellLayout() {
       UpdateService.checkForUpdates(true);
     } else {
       setUpdateState(UpdateService.getState());
+      setUpdateProgress((UpdateService as any).progress || 0);
     }
     
     return unsubscribe;
@@ -215,11 +218,20 @@ export function GlobalShellLayout() {
                 fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                marginRight: '8px'
+                marginRight: '8px',
+                whiteSpace: 'nowrap'
               }}
-              onClick={() => navigate('/updates')}
+              onClick={() => {
+                if (updateState === 'restart-required') {
+                  UpdateService.installAndRestart();
+                } else {
+                  navigate('/updates');
+                }
+              }}
             >
-              Update Available
+              {updateState === 'restart-required' ? 'Restart App' : 
+               (updateState === 'downloading' || updateState === 'installing') ? `Downloading... ${updateProgress}%` :
+               'Update Available'}
             </div>
           )}
           <button 

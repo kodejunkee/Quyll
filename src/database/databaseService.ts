@@ -26,11 +26,27 @@ export async function execute(
   sql: string,
   bindValues: unknown[] = [],
 ): Promise<{ rowsAffected: number; lastInsertId: number }> {
-  const result = await db.execute(sql, bindValues);
-  return {
-    rowsAffected: result.rowsAffected ?? 0,
-    lastInsertId: result.lastInsertId ?? 0,
-  };
+  try {
+    const result = await db.execute(sql, bindValues);
+    return {
+      rowsAffected: result.rowsAffected ?? 0,
+      lastInsertId: result.lastInsertId ?? 0,
+    };
+  } catch (e: any) {
+    if (e?.toString().includes('closed pool')) {
+      console.warn('Recovering from closed pool error in execute...', db.path);
+      const DatabaseClass = (await import('@tauri-apps/plugin-sql')).default;
+      const newDb = await DatabaseClass.load(db.path);
+      connections.set(db.path, newDb);
+      Object.assign(db, newDb); // mutate original reference if possible
+      const result = await newDb.execute(sql, bindValues);
+      return {
+        rowsAffected: result.rowsAffected ?? 0,
+        lastInsertId: result.lastInsertId ?? 0,
+      };
+    }
+    throw e;
+  }
 }
 
 /** Run a SELECT and return typed rows. */
@@ -39,7 +55,19 @@ export async function select<T>(
   sql: string,
   bindValues: unknown[] = [],
 ): Promise<T[]> {
-  return db.select<T[]>(sql, bindValues);
+  try {
+    return await db.select<T[]>(sql, bindValues);
+  } catch (e: any) {
+    if (e?.toString().includes('closed pool')) {
+      console.warn('Recovering from closed pool error in select...', db.path);
+      const DatabaseClass = (await import('@tauri-apps/plugin-sql')).default;
+      const newDb = await DatabaseClass.load(db.path);
+      connections.set(db.path, newDb);
+      Object.assign(db, newDb);
+      return await newDb.select<T[]>(sql, bindValues);
+    }
+    throw e;
+  }
 }
 
 /** Close a database connection and remove it from the pool. */

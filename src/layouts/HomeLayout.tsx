@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { Cloud } from 'lucide-react';
 import { UpdateService, UpdateState } from '@/services/updateService';
 import {
   LayersIcon,
@@ -60,8 +61,8 @@ export function HomeLayout() {
           <div className="home-sidebar__section-title">App Tools</div>
 
           <NavLink to="/online-backup" className={({ isActive }) => `home-sidebar__link ${isActive ? 'active' : ''}`}>
-            <DownloadIcon width={18} height={18} color="#10B981" />
-            <span>Online Backup</span>
+            <Cloud size={18} color="#10B981" />
+            <span>Cloud Backup</span>
           </NavLink>
 
           <NavLink to="/updates" className={({ isActive }) => `home-sidebar__link ${isActive ? 'active' : ''}`}>

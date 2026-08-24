@@ -6,6 +6,7 @@ import { GlobalShellLayout } from '@/layouts/GlobalShellLayout';
 import { LoadingSkeleton, GlobalErrorBoundary } from '@/components';
 import { PlaceholderPage } from '@/features/app-tools/pages/PlaceholderPage';
 import { UpdatesPage } from '@/features/app-tools/pages/UpdatesPage';
+import { OnlineBackupPage } from '@/features/app-tools/pages/OnlineBackupPage';
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import('@/features/projects/pages/HomePage'));
@@ -56,7 +57,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <SuspenseWrap><HomePage /></SuspenseWrap> },
 
-          { path: 'online-backup', element: <PlaceholderPage title="Online Backup" icon="download" /> },
+          { path: 'online-backup', element: <OnlineBackupPage /> },
           { path: 'trash', element: <SuspenseWrap><GlobalTrashPage /></SuspenseWrap> },
           { path: 'updates', element: <UpdatesPage /> },
           { path: 'about', element: <PlaceholderPage title="About" icon="about" /> },
