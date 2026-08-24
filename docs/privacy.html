@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Quyll</title>
+  <meta name="description" content="Quyll's privacy policy. Your data stays on your device." />
+  <meta name="theme-color" content="#0E1014" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="nav scrolled">
+    <div class="nav__inner">
+      <a href="index.html" class="nav__logo">
+        <img src="assets/quyll-app-logo.png" alt="Quyll" class="nav__logo-img" />
+        <span class="nav__logo-text">Quyll</span>
+      </a>
+      <nav class="nav__links">
+        <a href="index.html#features" class="nav__link">Features</a>
+        <a href="index.html#world" class="nav__link">World Database</a>
+        <a href="privacy.html" class="nav__link">Privacy</a>
+        <a href="terms.html" class="nav__link">Terms</a>
+      </nav>
+      <div class="nav__actions">
+        <a href="https://github.com/kodejunkee/Quyll" class="btn btn--ghost btn--sm" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="legal-page">
+    <h1>Privacy Policy</h1>
+    <p class="legal-date">Last Updated: August 24, 2026</p>
+
+    <h2>1. Introduction</h2>
+    <p>Quyll ("we", "our", "the app") is a desktop writing application built with a local-first architecture. Your privacy is fundamental to how we design and build Quyll. This policy explains what data we access, how we handle it, and your rights.</p>
+
+    <h2>2. Data Storage</h2>
+    <p>All project data — including manuscripts, characters, locations, world-building entries, and application settings — is stored locally on your device in SQLite databases within your operating system's app data directory. Quyll does not transmit, collect, or store any of your creative content on remote servers.</p>
+
+    <h2>3. Google Drive Integration</h2>
+    <p>Quyll offers an optional Cloud Backup feature powered by Google Drive. When you choose to enable this feature:</p>
+    <ul>
+      <li>The app requests access <strong>only</strong> to files it creates in your Google Drive (using the <code>drive.file</code> scope). It cannot read, modify, or delete any other files on your Drive.</li>
+      <li>OAuth authentication tokens are stored locally on your device and are never transmitted to any third-party server.</li>
+      <li>You can revoke Quyll's access at any time through your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google Account permissions</a>.</li>
+      <li>Basic profile information (name, email, profile picture) is retrieved solely to display your account in the app's backup interface. This information is not stored, logged, or transmitted anywhere.</li>
+    </ul>
+
+    <h2>4. Data Collection</h2>
+    <p>Quyll does <strong>not</strong> collect any of the following:</p>
+    <ul>
+      <li>Personal information or identifying data</li>
+      <li>Usage analytics or behavioral data</li>
+      <li>Telemetry or crash reports</li>
+      <li>Keystroke logging or manuscript content</li>
+    </ul>
+    <p>The app functions entirely offline and does not phone home.</p>
+
+    <h2>5. Third-Party Services</h2>
+    <p>The only third-party service Quyll integrates with is Google Drive, and only when explicitly enabled by you. There are no advertising networks, tracking pixels, analytics services, or other third-party integrations.</p>
+
+    <h2>6. Data Security</h2>
+    <p>All data remains on your local filesystem under your operating system's standard security protections. When using Cloud Backup, data is transmitted directly between your device and Google Drive over secure HTTPS connections. No intermediary servers are involved.</p>
+
+    <h2>7. Children's Privacy</h2>
+    <p>Quyll does not knowingly collect or solicit information from anyone under the age of 13. If you believe a child under 13 has provided us with personal information, please contact us so we can take appropriate action.</p>
+
+    <h2>8. Changes to This Policy</h2>
+    <p>We may update this privacy policy from time to time. Any changes will be posted on this page with an updated "Last Updated" date. Continued use of Quyll after changes constitutes acceptance of the revised policy.</p>
+
+    <h2>9. Contact</h2>
+    <p>If you have questions about this privacy policy, please open an issue on our <a href="https://github.com/kodejunkee/Quyll" target="_blank" rel="noopener">GitHub repository</a> or contact <strong>kodejunkee</strong> on GitHub.</p>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__bottom">
+        <p>&copy; 2026 Jayce. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
