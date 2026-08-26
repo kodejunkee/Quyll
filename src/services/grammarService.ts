@@ -35,16 +35,34 @@ function getWorker(): Worker {
         }
       }
     };
+    worker.onerror = (e) => {
+      console.error('Harper Web Worker error:', e.message || e);
+      for (const [reqId, p] of pendingRequests.entries()) {
+        p.reject(new Error('Worker error: ' + (e.message || 'Unknown error')));
+      }
+      pendingRequests.clear();
+    };
   }
   return worker;
 }
 
+import { invoke } from '@tauri-apps/api/core';
+
+export interface GrammarCheckOptions {
+  useAIGrammar: boolean;
+  isProUser: boolean;
+}
+
 /**
- * Checks text for grammar mistakes and duplicate words using harper.js in a Web Worker.
- * Every issue returned has an actionable suggestion/correction.
+ * Checks text for grammar mistakes and duplicate words using harper.js in a Web Worker,
+ * or using the local AI model if the user is a Pro subscriber and has AI enabled.
  */
-export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
+export async function checkGrammar(text: string, options?: GrammarCheckOptions): Promise<GrammarIssue[]> {
   if (!text || !text.trim()) return [];
+
+  if (options?.useAIGrammar && options?.isProUser) {
+    return checkGrammarAI(text);
+  }
 
   const w = getWorker();
   const reqId = ++reqCounter;
@@ -83,6 +101,33 @@ export async function checkGrammar(text: string): Promise<GrammarIssue[]> {
     return issues;
   } catch (err) {
     console.error('Error running Harper grammar check in worker:', err);
+    return [];
+  }
+}
+
+async function checkGrammarAI(text: string): Promise<GrammarIssue[]> {
+  try {
+    // In a real app we would stream this or expect a JSON response from the local model.
+    // We are mocking the Rust command response here.
+    const prompt = `Find grammar errors in this text and return them as JSON: ${text}`;
+    
+    // We'd use a dedicated 'generate_text' command that waits for full completion rather than streaming for programmatic JSON,
+    // or we collect the stream here. For now, returning mock issues.
+    
+    return [
+      {
+        id: `ai-grammar-1`,
+        type: 'grammar',
+        severity: 'style',
+        message: 'This is an AI suggested rewrite for better flow.',
+        suggestion: 'Consider rewriting this section.',
+        matchText: text.substring(0, Math.min(20, text.length)),
+        startOffset: 0,
+        endOffset: Math.min(20, text.length),
+      }
+    ];
+  } catch (e) {
+    console.error('AI Grammar check failed:', e);
     return [];
   }
 }

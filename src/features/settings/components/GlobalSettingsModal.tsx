@@ -53,12 +53,14 @@ const ACCENTS: { id: Accent; label: string; bgClass: string }[] = [
   { id: 'yellow', label: 'Yellow', bgClass: 'accent-bg-yellow' },
 ];
 
-type SettingsTab = 'profile' | 'appearance' | 'editor' | 'backup';
+type SettingsTab = 'profile' | 'appearance' | 'editor' | 'backup' | 'ai_models';
 
 interface GlobalSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+import { AIModelsPanel } from './AIModelsPanel';
 
 export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProps) {
   const ctx = useOptionalProjectDb();
@@ -135,6 +137,17 @@ export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProp
             >
               <ArchiveIcon width={18} height={18} />
               Backup & Sync
+            </button>
+          </div>
+
+          <div className="global-settings-modal__nav-group">
+            <span className="global-settings-modal__nav-label">Advanced</span>
+            <button 
+              className={`global-settings-modal__tab ${activeTab === 'ai_models' ? 'global-settings-modal__tab--active' : ''}`}
+              onClick={() => setActiveTab('ai_models')}
+            >
+              <Type size={18} />
+              AI Models
             </button>
           </div>
 
@@ -283,6 +296,18 @@ export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProp
                         />
                       </div>
                     </div>
+                    <div className="global-settings-modal__simple-row" style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                      <div className="global-settings-modal__simple-info">
+                        <span className="global-settings-modal__simple-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          Use AI Grammar Checker 
+                          <span style={{ fontSize: '0.65rem', background: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>PRO</span>
+                        </span>
+                        <span className="global-settings-modal__simple-desc">Switch from Harper.js to your downloaded local AI model for grammar checking.</span>
+                      </div>
+                      <div style={{ width: 200, display: 'flex', justifyContent: 'flex-end' }}>
+                        <input type="checkbox" className="components-checkbox" />
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
@@ -335,6 +360,10 @@ export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProp
               </div>
               <BackupPanel />
             </div>
+          )}
+
+          {activeTab === 'ai_models' && (
+            <AIModelsPanel />
           )}
         </div>
       </div>

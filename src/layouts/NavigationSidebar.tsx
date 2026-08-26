@@ -19,8 +19,10 @@ import {
   Trash2,
   BookA,
   Settings,
-  Search
-, StickyNote } from 'lucide-react';
+  Search,
+  Languages,
+  StickyNote
+} from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch/GlobalSearch';
 import './NavigationSidebar.css';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -57,6 +59,7 @@ const NAV_SECTIONS = [
     items: [
       { path: 'outliner', label: 'Outliner', icon: StickyNote, colorKey: 'outline' },
       { path: 'plot-planner', label: 'Plot Planner', icon: GitBranch, colorKey: 'plot_planner', disabled: true },
+      { path: 'language-builder', label: 'Language Builder', icon: Languages, colorKey: 'lore' },
       { path: 'trash', label: 'Trash Bin', icon: Trash2, colorKey: 'trash' },
     ],
   },

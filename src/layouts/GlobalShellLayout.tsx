@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Square, Minus } from 'lucide-react';
+import { invoke } from '@tauri-apps/api/core';
+import { Square, Minus, Bot } from 'lucide-react';
 import { PlusIcon, CopyIcon, GearIcon, Cross2Icon, HomeIcon, LayersIcon } from '@radix-ui/react-icons';
 import { useThemeStore } from '@/store/themeStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
+import { useAiStore } from '@/store/aiStore';
 import { OpenProjectModal } from '@/components/Modal/OpenProjectModal';
 import { CreateProjectModal } from '@/components/Modal/CreateProjectModal';
 import { GlobalSettingsModal } from '@/features/settings/components';
+import { AIChatPanel } from '@/features/ai/components/AIChatPanel';
 import { UpdateService, UpdateState } from '@/services/updateService';
 import './GlobalShellLayout.css';
 import './GlobalShellLayout-Menu.css';
@@ -125,6 +128,15 @@ export function GlobalShellLayout() {
     }
   };
 
+  const { isAiActive, isAiStarting, togglePanel, startEngine } = useAiStore();
+  
+  const handleToggleAiPanel = async () => {
+    togglePanel();
+    if (!isAiActive && !isAiStarting) {
+      await startEngine();
+    }
+  };
+
   return (
     <div className="global-shell">
       {/* Custom Tauri Titlebar / Global Top Nav */}
@@ -234,6 +246,29 @@ export function GlobalShellLayout() {
                'Update Available'}
             </div>
           )}
+
+          {/* Start AI Engine Button */}
+          <button 
+            className={`global-action-btn ${isAiStarting ? 'pulse-anim' : ''}`}
+            onClick={handleToggleAiPanel}
+            title={isAiActive ? "Open AI Chat" : "Start AI Engine & Open Chat"}
+            type="button"
+            style={{ position: 'relative' }}
+          >
+            <Bot size={15} />
+            <div style={{
+              position: 'absolute',
+              top: '4px',
+              right: '4px',
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: isAiActive ? 'var(--color-success, #10b981)' : 'var(--color-error, #ef4444)',
+              border: '1px solid var(--color-surface)',
+              transition: 'background-color 0.3s ease'
+            }} />
+          </button>
+
           <button 
             className="global-action-btn"
             onClick={() => setIsGlobalSettingsOpen(true)}
@@ -280,6 +315,8 @@ export function GlobalShellLayout() {
       <main className="global-shell__main">
         <Outlet />
       </main>
+      
+      <AIChatPanel />
       
       <CreateProjectModal />
       {/* Open Project Modal */}

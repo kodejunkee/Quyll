@@ -398,6 +398,51 @@ export function LexicalContextMenu() {
         </div>
       </button>
 
+      {selectedText && (
+        <>
+          <div className="lexical-context-menu__divider" />
+          <div className="lexical-context-menu__spelling-header" style={{ paddingLeft: '12px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>AI ASSISTANT <span style={{ fontSize: '0.55rem', background: '#ff9800', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>PRO</span></span>
+          </div>
+          <button
+            className="lexical-context-menu__item"
+            onMouseEnter={() => setSubmenuOpen(false)}
+            onClick={() => { alert('AI Rewrite action triggered (Mock)'); closeMenu(); }}
+          >
+            <div className="lexical-context-menu__item-left">
+              <span>✨ Rewrite</span>
+            </div>
+          </button>
+          <button
+            className="lexical-context-menu__item"
+            onMouseEnter={() => setSubmenuOpen(false)}
+            onClick={() => { alert('AI Make Formal action triggered (Mock)'); closeMenu(); }}
+          >
+            <div className="lexical-context-menu__item-left">
+              <span>👔 Make Formal</span>
+            </div>
+          </button>
+          <button
+            className="lexical-context-menu__item"
+            onMouseEnter={() => setSubmenuOpen(false)}
+            onClick={() => { alert('AI Make Moody action triggered (Mock)'); closeMenu(); }}
+          >
+            <div className="lexical-context-menu__item-left">
+              <span>🌧️ Make Moody</span>
+            </div>
+          </button>
+          <button
+            className="lexical-context-menu__item"
+            onMouseEnter={() => setSubmenuOpen(false)}
+            onClick={() => { alert('AI Translate to Conlang triggered (Mock)'); closeMenu(); }}
+          >
+            <div className="lexical-context-menu__item-left">
+              <span>🌐 Translate to Conlang</span>
+            </div>
+          </button>
+        </>
+      )}
+
       {submenuOpen && createPortal(
         <div
           ref={submenuRef}

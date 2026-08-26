@@ -46,6 +46,18 @@
     "updater:default",
     "updater:allow-check",
     "updater:allow-download-and-install",
+    "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "llama-server",
+          "cmd": "llama-server",
+          "args": true,
+          "sidecar": true
+        }
+      ]
+    },
     "http:allow-fetch",
     {
       "identifier": "http:default",

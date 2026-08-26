@@ -13,8 +13,16 @@ async function getLinter(): Promise<LocalLinter> {
     return linter;
   }
   initializing = true;
-  linter = new LocalLinter({ binary: binaryInlined });
-  initializing = false;
+  try {
+    const newLinter = new LocalLinter({ binary: binaryInlined });
+    await newLinter.setup();
+    linter = newLinter;
+  } catch (err) {
+    console.error("Failed to initialize harper.js LocalLinter:", err);
+    throw err;
+  } finally {
+    initializing = false;
+  }
   return linter;
 }
 

@@ -31,6 +31,7 @@ const LoreDetailPage = lazy(() => import('@/features/lore/pages/LoreDetailPage')
 const OutlinerPage = lazy(() => import('@/features/outliner/pages').then(m => ({ default: m.OutlinerPage })));
 const PlotPlannerPage = lazy(() => import('@/features/plot-planner/pages/PlotPlannerPage'));
 const PlotPointDetailPage = lazy(() => import('@/features/plot-planner/pages/PlotPointDetailPage'));
+const LanguageBuilderPage = lazy(() => import('@/features/world/components/LanguageBuilder').then(m => ({ default: m.LanguageBuilder })));
 
 const TrashPage = lazy(() => import('@/features/trash/pages/TrashPage').then(m => ({ default: m.TrashPage })));
 
@@ -112,8 +113,10 @@ const router = createBrowserRouter([
           { path: 'plot-planner', element: <SuspenseWrap><PlotPlannerPage /></SuspenseWrap> },
           { path: 'plot-planner/:entityId', element: <SuspenseWrap><PlotPointDetailPage /></SuspenseWrap> },
 
-          { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
+          // Language Builder
+          { path: 'language-builder', element: <SuspenseWrap><LanguageBuilderPage /></SuspenseWrap> },
 
+          { path: 'trash', element: <SuspenseWrap><TrashPage /></SuspenseWrap> },
         ],
       },
     ]
