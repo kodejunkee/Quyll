@@ -380,9 +380,18 @@ async fn start_ai_engine(
     let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let model_path = app_data_dir.join("models").join(model_name);
     
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    // We mapped bin/*.dll to "." in tauri.conf.json, so DLLs live in resource_dir.
+    let dll_dir = resource_dir;
+
     let sidecar_command = app.shell().sidecar("llama-server").map_err(|e| e.to_string())?;
     
+    // Explicitly add our bundled `bin` folder to the system PATH so Windows can locate the DLLs
+    let path_env = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{};{}", dll_dir.display(), path_env);
+
     let (_rx, child) = sidecar_command
+        .env("PATH", new_path)
         .args(["-m", model_path.to_str().unwrap(), "--port", "8080"])
         .spawn()
         .map_err(|e| format!("Failed to spawn llama-server: {}. Did you put the .exe in src-tauri/bin?", e))?;

@@ -51,7 +51,9 @@
   },
   "bundle": {
     "externalBin": ["bin/llama-server"],
-    "resources": ["bin/*.dll"],
+    "resources": {
+      "bin/*.dll": "."
+    },
     "createUpdaterArtifacts": true,
     "active": true,
     "targets": "all",
