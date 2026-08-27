@@ -35,7 +35,7 @@ function formatTimeAgo(dateString: string) {
 
 export function OpenProjectModal({ open, onClose }: OpenProjectModalProps) {
   const navigate = useNavigate();
-  const { projects, setActiveTab } = useProjectStore();
+  const { projects, openTab } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<'last_opened' | 'name' | 'date'>('last_opened');
 
@@ -67,8 +67,9 @@ export function OpenProjectModal({ open, onClose }: OpenProjectModalProps) {
   }, [projects, searchQuery, sortField]);
 
   const handleOpenProject = (project: any) => {
-    setActiveTab(project.id);
-    navigate(project.lastRoute || `/project/${project.id}/dashboard`);
+    const route = project.lastRoute || `/project/${project.id}/dashboard`;
+    openTab(project, route);
+    navigate(route);
     onClose();
   };
 

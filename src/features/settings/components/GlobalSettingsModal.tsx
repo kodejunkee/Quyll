@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { PersonIcon, ArchiveIcon, CheckIcon } from '@radix-ui/react-icons';
 import { Modal, Dropdown } from '@/components';
-import { Type, Palette } from 'lucide-react';
+import { Type, Palette, Cpu } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { useThemeStore, Theme, Accent } from '@/store/themeStore';
 import { useOptionalProjectDb } from '@/hooks/useProjectDb';
@@ -146,7 +146,7 @@ export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProp
               className={`global-settings-modal__tab ${activeTab === 'ai_models' ? 'global-settings-modal__tab--active' : ''}`}
               onClick={() => setActiveTab('ai_models')}
             >
-              <Type size={18} />
+              <Cpu size={18} />
               AI Models
             </button>
           </div>

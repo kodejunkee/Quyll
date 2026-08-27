@@ -156,15 +156,7 @@ export function NavigationSidebar({ collapsed, onToggle, onOpenSettings }: Navig
         ))}
       </div>
       <div className="nav-sidebar__footer">
-        <NavLink
-          to="/"
-          className="nav-sidebar__link"
-          title={collapsed ? "Back to projects" : undefined}
-          style={{ '--nav-accent': 'var(--color-text-secondary)' } as CSSProperties}
-        >
-          <Home size={18} className="nav-sidebar__link-icon" />
-          {!collapsed && <span className="nav-sidebar__link-label">Back to projects</span>}
-        </NavLink>
+
         {onOpenSettings && (
           <button
             onClick={onOpenSettings}

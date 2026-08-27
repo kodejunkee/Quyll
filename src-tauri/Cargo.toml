@@ -1,6 +1,6 @@
 [package]
 name = "quyll"
-version = "0.5.0"
+version = "0.5.3"
 description = "A professional writing workspace for authors"
 authors = ["Jayce"]
 edition = "2021"

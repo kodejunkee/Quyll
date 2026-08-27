@@ -61,7 +61,7 @@
 
 .global-settings-modal__content {
   flex: 1;
-  padding: 12px 0 12px 40px;
+  padding: 12px 24px 12px 40px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

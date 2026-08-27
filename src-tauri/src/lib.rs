@@ -1,4 +1,22 @@
 use tauri::{Manager, Emitter};
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU8, Ordering};
+use std::collections::HashMap;
+
+pub struct DownloadManager {
+    downloads: Mutex<HashMap<String, Arc<AtomicU8>>>,
+}
+
+const STATE_RUNNING: u8 = 0;
+const STATE_PAUSED: u8 = 1;
+const STATE_CANCELLED: u8 = 2;
+
+#[derive(serde::Serialize, Clone)]
+struct DownloadProgress {
+    filename: String,
+    downloaded: u64,
+    total: u64,
+}
 
 #[tauri::command]
 async fn start_oauth_server(window: tauri::Window) -> Result<String, String> {
@@ -274,34 +292,136 @@ async fn download_model(
     app: tauri::AppHandle,
     url: String,
     filename: String,
+    state: tauri::State<'_, DownloadManager>,
 ) -> Result<(), String> {
-    use std::fs::File;
+    use std::fs::OpenOptions;
     use std::io::Write;
     use futures_util::StreamExt;
     
     let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let models_dir = app_data_dir.join("models");
     std::fs::create_dir_all(&models_dir).map_err(|e| e.to_string())?;
-    
     let model_path = models_dir.join(&filename);
-    let mut file = File::create(&model_path).map_err(|e| e.to_string())?;
     
-    // In a real app we'd emit progress events here, but keeping it simple for now
-    let response = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+    let existing_size = if std::path::Path::new(&model_path).exists() {
+        std::fs::metadata(&model_path).map_err(|e| e.to_string())?.len()
+    } else {
+        0
+    };
+
+    let client = reqwest::Client::new();
+    let mut req = client.get(&url);
+    if existing_size > 0 {
+        req = req.header("Range", format!("bytes={}-", existing_size));
+    }
+    
+    let response = req.send().await.map_err(|e| e.to_string())?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Download failed: HTTP {}", response.status()));
+    }
+    
+    let is_partial = response.status() == reqwest::StatusCode::PARTIAL_CONTENT;
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(is_partial)
+        .truncate(!is_partial)
+        .open(&model_path)
+        .map_err(|e| e.to_string())?;
+        
+    let content_length = response.content_length().unwrap_or(0);
+    let total_size = if is_partial { existing_size + content_length } else { content_length };
+    
+    let cancel_flag = Arc::new(AtomicU8::new(STATE_RUNNING));
+    {
+        let mut downloads = state.downloads.lock().unwrap();
+        downloads.insert(filename.clone(), cancel_flag.clone());
+    }
+
+    let mut downloaded = if is_partial { existing_size } else { 0 };
     let mut stream = response.bytes_stream();
     
     while let Some(chunk) = stream.next().await {
+        let current_state = cancel_flag.load(Ordering::SeqCst);
+        if current_state == STATE_PAUSED {
+            break;
+        } else if current_state == STATE_CANCELLED {
+            drop(file);
+            let _ = std::fs::remove_file(&model_path);
+            break;
+        }
+
         let chunk = chunk.map_err(|e| e.to_string())?;
         file.write_all(&chunk).map_err(|e| e.to_string())?;
+        downloaded += chunk.len() as u64;
+        
+        let _ = app.emit("download-progress", DownloadProgress {
+            filename: filename.clone(),
+            downloaded,
+            total: total_size
+        });
+    }
+    
+    {
+        let mut downloads = state.downloads.lock().unwrap();
+        downloads.remove(&filename);
     }
     
     Ok(())
 }
 
 #[tauri::command]
+async fn pause_download(
+    filename: String,
+    state: tauri::State<'_, DownloadManager>,
+) -> Result<(), String> {
+    let downloads = state.downloads.lock().unwrap();
+    if let Some(cancel_flag) = downloads.get(&filename) {
+        cancel_flag.store(STATE_PAUSED, Ordering::SeqCst);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn cancel_download(
+    app: tauri::AppHandle,
+    filename: String,
+    state: tauri::State<'_, DownloadManager>,
+) -> Result<(), String> {
+    let mut needs_manual_delete = false;
+    {
+        let downloads = state.downloads.lock().unwrap();
+        if let Some(cancel_flag) = downloads.get(&filename) {
+            cancel_flag.store(STATE_CANCELLED, Ordering::SeqCst);
+        } else {
+            // Not actively downloading, just delete it
+            needs_manual_delete = true;
+        }
+    }
+    
+    if needs_manual_delete {
+        let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let models_dir = app_data_dir.join("models");
+        let model_path = models_dir.join(&filename);
+        if std::path::Path::new(&model_path).exists() {
+            let _ = std::fs::remove_file(model_path);
+        }
+    }
+    
+    Ok(())
+}
+
+#[derive(serde::Deserialize)]
+pub struct ChatMessage {
+    role: String,
+    content: String,
+}
+
+#[tauri::command]
 async fn generate_text_stream(
     window: tauri::Window,
-    prompt: String,
+    messages: Vec<ChatMessage>,
     system_prompt: Option<String>,
 ) -> Result<(), String> {
     use futures_util::StreamExt;
@@ -309,17 +429,20 @@ async fn generate_text_stream(
     
     let client = reqwest::Client::new();
     
+    let mut api_messages = vec![json!({
+        "role": "system",
+        "content": system_prompt.unwrap_or_else(|| "You are a helpful AI writing assistant. Keep your responses clear and helpful. You are integrated directly into a writing application.".to_string())
+    })];
+    
+    for msg in messages {
+        api_messages.push(json!({
+            "role": msg.role,
+            "content": msg.content
+        }));
+    }
+    
     let payload = json!({
-        "messages": [
-            {
-                "role": "system", 
-                "content": system_prompt.unwrap_or_else(|| "You are a helpful AI writing assistant.".to_string())
-            },
-            {
-                "role": "user", 
-                "content": prompt
-            }
-        ],
+        "messages": api_messages,
         "stream": true,
         "temperature": 0.7
     });
@@ -357,7 +480,7 @@ async fn generate_text_stream(
     Ok(())
 }
 
-use std::sync::Mutex;
+
 use tauri_plugin_shell::process::CommandChild;
 
 struct AiEngineState {
@@ -410,15 +533,55 @@ async fn stop_ai_engine(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+use tauri_plugin_sql::{Migration, MigrationKind};
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let migrations = vec![
+        Migration {
+            version: 1,
+            description: "create_initial_tables",
+            sql: "
+                CREATE TABLE IF NOT EXISTS ai_chats (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS ai_messages (
+                    id TEXT PRIMARY KEY,
+                    chat_id TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    FOREIGN KEY(chat_id) REFERENCES ai_chats(id) ON DELETE CASCADE
+                );
+                CREATE TABLE IF NOT EXISTS conlangs (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    word_order TEXT NOT NULL,
+                    vibe TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS dictionary_words (
+                    id TEXT PRIMARY KEY,
+                    language_id TEXT NOT NULL,
+                    word TEXT NOT NULL,
+                    meaning TEXT NOT NULL,
+                    part_of_speech TEXT NOT NULL,
+                    FOREIGN KEY(language_id) REFERENCES conlangs(id) ON DELETE CASCADE
+                );
+            ",
+            kind: MigrationKind::Up,
+        }
+    ];
+
     tauri::Builder::default()
         .manage(AiEngineState { child: Mutex::new(None) })
+        .manage(DownloadManager { downloads: Mutex::new(HashMap::new()) })
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_sql::Builder::new().build())
+        .plugin(tauri_plugin_sql::Builder::new().add_migrations("sqlite:quyll.db", migrations).build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
@@ -429,6 +592,8 @@ pub fn run() {
             extract_backup_zip, 
             restore_project_folders,
             download_model,
+            pause_download,
+            cancel_download,
             generate_text_stream,
             start_ai_engine,
             stop_ai_engine
