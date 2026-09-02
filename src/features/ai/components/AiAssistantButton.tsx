@@ -8,7 +8,7 @@ interface AiAssistantButtonProps {
 }
 
 /** Disabled AI assistant button shown as "Coming Soon" placeholder. */
-export function AiAssistantButton({ label = 'AI Assistant' }: AiAssistantButtonProps) {
+export function AiAssistantButton({ label = 'Quyll Assistant' }: AiAssistantButtonProps) {
   return (
     <div className="ai-assistant-btn">
       <Button variant="ghost" disabled>

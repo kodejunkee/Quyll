@@ -344,7 +344,17 @@ export default function ChaptersPage() {
   const loadChapter = useCallback(
     async (id: string) => {
       const chapter = await getById(id);
-      if (!chapter) return;
+      if (!chapter) {
+        setActiveChapter(null);
+        setActiveChapterId(null);
+        if (projectId) {
+          setLastActiveChapterId(projectId, null);
+        }
+        if (editorRef.current) {
+          editorRef.current.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+        }
+        return;
+      }
 
       setActiveChapter(chapter);
 
@@ -392,7 +402,7 @@ export default function ChaptersPage() {
 
       resetAutosave();
     },
-    [getById, checkDraft, resetAutosave],
+    [getById, checkDraft, resetAutosave, projectId, setLastActiveChapterId],
   );
 
   /** Select a chapter — save current first, then let URL handle the rest. */
@@ -406,7 +416,9 @@ export default function ChaptersPage() {
       }
 
       if (!id) {
-        setLastActiveChapterId(null);
+        if (projectId) {
+          setLastActiveChapterId(projectId, null);
+        }
         navigate(`/project/${projectId}/chapters`);
         return;
       }
@@ -433,30 +445,37 @@ export default function ChaptersPage() {
       }
     } else {
       const isDirectoryRoute = location.pathname.endsWith('/chapters') || location.pathname.endsWith('/chapters/');
-      if (isDirectoryRoute && activeChapterId) {
-        setActiveChapterId(null);
-        setActiveChapter(null);
-        setHasScannedGrammar(false);
-        setGrammarIssues([]);
+      if (isDirectoryRoute) {
+        if (activeChapterId || activeChapter) {
+          setActiveChapterId(null);
+          setActiveChapter(null);
+          setHasScannedGrammar(false);
+          setGrammarIssues([]);
+          if (editorRef.current) {
+            editorRef.current.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+          }
+        }
       }
     }
   }, [urlChapterId, activeChapterId, activeChapter, loadChapter, location.pathname]);
 
   // Persistence redirect
   useEffect(() => {
+    if (!projectId) return;
     const isWritingWorkspace = location.pathname.endsWith('/chapters') || location.pathname.endsWith('/chapters/');
-    const currentLastActive = useLayoutStore.getState().lastActiveChapterId;
-    if (isWritingWorkspace && currentLastActive && !urlChapterId) {
+    const currentLastActive = useLayoutStore.getState().lastActiveChapterIds[projectId];
+    const chapterExists = currentLastActive && chapters.some(c => c.id === currentLastActive);
+    if (isWritingWorkspace && chapterExists && !urlChapterId) {
       navigate(`/project/${projectId}/chapters/${currentLastActive}`, { replace: true });
     }
-  }, [location.pathname, urlChapterId, projectId, navigate]);
+  }, [location.pathname, urlChapterId, projectId, navigate, chapters]);
 
   // Update lastActiveChapterId when a chapter is opened
   useEffect(() => {
-    if (urlChapterId) {
-      setLastActiveChapterId(urlChapterId);
+    if (projectId && urlChapterId) {
+      setLastActiveChapterId(projectId, urlChapterId);
     }
-  }, [urlChapterId, setLastActiveChapterId]);
+  }, [projectId, urlChapterId, setLastActiveChapterId]);
 
   // Remove auto-select first chapter logic. Let it stay empty if no urlChapterId.
 

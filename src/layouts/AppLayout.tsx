@@ -59,10 +59,11 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [toggleSidebar, toggleInspector, isWritingWorkspace]);
 
-  // Track route changes for tab persistence
+  // Track route changes for tab persistence and reset modals on project change
   useEffect(() => {
     if (projectId) {
       updateTabRoute(projectId, location.pathname);
+      useLayoutStore.getState().resetProjectModals();
     }
   }, [projectId, location.pathname, updateTabRoute]);
 
@@ -103,7 +104,7 @@ export function AppLayout() {
           <main className="app-layout__main">
             <div style={{ display: isWritingWorkspace ? 'block' : 'none', height: '100%' }}>
               <SuspenseWrap>
-                <ChaptersPage />
+                <ChaptersPage key={projectId} />
               </SuspenseWrap>
             </div>
             {!isWritingWorkspace && <Outlet />}

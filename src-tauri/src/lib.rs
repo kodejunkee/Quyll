@@ -318,6 +318,9 @@ async fn download_model(
     let response = req.send().await.map_err(|e| e.to_string())?;
     
     if !response.status().is_success() {
+        if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+            return Ok(()); // File is already fully downloaded
+        }
         return Err(format!("Download failed: HTTP {}", response.status()));
     }
     
@@ -423,6 +426,7 @@ async fn generate_text_stream(
     window: tauri::Window,
     messages: Vec<ChatMessage>,
     system_prompt: Option<String>,
+    channel_id: Option<String>,
 ) -> Result<(), String> {
     use futures_util::StreamExt;
     use serde_json::json;
@@ -447,12 +451,37 @@ async fn generate_text_stream(
         "temperature": 0.7
     });
 
-    // We assume llama-server sidecar is running on port 8080.
-    let res = client.post("http://127.0.0.1:8080/v1/chat/completions")
-        .json(&payload)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to connect to AI server. Is the model running? Error: {}", e))?;
+    // Retry loop in case the server is still booting up or loading the model into RAM
+    let mut retries = 5;
+    let mut res_opt = None;
+    
+    while retries > 0 {
+        match client.post("http://127.0.0.1:8080/v1/chat/completions")
+            .json(&payload)
+            .send()
+            .await 
+        {
+            Ok(response) => {
+                res_opt = Some(response);
+                break;
+            },
+            Err(e) => {
+                retries -= 1;
+                if retries == 0 {
+                    return Err(format!("Failed to connect to AI server. Is the model running? Error: {}", e));
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+            }
+        }
+    }
+    
+    let res = res_opt.unwrap();
+    
+    if !res.status().is_success() {
+        let status = res.status();
+        let err_text = res.text().await.unwrap_or_default();
+        return Err(format!("AI Server returned {}: {}", status, err_text));
+    }
 
     let mut stream = res.bytes_stream();
 
@@ -469,14 +498,16 @@ async fn generate_text_stream(
                 }
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
                     if let Some(content) = json["choices"][0]["delta"]["content"].as_str() {
-                        let _ = window.emit("ai-token", content);
+                        let event_name = channel_id.as_deref().map(|id| format!("ai-token-{}", id)).unwrap_or_else(|| "ai-token".to_string());
+                        let _ = window.emit(&event_name, content);
                     }
                 }
             }
         }
     }
 
-    let _ = window.emit("ai-finished", ());
+    let finish_event = channel_id.as_deref().map(|id| format!("ai-finished-{}", id)).unwrap_or_else(|| "ai-finished".to_string());
+    let _ = window.emit(&finish_event, ());
     Ok(())
 }
 
@@ -513,9 +544,23 @@ async fn start_ai_engine(
     let path_env = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{};{}", dll_dir.display(), path_env);
 
+    let cpu_count = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4);
+    // Allocate optimal threads (e.g. 4 on a 4-core CPU, up to 6 on larger CPUs)
+    let threads = cpu_count.clamp(2, 6);
+    let threads_str = threads.to_string();
+
     let (_rx, child) = sidecar_command
         .env("PATH", new_path)
-        .args(["-m", model_path.to_str().unwrap(), "--port", "8080"])
+        .args([
+            "-m", model_path.to_str().unwrap(),
+            "--port", "8080",
+            "-t", &threads_str,
+            "-tb", &threads_str,
+            "-c", "2048",
+            "-ngl", "99",
+        ])
         .spawn()
         .map_err(|e| format!("Failed to spawn llama-server: {}. Did you put the .exe in src-tauri/bin?", e))?;
         

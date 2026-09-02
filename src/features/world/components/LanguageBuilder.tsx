@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { Wand2, Plus, Sparkles, Languages, ChevronLeft, MoreVertical, Trash2, Settings, BookA } from 'lucide-react';
@@ -86,9 +86,11 @@ function LanguageDashboard({ onCreate }: { onCreate: () => void }) {
   );
 }
 
+import { ModelSelectorDropdown } from '@/features/ai/components/ModelSelectorDropdown';
+
 function LanguageCreationWizard({ onCancel }: { onCancel: () => void }) {
   const { createLanguage, addWordsToDictionary, setActiveLanguageId } = useLanguageStore();
-  const { isAiActive, startEngine } = useAiStore();
+  const { isAiActive, startEngine, activeModel } = useAiStore();
 
   const [name, setName] = useState('');
   const [wordOrder, setWordOrder] = useState('SVO');
@@ -96,18 +98,29 @@ function LanguageCreationWizard({ onCancel }: { onCancel: () => void }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rawJson, setRawJson] = useState('');
+  const rawJsonRef = useRef('');
 
   useEffect(() => {
     let unlistenToken: (() => void) | undefined;
     let unlistenFinish: (() => void) | undefined;
 
     const setupListeners = async () => {
-      unlistenToken = await listen<string>('ai-token', (event) => {
-        setRawJson(prev => prev + event.payload);
+      unlistenToken = await listen<string>('ai-token-forge', (event) => {
+        rawJsonRef.current += event.payload;
+        setRawJson(rawJsonRef.current);
       });
 
-      unlistenFinish = await listen('ai-finished', async () => {
+      unlistenFinish = await listen('ai-finished-forge', async () => {
         setIsGenerating(false);
+        // Small delay to make sure all tokens have been processed
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const finalJson = rawJsonRef.current;
+        console.log('[Language Forge] ai-finished-forge fired. rawJsonRef:', finalJson.length, 'chars');
+        if (finalJson) {
+          handleParsingRef.current(finalJson);
+          rawJsonRef.current = '';
+          setRawJson('');
+        }
       });
     };
 
@@ -119,38 +132,62 @@ function LanguageCreationWizard({ onCancel }: { onCancel: () => void }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isGenerating && rawJson) {
-      handleParsing(rawJson);
-      setRawJson(''); 
-    }
-  }, [isGenerating, rawJson]);
-
   const handleParsing = async (jsonStr: string) => {
+    let newWords: WordEntry[] = [];
+    
+    console.log('[Language Forge] Raw AI output:', jsonStr);
+    console.log('[Language Forge] Raw AI output length:', jsonStr.length);
+    
     try {
-      const startIdx = jsonStr.indexOf('[');
-      const endIdx = jsonStr.lastIndexOf(']');
-      if (startIdx !== -1 && endIdx !== -1) {
-        const cleanJson = jsonStr.substring(startIdx, endIdx + 1);
-        const newWords = JSON.parse(cleanJson) as WordEntry[];
-        
-        // Save to DB
-        const newId = await createLanguage(name, wordOrder, vibe);
-        if (newWords.length > 0) {
-          await addWordsToDictionary(newId, newWords);
-        }
-        await setActiveLanguageId(newId);
-        
-      } else {
-        throw new Error("No JSON array found in response");
+      let cleanText = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+      const startArr = cleanText.indexOf('[');
+      const endArr = cleanText.lastIndexOf(']');
+      if (startArr !== -1 && endArr !== -1) {
+         const parsed = JSON.parse(cleanText.substring(startArr, endArr + 1));
+         if (Array.isArray(parsed)) {
+           newWords = parsed;
+         }
       }
-    } catch (err) {
-      console.error("Failed to parse dictionary JSON:", err);
-      // Even if AI fails JSON parsing, we can still create the empty language so they don't lose their settings
+    } catch (e) {
+      console.warn("Standard JSON parse failed, falling back to regex extraction");
+    }
+
+    if (newWords.length === 0) {
+      // Fallback: Robust regex extraction that is independent of key order
+      const objRegex = /{[^}]*}/g;
+      let objMatch;
+      while ((objMatch = objRegex.exec(jsonStr)) !== null) {
+        const objStr = objMatch[0];
+        const wordMatch = /"word"\s*:\s*"([^"]+)"/i.exec(objStr);
+        const meaningMatch = /"meaning"\s*:\s*"([^"]+)"/i.exec(objStr);
+        const posMatch = /"partOfSpeech"\s*:\s*"([^"]+)"/i.exec(objStr);
+        if (wordMatch && meaningMatch && posMatch) {
+          newWords.push({
+            word: wordMatch[1],
+            meaning: meaningMatch[2],
+            partOfSpeech: posMatch[3]
+          } as WordEntry);
+        }
+      }
+    }
+
+    console.log('[Language Forge] Extracted words:', newWords.length, newWords);
+
+    try {
       const newId = await createLanguage(name, wordOrder, vibe);
+      if (newWords.length > 0) {
+        await addWordsToDictionary(newId, newWords);
+      }
       await setActiveLanguageId(newId);
+    } catch (dbErr) {
+      console.error("Failed to save language to DB:", dbErr);
+    } finally {
+      onCancel();
     }
   };
+
+  const handleParsingRef = useRef(handleParsing);
+  handleParsingRef.current = handleParsing;
 
   const handleForge = async () => {
     if (!name || !vibe) {
@@ -161,10 +198,13 @@ function LanguageCreationWizard({ onCancel }: { onCancel: () => void }) {
     setIsGenerating(true);
     setError(null);
     setRawJson('');
+    rawJsonRef.current = '';
 
     try {
       if (!isAiActive) {
         await startEngine();
+        // Give llama-server time to load model into RAM
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
 
       const systemPrompt = `You are an expert conlang creator. Generate exactly 10 base starter words (pronouns, basic verbs, core nouns) for a constructed language.
@@ -178,7 +218,8 @@ Do not include any text outside the JSON array.`;
       
       await invoke('generate_text_stream', { 
         messages: [{ role: 'user', content: prompt }], 
-        systemPrompt 
+        systemPrompt,
+        channelId: "forge"
       });
     } catch (err) {
       console.error(err);
@@ -196,13 +237,29 @@ Do not include any text outside the JSON array.`;
       </div>
 
       <div className="language-wizard-container">
-        {isGenerating ? (
-          <div className="language-wizard-loading">
-            <Sparkles size={48} className="animate-pulse" style={{ color: 'var(--color-primary)', marginBottom: '16px' }} />
-            <h2>Forging {name}...</h2>
-            <p>Applying phonetic rules, constructing affix tables, and seeding vocabulary base...</p>
-          </div>
-        ) : (
+        {isGenerating ? (() => {
+          let progressText = "Analyzing phonetic constraints...";
+          if (rawJson.length > 400) {
+            progressText = "Finalizing dictionary JSON...";
+          } else if (rawJson.length > 250) {
+            progressText = "Seeding vocabulary base...";
+          } else if (rawJson.length > 100) {
+            progressText = "Constructing grammar rules...";
+          }
+          
+          const progressPercentage = Math.min(100, Math.max(5, (rawJson.length / 500) * 100));
+
+          return (
+            <div className="language-wizard-loading">
+              <Sparkles size={48} className="animate-pulse" style={{ color: 'var(--color-primary)', marginBottom: '16px' }} />
+              <h2>Forging {name}...</h2>
+              <p style={{ minWidth: '320px', minHeight: '24px' }}>{progressText}</p>
+              <div style={{ width: '300px', height: '4px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', marginTop: '24px', overflow: 'hidden' }}>
+                <div style={{ width: `${progressPercentage}%`, height: '100%', backgroundColor: 'var(--color-primary)', transition: 'width 0.3s ease-out' }} />
+              </div>
+            </div>
+          );
+        })() : (
           <div className="language-wizard-form">
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <h2><Wand2 size={24} style={{ color: 'var(--color-primary)', display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} /> The Language Forge</h2>
@@ -247,9 +304,18 @@ Do not include any text outside the JSON array.`;
 
             {error && <p className="language-builder__error">{error}</p>}
 
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="components-label">AI Model</label>
+              <div style={{ padding: '12px', border: '1px solid var(--color-border)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Select the AI model to generate this language</span>
+                <ModelSelectorDropdown />
+              </div>
+            </div>
+
             <button 
               className="components-button components-button--primary"
               onClick={handleForge}
+              disabled={!activeModel}
               style={{ width: '100%', marginTop: '24px', padding: '12px', fontSize: '1.05rem', display: 'flex', justifyContent: 'center', gap: '8px' }}
             >
               <Wand2 size={18} /> Forge Language
@@ -317,7 +383,7 @@ function LanguageStudio({ languageId }: { languageId: string }) {
 function StudioTranslator({ languageId }: { languageId: string }) {
   const { languages, addWordsToDictionary } = useLanguageStore();
   const language = languages.find(l => l.id === languageId);
-  const { isAiActive, startEngine } = useAiStore();
+  const { isAiActive, startEngine, activeModel } = useAiStore();
 
   const [inputSentence, setInputSentence] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -330,11 +396,11 @@ function StudioTranslator({ languageId }: { languageId: string }) {
     let unlistenFinish: (() => void) | undefined;
 
     const setupListeners = async () => {
-      unlistenToken = await listen<string>('ai-token', (event) => {
+      unlistenToken = await listen<string>('ai-token-translate', (event) => {
         setRawJson(prev => prev + event.payload);
       });
 
-      unlistenFinish = await listen('ai-finished', () => {
+      unlistenFinish = await listen('ai-finished-translate', () => {
         setIsGenerating(false);
       });
     };
@@ -349,23 +415,60 @@ function StudioTranslator({ languageId }: { languageId: string }) {
 
   useEffect(() => {
     if (!isGenerating && rawJson) {
+      let translation = "";
+      let newWords: WordEntry[] = [];
+
       try {
-        const startIdx = rawJson.indexOf('{');
-        const endIdx = rawJson.lastIndexOf('}');
+        let cleanText = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+        const startIdx = cleanText.indexOf('{');
+        const endIdx = cleanText.lastIndexOf('}');
         if (startIdx !== -1 && endIdx !== -1) {
-          const jsonStr = rawJson.substring(startIdx, endIdx + 1);
+          const jsonStr = cleanText.substring(startIdx, endIdx + 1);
           const parsed = JSON.parse(jsonStr) as { translation: string, newWords: WordEntry[] };
           
-          if (parsed.translation) setLastTranslation(parsed.translation);
-          if (parsed.newWords && parsed.newWords.length > 0) {
-            addWordsToDictionary(languageId, parsed.newWords);
-          }
-        } else {
-          throw new Error("No JSON object found in response");
+          if (parsed.translation) translation = parsed.translation;
+          if (parsed.newWords && Array.isArray(parsed.newWords)) newWords = parsed.newWords;
         }
       } catch (err) {
-        console.error("Failed to parse translator JSON:", err);
+        console.warn("Standard JSON parse failed, falling back to regex extraction for translator");
+      }
+
+      if (!translation) {
+        // Fallback: Regex extraction for translation string
+        const transRegex = /"translation"\s*:\s*"([^"]+)"/i;
+        const transMatch = transRegex.exec(rawJson);
+        if (transMatch) {
+          translation = transMatch[1] ?? '';
+        }
+      }
+
+      if (newWords.length === 0) {
+        // Fallback: Robust regex extraction that is independent of key order
+        const objRegex = /{[^}]*}/g;
+        let objMatch;
+        while ((objMatch = objRegex.exec(rawJson)) !== null) {
+          const objStr = objMatch[0];
+          const wordMatch = /"word"\s*:\s*"([^"]+)"/i.exec(objStr);
+          const meaningMatch = /"meaning"\s*:\s*"([^"]+)"/i.exec(objStr);
+          const posMatch = /"partOfSpeech"\s*:\s*"([^"]+)"/i.exec(objStr);
+          if (wordMatch && meaningMatch && posMatch) {
+            newWords.push({
+              word: wordMatch[1],
+              meaning: meaningMatch[2],
+              partOfSpeech: posMatch[3]
+            } as WordEntry);
+          }
+        }
+      }
+
+      if (translation) {
+        setLastTranslation(translation);
+      } else {
         setError('Failed to parse the translation. The AI might not have returned valid JSON.');
+      }
+
+      if (newWords.length > 0) {
+        addWordsToDictionary(languageId, newWords);
       }
       setRawJson(''); 
     }
@@ -406,7 +509,8 @@ Translate the input into the constructed language. Invent any new words you need
       
       await invoke('generate_text_stream', { 
         messages: [{ role: 'user', content: prompt }], 
-        systemPrompt 
+        systemPrompt,
+        channelId: "translate"
       });
     } catch (err) {
       console.error(err);
@@ -430,11 +534,15 @@ Translate the input into the constructed language. Invent any new words you need
               rows={4}
               style={{ width: '100%', resize: 'vertical' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Powered by</span>
+                <ModelSelectorDropdown />
+              </div>
               <button 
                 className="components-button components-button--primary"
                 onClick={handleTranslate}
-                disabled={isGenerating || !inputSentence.trim()}
+                disabled={isGenerating || !inputSentence.trim() || !activeModel}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 {isGenerating ? <Sparkles className="animate-spin" size={16} /> : <Wand2 size={16} />}

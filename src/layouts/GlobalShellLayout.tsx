@@ -247,11 +247,11 @@ export function GlobalShellLayout() {
             </div>
           )}
 
-          {/* Start AI Engine Button */}
+          {/* Quyll Assistant Button */}
           <button 
             className={`global-action-btn ${isAiStarting ? 'pulse-anim' : ''}`}
             onClick={handleToggleAiPanel}
-            title={isAiActive ? "Open AI Chat" : "Start AI Engine & Open Chat"}
+            title={isAiActive ? "Open Quyll Assistant" : "Start Quyll Assistant"}
             type="button"
             style={{ position: 'relative' }}
           >

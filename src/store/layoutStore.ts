@@ -24,11 +24,12 @@ interface LayoutState {
   openEntityModal: (entityId: string, entityType: string, x?: number, y?: number) => void;
   closeEntityModal: (entityId: string) => void;
   bringToFront: (entityId: string) => void;
-  lastActiveChapterId: string | null;
+  lastActiveChapterIds: Record<string, string | null>;
   openOutlineNotes: string[];
   openOutlineNote: (id: string) => void;
   closeOutlineNote: (id: string) => void;
-  setLastActiveChapterId: (id: string | null) => void;
+  setLastActiveChapterId: (projectId: string, id: string | null) => void;
+  resetProjectModals: () => void;
 }
 
 function loadBool(key: string, fallback: boolean): boolean {
@@ -42,10 +43,14 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   chapterListCollapsed: loadBool('quyll-chapter-list-collapsed', false),
   showKeywords: loadBool('quyll-show-keywords', true),
   activeEntityModals: [],
-  lastActiveChapterId: null,
+  lastActiveChapterIds: {},
   openOutlineNotes: [],
 
-  setLastActiveChapterId: (id) => set({ lastActiveChapterId: id }),
+  setLastActiveChapterId: (projectId, id) =>
+    set((s) => ({
+      lastActiveChapterIds: { ...s.lastActiveChapterIds, [projectId]: id },
+    })),
+  resetProjectModals: () => set({ activeEntityModals: [], openOutlineNotes: [] }),
   openOutlineNote: (id) => set((s) => ({ openOutlineNotes: s.openOutlineNotes.includes(id) ? s.openOutlineNotes : [...s.openOutlineNotes, id] })),
   closeOutlineNote: (id) => set((s) => ({ openOutlineNotes: s.openOutlineNotes.filter(n => n !== id) })),
 

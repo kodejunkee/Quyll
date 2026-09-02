@@ -147,7 +147,7 @@ export function GlobalSettingsModal({ isOpen, onClose }: GlobalSettingsModalProp
               onClick={() => setActiveTab('ai_models')}
             >
               <Cpu size={18} />
-              AI Models
+              Language Models
             </button>
           </div>
 

@@ -71,7 +71,7 @@ function accentStyle(colorKey: string): CSSProperties {
 
 export function NavigationSidebar({ collapsed, onToggle, onOpenSettings }: NavigationSidebarProps) {
   const { projectId } = useParams<{ projectId: string }>();
-  const { lastActiveChapterId } = useLayoutStore();
+  const lastActiveChapterId = useLayoutStore((s) => projectId ? s.lastActiveChapterIds[projectId] : null);
 
   return (
     <nav className={`nav-sidebar ${collapsed ? 'nav-sidebar--collapsed' : ''}`}>

@@ -1,36 +1,156 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { PaperPlaneIcon, MinusIcon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { listen } from '@tauri-apps/api/event';
+import ReactMarkdown from 'react-markdown';
+import Draggable from 'react-draggable';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  Pencil,
+  Trash2,
+  Copy,
+  Check,
+  Send,
+  Bot,
+  User,
+  Minus,
+  Settings2,
+  MessageSquare,
+  RefreshCw,
+  RotateCcw,
+  PowerOff
+} from 'lucide-react';
+
+import { useAiStore, ChatMessage, ChatSession } from '@/store/aiStore';
+import { ModelSelectorDropdown } from './ModelSelectorDropdown';
+import { QuyllIcon } from '@/components/QuyllIcon';
 import './AIChatPanel.css';
 
-import { useAiStore, ChatMessage } from '@/store/aiStore';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { GearIcon, ViewHorizontalIcon } from '@radix-ui/react-icons';
-import Draggable from 'react-draggable';
+// Individual Message Component with copy and markdown support
+function ChatMessageBubble({
+  msg,
+  onRetry
+}: {
+  msg: ChatMessage;
+  onRetry?: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const isAi = msg.role === 'ai';
+
+  const handleCopy = () => {
+    if (!msg.text) return;
+    navigator.clipboard.writeText(msg.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className={`ai-message-row ${isAi ? 'ai-message-row--ai' : 'ai-message-row--user'}`}>
+      <div className="ai-message-avatar">
+        {isAi ? <Bot size={16} /> : <User size={16} />}
+      </div>
+
+      <div className="ai-message-content-wrapper">
+        <div className="ai-message-bubble">
+          {isAi ? (
+            msg.text ? (
+              <div className="ai-markdown-body">
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="ai-typing-indicator">
+                <span className="ai-typing-dot" />
+                <span className="ai-typing-dot" />
+                <span className="ai-typing-dot" />
+              </div>
+            )
+          ) : (
+            <div className="ai-user-text">{msg.text}</div>
+          )}
+        </div>
+
+        {/* Action bar for messages */}
+        {msg.text && (
+          <div className="ai-message-actions">
+            <button
+              className="ai-action-btn"
+              onClick={handleCopy}
+              title="Copy text"
+            >
+              {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            {isAi && onRetry && (
+              <button
+                className="ai-action-btn"
+                onClick={onRetry}
+                title="Regenerate response"
+              >
+                <RefreshCw size={12} />
+                <span>Retry</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function AIChatPanel() {
-  const { 
+  const {
     isPanelOpen, setPanelOpen, isAiStarting, isAiActive, stopEngine,
-    chats, activeChatId, activeChatMessages, createChat, setActiveChat, deleteChat, 
-    updateActiveChatMessages, clearActiveChatHistory, loadChats
+    chats, activeChatId, activeChatMessages, isGeneratingByChat,
+    createChat, setActiveChat, deleteChat, updateChatTitle,
+    sendChatMessage, retryLastMessage, clearActiveChatHistory, loadChats
   } = useAiStore();
-  
+
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [panelPosition, setPanelPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const editInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const bubbleNodeRef = useRef<HTMLDivElement>(null);
+  const dragStartPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const activeChat = chats.find(c => c.id === activeChatId);
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
+  const isCurrentChatGenerating = activeChatId ? !!isGeneratingByChat[activeChatId] : false;
+  const isAnyGenerating = Object.values(isGeneratingByChat).some(Boolean);
 
-  // Sync activeChatMessages into localMessages whenever it changes
-  useEffect(() => {
-    if (activeChatId && !isTyping) {
-      setLocalMessages(activeChatMessages);
+  const resetPosition = () => {
+    setPanelPosition({ x: 0, y: 0 });
+  };
+
+  const startEditing = (chat: ChatSession, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingChatId(chat.id);
+    setEditingTitle(chat.title);
+    setTimeout(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    }, 50);
+  };
+
+  const saveEditing = (chatId: string) => {
+    if (editingTitle.trim()) {
+      updateChatTitle(chatId, editingTitle.trim());
     }
-  }, [activeChatId, activeChatMessages]);
+    setEditingChatId(null);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, chatId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEditing(chatId);
+    } else if (e.key === 'Escape') {
+      setEditingChatId(null);
+    }
+  };
 
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -45,228 +165,370 @@ export function AIChatPanel() {
     }
   }, [hasLoaded, isPanelOpen, activeChatId, chats.length, createChat]);
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
+  // Auto-scroll to bottom smoothly
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [localMessages]);
+  }, []);
 
   useEffect(() => {
-    const unlistenToken = listen<string>('ai-token', (event) => {
-      setLocalMessages((prev) => {
-        const lastMsg = prev[prev.length - 1];
-        if (lastMsg && lastMsg.role === 'ai') {
-          return [
-            ...prev.slice(0, -1),
-            { ...lastMsg, text: lastMsg.text + event.payload }
-          ];
-        }
-        return prev;
-      });
-    });
-
-    const unlistenFinish = listen('ai-finished', () => {
-      setIsTyping(false);
-      // We must use a setState callback to get the absolute latest localMessages to persist
-      setLocalMessages(latest => {
-        updateActiveChatMessages(latest);
-        return latest;
-      });
-    });
-
-    return () => {
-      unlistenToken.then(f => f());
-      unlistenFinish.then(f => f());
-    };
-  }, [updateActiveChatMessages]);
+    scrollToBottom();
+  }, [activeChatMessages, scrollToBottom]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-    
+    if (!input.trim() || isCurrentChatGenerating) return;
+
     const userMsg = input.trim();
     setInput('');
-    
-    const newMessages: ChatMessage[] = [
-      ...localMessages, 
-      { id: Date.now().toString(), role: 'user', text: userMsg },
-      { id: (Date.now() + 1).toString(), role: 'ai', text: '' }
-    ];
-    
-    setLocalMessages(newMessages);
-    setIsTyping(true);
-    
-    // We send all messages EXCEPT the empty AI placeholder we just added
-    const messagesToSend = newMessages.slice(0, -1);
-    
-    try {
-      await invoke('generate_text_stream', { 
-        messages: messagesToSend, 
-        systemPrompt: null 
-      });
-    } catch (e) {
-      console.error(e);
-      setLocalMessages(prev => {
-        const lastMsg = prev[prev.length - 1];
-        if (!lastMsg) return prev;
-        
-        const errorMessages: ChatMessage[] = [
-          ...prev.slice(0, -1),
-          { ...lastMsg, text: "Error: Could not connect to local AI engine." }
-        ];
-        updateActiveChatMessages(errorMessages);
-        return errorMessages;
-      });
-      setIsTyping(false);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
+    let targetChatId: string | null | undefined = activeChatId;
+    if (!targetChatId) {
+      targetChatId = await createChat();
+    }
+
+    if (targetChatId) {
+      await sendChatMessage(targetChatId, userMsg);
     }
   };
 
-  const handleClearHistory = () => {
-    clearActiveChatHistory();
+  const handleRetry = async () => {
+    if (!activeChatId || activeChatMessages.length < 2 || isCurrentChatGenerating) return;
+    await retryLastMessage(activeChatId);
   };
 
-  const handleSwitchChat = (id: string) => {
-    if (isTyping) return;
-    setActiveChat(id);
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
   };
-
-  if (!isPanelOpen) return null;
 
   return (
-    <Draggable nodeRef={nodeRef} handle=".ai-chat-panel__header">
-      <div ref={nodeRef} className="ai-chat-panel">
-        
-        {sidebarOpen && (
-          <div className="ai-chat-panel__sidebar">
-            <div className="ai-chat-panel__sidebar-header">
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Chat History</span>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button 
-                  className="components-button components-button--ghost" 
-                  onClick={() => createChat()}
-                  style={{ padding: '4px' }}
-                  title="New Chat"
-                >
-                  <PlusIcon />
-                </button>
-                <button 
-                  className="components-button components-button--ghost" 
-                  onClick={() => setSidebarOpen(false)}
-                  style={{ padding: '4px' }}
-                  title="Collapse Sidebar"
-                >
-                  <ViewHorizontalIcon />
-                </button>
-              </div>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {chats.map(chat => (
-                <div 
-                  key={chat.id} 
-                  className={`ai-chat-panel__chat-item ${chat.id === activeChatId ? 'ai-chat-panel__chat-item--active' : ''}`}
-                  onClick={() => handleSwitchChat(chat.id)}
-                >
-                  <span className="ai-chat-panel__chat-title">
-                    {chat.title}
-                  </span>
-                  <button 
-                    className="ai-chat-panel__chat-delete"
-                    onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
-                    title="Delete Chat"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              ))}
-              {chats.length === 0 && (
-                <div style={{ padding: '16px', textAlign: 'center', opacity: 0.5, fontSize: '0.85rem' }}>
-                  No previous chats
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+    <>
+      {/* Draggable Chat Window (Kept mounted to maintain dragged position and state) */}
+      <Draggable
+        nodeRef={nodeRef}
+        handle=".ai-chat-header"
+        position={panelPosition}
+        onDrag={(_e, data) => {
+          setPanelPosition({ x: data.x, y: Math.max(0, data.y) });
+        }}
+        onStop={(_e, data) => {
+          setPanelPosition({ x: data.x, y: Math.max(0, data.y) });
+        }}
+        bounds={{
+          top: 0,
+          left: -(window.innerWidth - 320),
+          right: 20,
+          bottom: window.innerHeight - 180
+        }}
+        cancel="button, input, textarea, a, .model-selector-trigger, .ai-settings-dropdown, .ai-message-bubble, .ai-chat-sidebar, .ai-chat-item"
+      >
+        <div
+          ref={nodeRef}
+          className={`ai-chat-panel ${isPanelOpen ? 'ai-chat-panel--open' : 'ai-chat-panel--hidden'}`}
+          data-tauri-drag-region="false"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
 
-        <div className="ai-chat-panel__main">
-          <div className="ai-chat-panel__header" style={{ cursor: 'grab' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {!sidebarOpen && (
-                <button 
-                  className="components-button components-button--ghost" 
-                  onClick={() => setSidebarOpen(true)}
-                  style={{ padding: '4px' }}
-                  title="Expand Sidebar"
-                >
-                  <ViewHorizontalIcon />
-                </button>
-              )}
-              <span style={{ fontWeight: 600 }}>AI Assistant</span>
-              <span style={{ fontSize: '0.65rem', background: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>PRO</span>
-              {isAiStarting && <span style={{ fontSize: '0.75rem', opacity: 0.7, marginLeft: '8px' }}>Starting Engine...</span>}
-            </div>
-            
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button className="components-button components-button--ghost" style={{ padding: '4px' }}>
-                    <GearIcon />
+          {/* Animated Sidebar */}
+          <aside className={`ai-chat-sidebar ${sidebarOpen ? 'ai-chat-sidebar--open' : 'ai-chat-sidebar--closed'}`}>
+            <div className="ai-chat-sidebar__inner">
+              <div className="ai-chat-sidebar__header">
+                <div className="ai-chat-sidebar__title">
+                  <MessageSquare size={15} className="text-emerald-400" />
+                  <span>Conversations</span>
+                </div>
+                <div className="ai-chat-sidebar__actions">
+                  <button
+                    className="ai-icon-btn"
+                    onClick={() => createChat()}
+                    title="Start New Chat"
+                  >
+                    <Plus size={15} />
                   </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="global-dropdown-content" align="end" sideOffset={5} style={{ zIndex: 10000, backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                    <DropdownMenu.Item className="global-dropdown-item" onClick={handleClearHistory} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      Clear Current History
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item className="global-dropdown-item" onClick={() => { stopEngine(); setPanelOpen(false); }} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--color-error, #ef4444)' }}>
-                      Shut Down Engine
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-              
-              <button className="components-button components-button--ghost" onClick={() => setPanelOpen(false)} style={{ padding: '4px' }}>
-                <MinusIcon />
-              </button>
+                  <button
+                    className="ai-icon-btn"
+                    onClick={() => setSidebarOpen(false)}
+                    title="Collapse Sidebar"
+                  >
+                    <PanelLeftClose size={15} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="ai-chat-sidebar__list">
+                {chats.map(chat => {
+                  const isActive = chat.id === activeChatId;
+                  const isEditing = chat.id === editingChatId;
+
+                  return (
+                    <div
+                      key={chat.id}
+                      className={`ai-chat-item ${isActive ? 'ai-chat-item--active' : ''}`}
+                      onClick={() => !isEditing && setActiveChat(chat.id)}
+                    >
+                      <MessageSquare size={13} className="ai-chat-item__icon" />
+
+                      {isEditing ? (
+                        <input
+                          ref={editInputRef}
+                          className="ai-chat-item__edit-input"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onBlur={() => saveEditing(chat.id)}
+                          onKeyDown={(e) => handleEditKeyDown(e, chat.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span className="ai-chat-item__title" title={chat.title || 'Untitled Session'}>
+                          {chat.title || 'Untitled Session'}
+                        </span>
+                      )}
+
+                      <div className="ai-chat-item__actions">
+                        {!isEditing && (
+                          <button
+                            className="ai-chat-item__action-btn"
+                            onClick={(e) => startEditing(chat, e)}
+                            title="Rename Conversation"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                        )}
+                        <button
+                          className="ai-chat-item__action-btn ai-chat-item__action-btn--delete"
+                          onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
+                          title="Delete Conversation"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {chats.length === 0 && (
+                  <div className="ai-chat-sidebar__empty">
+                    No previous sessions
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <div className="ai-chat-panel__messages">
-            {localMessages.length === 0 && (
-              <div className="ai-chat-panel__empty">
-                <p>How can I help you build your world today?</p>
+          </aside>
+
+          {/* Main Chat View */}
+          <main className="ai-chat-main">
+            {/* Header Bar */}
+            <header className="ai-chat-header">
+              <div className="ai-chat-header__left">
+                {!sidebarOpen && (
+                  <button
+                    className="ai-icon-btn"
+                    onClick={() => setSidebarOpen(true)}
+                    title="Expand Sidebar"
+                  >
+                    <PanelLeftOpen size={16} />
+                  </button>
+                )}
+
+                <div className="ai-chat-brand">
+                  <QuyllIcon size={20} className="ai-brand-feather" />
+                  <span className="ai-brand-name">Quyll Assistant</span>
+                </div>
               </div>
-            )}
-            {localMessages.map(msg => (
-              <div key={msg.id} className={`ai-chat-panel__message ai-chat-panel__message--${msg.role}`}>
-                {msg.text}
+
+              <div className="ai-chat-header__controls">
+                {isAiStarting ? (
+                  <div className="ai-status-pill ai-status-pill--starting">
+                    <span className="ai-status-pulse" />
+                    <span>Booting Engine...</span>
+                  </div>
+                ) : isAiActive ? (
+                  <div className="ai-status-pill ai-status-pill--ready">
+                    <span className="ai-status-dot" />
+                    <span>Ready</span>
+                  </div>
+                ) : null}
+
+                <ModelSelectorDropdown />
+
+                <button
+                  className="ai-icon-btn"
+                  onClick={() => setPanelOpen(false)}
+                  title="Minimize Panel"
+                >
+                  <Minus size={15} />
+                </button>
+
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="ai-icon-btn" title="Settings & Actions">
+                      <Settings2 size={15} />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="ai-settings-dropdown"
+                      align="end"
+                      sideOffset={6}
+                    >
+                      <DropdownMenu.Item
+                        className="ai-dropdown-item"
+                        onClick={clearActiveChatHistory}
+                      >
+                        <Trash2 size={14} />
+                        <span>Clear Conversation</span>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="ai-dropdown-item"
+                        onClick={resetPosition}
+                      >
+                        <RotateCcw size={14} />
+                        <span>Reset Window Position</span>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="ai-dropdown-item ai-dropdown-item--danger"
+                        onClick={() => { stopEngine(); setPanelOpen(false); }}
+                      >
+                        <PowerOff size={14} />
+                        <span>Stop Engine & Free RAM</span>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-          
-          <div className="ai-chat-panel__input-area">
-            <textarea 
-              className="components-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+            </header>
+
+            {/* Messages Scroll Area */}
+            <div className="ai-chat-messages">
+              {activeChatMessages.length === 0 && (
+                <div className="ai-chat-empty-state">
+                  <div className="ai-empty-icon-wrap">
+                    <QuyllIcon size={32} />
+                  </div>
+                  <h3>Your Creative Sounding Board</h3>
+                  <p>Refine dialogue, explore phrasing variations, adjust scene tone, or test world logic. Everything runs 100% privately on your machine.</p>
+                  <div className="ai-prompt-suggestions">
+                    <button
+                      className="ai-suggestion-chip"
+                      onClick={() => {
+                        setInput("Help me rephrase this passage for stronger sensory detail and impact: ");
+                        textareaRef.current?.focus();
+                      }}
+                    >
+                      ✍️ Rephrase a passage for stronger impact
+                    </button>
+                    <button
+                      className="ai-suggestion-chip"
+                      onClick={() => {
+                        setInput("Suggest ways to heighten the mood and tension in this scene excerpt: ");
+                        textareaRef.current?.focus();
+                      }}
+                    >
+                      🎭 Enhance the atmospheric mood of a scene
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeChatMessages.map((msg, index) => {
+                const isLastAi = msg.role === 'ai' && index === activeChatMessages.length - 1;
+                return (
+                  <ChatMessageBubble
+                    key={msg.id}
+                    msg={msg}
+                    onRetry={isLastAi && !isCurrentChatGenerating ? handleRetry : undefined}
+                  />
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Floating Input Area */}
+            <div className="ai-chat-input-container">
+              <div className="ai-chat-input-card">
+                <textarea
+                  ref={textareaRef}
+                  className="ai-chat-textarea"
+                  value={input}
+                  onChange={handleTextareaChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask anything... (Shift+Enter for newline)"
+                  rows={1}
+                  disabled={isCurrentChatGenerating}
+                />
+
+                <div className="ai-chat-input-footer">
+                  <div className="ai-input-tip">
+                    <span>Enter</span> to send, <span>Shift + Enter</span> for line break
+                  </div>
+
+                  <button
+                    className={`ai-send-btn ${input.trim() && !isCurrentChatGenerating ? 'ai-send-btn--active' : ''}`}
+                    onClick={handleSend}
+                    disabled={!input.trim() || isCurrentChatGenerating}
+                    title="Send Message"
+                  >
+                    <Send size={15} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </Draggable>
+
+      {/* Floating Draggable Quick-Access Circular Bubble */}
+      {!isPanelOpen && (
+        <Draggable
+          nodeRef={bubbleNodeRef}
+          onStart={(_e, data) => {
+            dragStartPosRef.current = { x: data.x, y: data.y };
+          }}
+          onStop={(_e, data) => {
+            const dx = data.x - dragStartPosRef.current.x;
+            const dy = data.y - dragStartPosRef.current.y;
+            const dist = Math.hypot(dx, dy);
+            // If moved less than 5px, it was a click -> open panel!
+            if (dist < 5) {
+              setPanelOpen(true);
+            }
+          }}
+        >
+          <div ref={bubbleNodeRef} className="ai-floating-bubble-container">
+            <div
+              role="button"
+              tabIndex={0}
+              className={`ai-floating-bubble ${isAnyGenerating ? 'ai-floating-bubble--generating' : ''}`}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  handleSend();
+                  setPanelOpen(true);
                 }
               }}
-              placeholder="Ask something..."
-              rows={2}
-              disabled={isTyping || isAiStarting || !isAiActive}
-            />
-            <button 
-              className="components-button components-button--primary"
-              onClick={handleSend}
-              disabled={!input.trim() || isTyping || isAiStarting || !isAiActive}
+              title="Open Quyll Assistant (Click to Expand, Drag to Move)"
             >
-              <PaperPlaneIcon />
-            </button>
+              <div className="ai-floating-bubble__icon">
+                <QuyllIcon size={20} className="ai-floating-feather" />
+              </div>
+
+              {isAnyGenerating ? (
+                <span className="ai-floating-pulse" />
+              ) : isAiActive ? (
+                <span className="ai-floating-status-dot" />
+              ) : null}
+            </div>
           </div>
-        </div>
-      </div>
-    </Draggable>
+        </Draggable>
+      )}
+    </>
   );
 }
+
